@@ -100,75 +100,74 @@ export default function StudentsPage() {
 
   return (
     <div className="h-full container mx-auto py-8 px-4">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">My Students</h1>
-        <StudentFormModal onSuccess={handleStudentAdded} open={showStudentModal}
-      onOpenChange={setShowStudentModal}/>
-        <ObjectiveFormModal onSuccess={handleStudentAdded} students={students} open={showObjectiveModal}
-      onOpenChange={setShowObjectiveModal} onStudentOpenChange={setShowStudentModal}/>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold tracking-tight">My Students</h1>
+        <div className="flex gap-2">
+          <ObjectiveFormModal
+            onSuccess={handleStudentAdded}
+            students={students}
+            open={showObjectiveModal}
+            onOpenChange={setShowObjectiveModal}
+            onStudentOpenChange={setShowStudentModal}
+          />
+          <StudentFormModal
+            onSuccess={handleStudentAdded}
+            open={showStudentModal}
+            onOpenChange={setShowStudentModal}
+          />
+        </div>
       </div>
-
+  
       {error && (
         <div className="p-4 mb-6 rounded-md bg-destructive/10 text-destructive">
           {error}
         </div>
       )}
-
+  
       {isLoading ? (
         <div className="flex justify-center items-center h-64">
           <LoadingSpinner />
         </div>
       ) : students.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {students.map((student) => (
-            <Card key={student.id} className="overflow-hidden">
-              <CardHeader className="pb-2">
+          {students.map((student) => {
+            const objectives = student.objectives || [];
+            const previewObjectives = objectives.slice(0, 2);
+  
+            return (
+              <Card key={student.id} className="h-56 shadow-sm border border-border rounded-xl p-4 flex flex-col justify-between">
                 <div className="flex items-center gap-4">
                   <Avatar className="h-12 w-12">
                     <AvatarImage src={student.avatar_url} alt={student.name} />
                     <AvatarFallback>{getInitials(student.name)}</AvatarFallback>
                   </Avatar>
                   <div>
-                    <CardTitle>{student.name}</CardTitle>
-                    <CardDescription>Grade {student.grade}</CardDescription>
+                    <h2 className="text-lg font-semibold">{student.name}</h2>
+                    <p className="text-sm text-muted-foreground">Grade {student.grade_level}</p>
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent className="pb-2">
-                <div className="flex items-center gap-2 mb-4">
-                  <Badge variant={student.status === 'active' ? 'default' : 'secondary'}>
-                    {student.status}
+  
+                <div className="flex-1 flex flex-col gap-1">
+                  <Badge variant="secondary" className="w-fit text-xs mb-1">
+                    {objectives.length} objective{objectives.length !== 1 && 's'}
                   </Badge>
-                  <span className="text-sm text-muted-foreground">
-                    Last session: {formatDate(student.last_session_date)}
-                  </span>
-                </div>
-                
-                <div className="space-y-4">
-                  <h4 className="text-sm font-medium">Current Objectives</h4>
-                  {student.objectives && student.objectives.length > 0 ? (
-                    student.objectives.map((objective, index) => (
-                      <div key={index} className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm font-medium">
-                            {objective.description}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            {objective.progress}%
-                          </span>
-                        </div>
-                        <Progress value={objective.progress} className="h-2" />
-                      </div>
+                  {previewObjectives.length > 0 ? (
+                    previewObjectives.map((obj) => (
+                      <p key={obj.id} className="text-sm text-muted-foreground truncate">
+                        • {obj.description}
+                      </p>
                     ))
                   ) : (
-                    <p className="text-sm text-muted-foreground">
-                      No objectives set yet
-                    </p>
+                    <p className="text-sm text-muted-foreground italic">No objectives yet</p>
                   )}
                 </div>
-              </CardContent>
-            </Card>
-          ))}
+  
+                <div className="text-xs text-muted-foreground">
+                  Last session: {formatDate(student.last_session_date)}
+                </div>
+              </Card>
+            );
+          })}
         </div>
       ) : (
         <div className="text-center py-12">
@@ -176,9 +175,9 @@ export default function StudentsPage() {
           <p className="text-muted-foreground mb-4">
             You don&apos;t have any students assigned to you yet.
           </p>
-          <StudentFormModal onSuccess={handleStudentAdded} />
         </div>
       )}
     </div>
   );
+  
 }

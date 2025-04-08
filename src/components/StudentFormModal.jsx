@@ -111,7 +111,7 @@ export function StudentFormModal({ onSuccess, onCancel, open, onOpenChange }) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         <Button variant="outline">
-          <Plus className="mr-2 h-4 w-4" />
+          <Plus className="h-4 w-4" />
           Add Student
         </Button>
       </DialogTrigger>

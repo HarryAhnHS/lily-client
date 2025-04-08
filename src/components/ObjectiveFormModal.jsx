@@ -192,7 +192,7 @@ export function ObjectiveFormModal({ onSuccess, students, open, onOpenChange, on
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         <Button variant="outline">
-          <Plus className="mr-2 h-4 w-4" />
+          <Plus className="h-4 w-4" />
           Add Objective
         </Button>
       </DialogTrigger>
