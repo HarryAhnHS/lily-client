@@ -6,6 +6,7 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import './globals.css';
 import { ThemeProvider } from 'next-themes';
+import { Sidebar } from '@/components/Sidebar';
 
 export default function RootLayout({ children }) {
   return (
@@ -13,11 +14,16 @@ export default function RootLayout({ children }) {
       <body className='bg-background text-foreground flex flex-col min-h-screen'>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <AuthProvider>
-            <Header />
-            <main className='flex-1 mt-16 min-h-screen'>
-              {children}
+            <main className='flex-1 mt-16 min-h-screen flex'>
+              <Sidebar />
+              <div className='flex-1 flex flex-col'>
+                <Header />
+                <div className='ml-36 flex-1 min-h-screen p-6'>
+                  {children}
+                </div>
+                <Footer />
+              </div>
             </main>
-            <Footer />
           </AuthProvider>
         </ThemeProvider>
       </body>
