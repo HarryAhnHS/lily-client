@@ -14,7 +14,7 @@ export const Sidebar = () => {
   const pathname = usePathname()
 
   return (
-    <aside className="w-36 h-screen border-r bg-background px-4 py-6 fixed">
+    <aside className="w-36 h-screen border-r bg-background px-4 py-6 fixed z-50">
       <nav className="space-y-2">
         {navItems.map(({ label, href }) => (
           <Link

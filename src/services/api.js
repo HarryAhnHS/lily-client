@@ -1,14 +1,9 @@
 // lib/api.js
-import { supabase } from './supabase';
 
-export const authorizedFetch = async (url, options = {}) => {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-  const token = session?.access_token;
-
-  return fetch(url, {
+export const authorizedFetch = async (url, token, options = {}) => {
+  return fetch(`${API_URL}${url}`, {
     ...options,
     headers: {
       ...options.headers,
