@@ -105,18 +105,17 @@ export default function ReportsPage() {
   };
 
   const getUniqueSubjects = () => {
-    return [...new Set(reports.map(report => report.objective.goal.subject_area.name))];
+    return [...new Set(reports.map(report => report.objective.subject_area.name))];
   };
 
   const filteredReports = reports.filter(report => {
     const matchesSearch = 
       report.student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      report.objective.goal.subject_area.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      report.objective.goal.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      report.objective.subject_area.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       report.objective.description.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStudent = filterStudent === 'all' ? true : report.student.name === filterStudent;
-    const matchesSubject = filterSubject === 'all' ? true : report.objective.goal.subject_area.name === filterSubject;
+    const matchesSubject = filterSubject === 'all' ? true : report.objective.subject_area.name === filterSubject;
     
     return matchesSearch && matchesStudent && matchesSubject;
   });
@@ -193,10 +192,9 @@ export default function ReportsPage() {
                 <TableHead>Date</TableHead>
                 <TableHead>Student</TableHead>
                 <TableHead>Subject Area</TableHead>
-                <TableHead>Goal</TableHead>
                 <TableHead>Objective</TableHead>
                 <TableHead>Summary</TableHead>
-                <TableHead>Progress</TableHead>
+                <TableHead>Progress (+/-)</TableHead>
                 <TableHead className="w-[50px]"></TableHead>
               </TableRow>
             </TableHeader>
@@ -205,19 +203,34 @@ export default function ReportsPage() {
                 <TableRow key={report.id}>
                   <TableCell className="font-medium">{formatDate(report.created_at)}</TableCell>
                   <TableCell>{report.student.name}</TableCell>
-                  <TableCell>{report.objective.goal.subject_area.name}</TableCell>
-                  <TableCell>{report.objective.goal.title}</TableCell>
+                  <TableCell>{report.objective.subject_area.name}</TableCell>
                   <TableCell>{report.objective.description}</TableCell>
                   <TableCell className="max-w-[300px] truncate">{report.summary || report.raw_input}</TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-2">
-                      <div className="w-16 h-2 bg-secondary rounded-full overflow-hidden">
-                        <div 
-                          className={`h-full ${getProgressColor(report.progress_score || 0)} rounded-full`}
-                          style={{ width: `${report.progress_score || 0}%` }}
-                        />
-                      </div>
-                      <span className="text-sm font-medium">{report.progress_score || 0}%</span>
+                    <div className="flex items-center gap-2 w-32">
+                        <div className="relative w-full h-2 bg-muted rounded-full overflow-hidden">
+                            {/* Background line */}
+                            <div className="absolute top-0 left-1/2 w-px h-full bg-border" />
+
+                            {/* Negative (left side) */}
+                            {report.progress_delta < 0 && (
+                            <div
+                                className="absolute left-1/2 top-0 h-full bg-red-500"
+                                style={{ width: `${Math.min(Math.abs(report.progress_delta), 100) / 2}%`, transform: 'translateX(-100%)' }}
+                            />
+                            )}
+
+                            {/* Positive (right side) */}
+                            {report.progress_delta > 0 && (
+                            <div
+                                className="absolute left-1/2 top-0 h-full bg-green-500"
+                                style={{ width: `${Math.min(report.progress_delta, 100) / 2}%` }}
+                            />
+                            )}
+                        </div>
+                        <span className="text-sm font-medium">
+                            {report.progress_delta > 0 ? `+${report.progress_delta}%` : `${report.progress_delta || 0}%`}
+                        </span>
                     </div>
                   </TableCell>
                   <TableCell>
