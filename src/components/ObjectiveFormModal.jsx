@@ -36,7 +36,6 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
-import { StudentFormModal } from './StudentFormModal';
 
 // Form schema for objective
 const objectiveFormSchema = z.object({

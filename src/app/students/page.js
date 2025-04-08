@@ -4,14 +4,12 @@ import { useAuth } from '@/app/context/auth-context';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { Button } from '@/components/ui/button';
 import { authorizedFetch } from '@/services/api';
 import { StudentFormModal } from '@/components/StudentFormModal';
 import { 
   Card, 
   CardContent, 
   CardDescription, 
-  CardFooter, 
   CardHeader, 
   CardTitle 
 } from '@/components/ui/card';

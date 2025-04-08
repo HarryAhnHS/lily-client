@@ -25,11 +25,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Check, ChevronsUpDown, Mic, MicOff } from "lucide-react";
+import { Check, ChevronsUpDown, Mic, MicOff, Send } from "lucide-react";
 import { authorizedFetch } from "@/services/api";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
+import { toast } from "sonner";
+import { MultiAnalysisReviewModal } from "@/components/MultiAnalysisReviewModal";
 
 // Import from @google/genai
 import {
@@ -54,15 +56,19 @@ export default function Home() {
   const [transcript, setTranscript] = useState("");
   const [students, setStudents] = useState([]);
   const [objectives, setObjectives] = useState([]);
-  const [selectedStudent, setSelectedStudent] = useState("");
+  const [selectedStudent, setSelectedStudent] = useState(null);
   const [selectedObjectives, setSelectedObjectives] = useState([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [error, setError] = useState(null);
   const [openObjectives, setOpenObjectives] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [analysisResults, setAnalysisResults] = useState([]);
+  const [showAnalysisModal, setShowAnalysisModal] = useState(false);
 
   // For recording
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
+  const formRef = useRef(null);
 
   // Optional login redirect
   useEffect(() => {
@@ -111,7 +117,7 @@ export default function Home() {
       
       try {
         console.log("Fetching objectives for student:", selectedStudent);
-        const response = await authorizedFetch(`/objectives/student/${selectedStudent}`, session?.access_token);
+        const response = await authorizedFetch(`/objectives/student/${selectedStudent.id}`, session?.access_token);
         
         if (!response.ok) {
           throw new Error(`Failed to fetch objectives: ${response.status}`);
@@ -130,22 +136,26 @@ export default function Home() {
     };
     
     fetchObjectives();
-  }, [session, selectedStudent]);
+  }, [selectedStudent]);
 
   const toggleObjective = (objectiveId) => {
+    const objective = objectives.find((obj) => obj.id === objectiveId);
+    if (!objective) return;
+  
     setSelectedObjectives((prev) => {
-      if (prev.includes(objectiveId)) {
-        return prev.filter((id) => id !== objectiveId);
-      } else {
-        return [...prev, objectiveId];
-      }
+      const exists = prev.find((o) => o.id === objectiveId);
+      return exists
+        ? prev.filter((o) => o.id !== objectiveId)
+        : [...prev, objective];
     });
   };
 
   const removeObjective = (objectiveId) => {
-    setSelectedObjectives((prev) => prev.filter((id) => id !== objectiveId));
+    console.log("Removing objective:", objectiveId);
+    setSelectedObjectives((prev) =>
+      prev.filter((o) => o.id !== objectiveId)
+    );
   };
-
   /**
    * Record WAV with MediaRecorder, then call Gemini client:
    * 1. Upload the WAV file to Gemini's File API
@@ -233,6 +243,55 @@ export default function Home() {
     }
   };
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!selectedStudent || selectedObjectives.length === 0 || !transcript.trim()) {
+      toast.error("Please fill in all required fields before submitting.");
+      return;
+    }
+    
+    setIsSubmitting(true);
+    setError(null);
+    
+    try {
+      const payload = {
+        student: selectedStudent,
+        objectives: selectedObjectives,
+        raw_text: transcript,
+      };
+      
+      const response = await authorizedFetch('/sessions/analyze', session?.access_token, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to analyze session: ${response.status}`);
+      }
+      
+      const result = await response.json();
+
+      setAnalysisResults(result["results"]);
+
+      console.log("analysisResults", result["results"]);
+      
+      toast.success("Analysis complete");
+      // Show the analysis modal
+      setShowAnalysisModal(true);
+      
+    } catch (err) {
+      console.error("Error analyzing session:", err);
+      setError("Failed to analyze session. Please try again later.");
+      toast.error("Failed to analyze session. Please try again later.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   if (loading) {
     return <LoadingSpinner />;
   }
@@ -245,7 +304,7 @@ export default function Home() {
           <p className="text-muted-foreground">Select a student and objectives, then start recording</p>
         </div>
 
-        <div className="space-y-6">
+        <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
           {/* Student/Objective row */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
@@ -256,8 +315,11 @@ export default function Home() {
                 </div>
               ) : students.length > 0 ? (
                 <Select
-                  value={selectedStudent}
-                  onValueChange={setSelectedStudent}
+                  value={selectedStudent?.id}
+                  onValueChange={(id) => {
+                    const student = students.find((s) => s.id === id);
+                    setSelectedStudent(student || null);
+                  }}
                 >
                   <SelectTrigger className="h-11 w-full">
                     <SelectValue placeholder="Select a student" />
@@ -319,7 +381,7 @@ export default function Home() {
                               <Check
                                 className={cn(
                                   "mr-2 h-4 w-4",
-                                  selectedObjectives.includes(obj.id) ? "opacity-100" : "opacity-0"
+                                  selectedObjectives.includes(obj) ? "opacity-100" : "opacity-0"
                                 )}
                               />
                               {obj.description}
@@ -331,23 +393,26 @@ export default function Home() {
                   </Popover>
                   
                   {selectedObjectives.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {selectedObjectives.map((objId) => {
-                        const obj = objectives.find(o => o.id === objId);
-                        return obj ? (
-                          <Badge 
-                            key={obj.id} 
+                    <div className="flex flex-wrap gap-2 mt-2"> 
+                      {selectedObjectives.map((obj) =>
+                        obj && obj.id ? (
+                          <Badge
+                            key={obj.id}
                             variant="secondary"
                             className="flex items-center gap-1 py-1 px-2"
                           >
                             {obj.description}
-                            <X 
-                              className="h-3 w-3 cursor-pointer" 
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-3 w-3 cursor-pointer ml-1"
                               onClick={() => removeObjective(obj.id)}
-                            />
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
                           </Badge>
-                        ) : null;
-                      })}
+                        ) : null
+                      )}
                     </div>
                   )}
                 </div>
@@ -374,12 +439,14 @@ export default function Home() {
               className="min-h-[250px] resize-none border-muted-foreground/20 focus:border-primary"
               value={transcript}
               onChange={(e) => setTranscript(e.target.value)}
+              required
             />
           </div>
 
-          {/* Record button */}
-          <div className="flex justify-center pt-4">
+          {/* Record and Submit buttons */}
+          <div className="flex justify-center gap-4 pt-4">
             <Button
+              type="button"
               onClick={toggleRecording}
               variant={isRecording ? "destructive" : "default"}
               size="lg"
@@ -391,8 +458,42 @@ export default function Home() {
             >
               {isRecording ? <MicOff className="h-8 w-8" /> : <Mic className="h-8 w-8" />}
             </Button>
+            
+            <Button
+              type="submit"
+              disabled={!selectedStudent || selectedObjectives.length === 0 || !transcript.trim() || isSubmitting}
+              size="lg"
+              className="rounded-full px-8 h-20 flex items-center gap-2"
+            >
+              {isSubmitting ? (
+                <>
+                  <LoadingSpinner size="small" />
+                  <span>Analyzing...</span>
+                </>
+              ) : (
+                <>
+                  <Send className="h-5 w-5" />
+                  <span>Submit</span>
+                </>
+              )}
+            </Button>
           </div>
-        </div>
+        </form>
+        
+        {/* Analysis Result Modal */}
+        {analysisResults.length > 0 && (  
+          <MultiAnalysisReviewModal
+            isOpen={showAnalysisModal}
+            onClose={() => setShowAnalysisModal(false)}
+            analysisResults={analysisResults}
+            sessionMetadata={{
+              student: selectedStudent,
+              objectives: selectedObjectives,
+              raw_text: transcript,
+            }}
+            access_token={session?.access_token}
+          />
+        )}
       </div>
     </div>
   );

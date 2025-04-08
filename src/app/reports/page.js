@@ -132,7 +132,6 @@ export default function ReportsPage() {
             <Download className="h-4 w-4" />
             Export
           </Button>
-          <Button>Generate Report</Button>
         </div>
       </div>
 
@@ -248,10 +247,10 @@ export default function ReportsPage() {
           <h3 className="text-lg font-medium mb-2">No reports found</h3>
           <p className="text-muted-foreground mb-4">
             {searchTerm || filterStudent !== 'all' || filterSubject !== 'all'
-              ? "No reports match your search criteria."
-              : "You don&apos;t have any reports yet."}
+              ? "No sessions match your search criteria."
+              : "You don't have any sessions yet."}
           </p>
-          <Button>Create Your First Report</Button>
+          <Button>Create Your First Session</Button>
         </div>
       )}
     </div>
