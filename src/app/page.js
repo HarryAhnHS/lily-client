@@ -1,113 +1,265 @@
-'use client';
+"use client";
 
-import { useAuth } from '@/app/context/auth-context';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import LoadingSpinner from '@/components/LoadingSpinner';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Mic, MicOff } from 'lucide-react';
+import { useAuth } from "@/app/context/auth-context";
+import { useRouter } from "next/navigation";
+import { useEffect, useState, useRef } from "react";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Check, ChevronsUpDown, Mic, MicOff } from "lucide-react";
+import { authorizedFetch } from "@/services/api";
+import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { X } from "lucide-react";
 
-// Mock API data
-const mockStudents = [
-  { id: '1', name: 'John Doe' },
-  { id: '2', name: 'Jane Smith' },
-  { id: '3', name: 'Bob Johnson' },
-];
+// Import from @google/genai
+import {
+  GoogleGenAI,
+  createUserContent,
+  createPartFromUri,
+} from "@google/genai";
 
-const mockObjectives = {
-  '1': [
-    { id: '1-1', title: 'Reading Comprehension' },
-    { id: '1-2', title: 'Writing Skills' },
-  ],
-  '2': [
-    { id: '2-1', title: 'Math Problem Solving' },
-    { id: '2-2', title: 'Algebra Basics' },
-  ],
-  '3': [
-    { id: '3-1', title: 'Science Projects' },
-    { id: '3-2', title: 'Lab Safety' },
-  ],
-};
+// Direct client usage of Gemini
+// Replace with your real API key
+const ai = new GoogleGenAI({
+  apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY,
+});
 
 export default function Home() {
-  const { session, loading } = useAuth();
+  // If you have a real auth:
+  const { session, loading } = useAuth() || { session: true, loading: false };
   const router = useRouter();
+
+  // The same states from your original code
   const [isRecording, setIsRecording] = useState(false);
-  const [transcript, setTranscript] = useState('');
+  const [transcript, setTranscript] = useState("");
   const [students, setStudents] = useState([]);
   const [objectives, setObjectives] = useState([]);
-  const [selectedStudent, setSelectedStudent] = useState('');
-  const [selectedObjective, setSelectedObjective] = useState('');
+  const [selectedStudent, setSelectedStudent] = useState("");
+  const [selectedObjectives, setSelectedObjectives] = useState([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [error, setError] = useState(null);
+  const [openObjectives, setOpenObjectives] = useState(false);
 
+  // For recording
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+
+  // Optional login redirect
   useEffect(() => {
     if (!loading && !session) {
-      router.replace('/login');
+      router.replace("/login");
     }
   }, [loading, session, router]);
 
+  // Fetch students from API
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchStudents = async () => {
       if (!session) return;
-      
       setIsLoadingData(true);
       setError(null);
-      
+
       try {
-        // Mock API call for students
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
-        setStudents(mockStudents);
-      } 
-      catch (err) {
-        console.error('Error fetching students:', err);
-        setError('Failed to load students');
-      } 
-      finally {
+        const response = await authorizedFetch('/students', session?.access_token);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch students: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        setStudents(data);
+      } catch (err) {
+        console.error("Error fetching students:", err);
+        setError("Failed to load students. Please try again later.");
+      } finally {
         setIsLoadingData(false);
       }
     };
     
-    fetchData();
+    fetchStudents();
   }, [session]);
 
-  // Update objectives when student is selected
+  // Fetch objectives when student changes
   useEffect(() => {
-    if (selectedStudent) {
-      setObjectives(mockObjectives[selectedStudent] || []);
-      setSelectedObjective(''); // Reset objective selection
-    } else {
-      setObjectives([]);
-      setSelectedObjective('');
-    }
-  }, [selectedStudent]);
+    const fetchObjectives = async () => {
+      if (!session || !selectedStudent) {
+        setObjectives([]);
+        setSelectedObjectives([]);
+        return;
+      }
+      
+      setIsLoadingData(true);
+      
+      try {
+        console.log("Fetching objectives for student:", selectedStudent);
+        const response = await authorizedFetch(`/objectives/student/${selectedStudent}`, session?.access_token);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch objectives: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        setObjectives(data);
+        setSelectedObjectives([]);
+      } catch (err) {
+        console.error("Error fetching objectives:", err);
+        setError("Failed to load objectives. Please try again later.");
+        setObjectives([]);
+      } finally {
+        setIsLoadingData(false);
+      }
+    };
+    
+    fetchObjectives();
+  }, [session, selectedStudent]);
 
-  const toggleRecording = () => {
-    setIsRecording(!isRecording);
-    // Here you would implement the actual recording functionality
-    // For now, we're just toggling the state
+  const toggleObjective = (objectiveId) => {
+    setSelectedObjectives((prev) => {
+      if (prev.includes(objectiveId)) {
+        return prev.filter((id) => id !== objectiveId);
+      } else {
+        return [...prev, objectiveId];
+      }
+    });
   };
 
-  if (loading) return <LoadingSpinner />;
+  const removeObjective = (objectiveId) => {
+    setSelectedObjectives((prev) => prev.filter((id) => id !== objectiveId));
+  };
+
+  /**
+   * Record WAV with MediaRecorder, then call Gemini client:
+   * 1. Upload the WAV file to Gemini's File API
+   * 2. Request transcript from gemini-2.0-flash
+   */
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      // Collect audio data
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        // Combine chunks into a single WAV Blob
+        const audioBlob = new Blob(audioChunksRef.current, {
+          type: "audio/wav",
+        });
+
+        try {
+          // Upload to Gemini's File API ( store it for up to 48 hours )
+          const fileToUpload = new File([audioBlob], "recording.wav", {
+            type: "audio/wav",
+          });
+
+          const myfile = await ai.files.upload({
+            file: fileToUpload,
+            config: { mimeType: "audio/wav" },
+          });
+
+          // Then request a transcript
+          const result = await ai.models.generateContent({
+            model: "gemini-2.0-flash",
+            contents: createUserContent([
+              createPartFromUri(myfile.uri, myfile.mimeType),
+              "Generate a transcript of the speech.",
+            ]),
+          });
+
+          setTranscript(result.text || "");
+        } catch (err) {
+          console.error("Transcription error:", err);
+          setError("Could not transcribe audio. Check console for details.");
+        } finally {
+          // Stop mic access
+          stream.getTracks().forEach((track) => track.stop());
+        }
+      };
+
+      // Start the recording
+      mediaRecorder.start();
+    } catch (err) {
+      console.error("Mic error:", err);
+      setError("Could not access microphone. Please check permissions.");
+      setIsRecording(false);
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current = null;
+    }
+  };
+
+  /**
+   * Toggle the recording state
+   */
+  const toggleRecording = () => {
+    const newVal = !isRecording;
+    setIsRecording(newVal);
+
+    if (newVal) {
+      setError(null);
+      setTranscript("");
+      startRecording();
+    } else {
+      stopRecording();
+    }
+  };
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
 
   return (
-    <div className="flex flex-col items-center justify-center p-6 min-h-screen">
-      <div className="w-full max-w-2xl rounded-lg bg-card p-6 shadow space-y-6">
-        <h1 className="text-2xl font-bold text-center">Record Your Notes</h1>
-        
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 flex flex-col items-center justify-center p-6">
+      <div className="w-full max-w-3xl rounded-xl bg-card p-8 shadow-lg border border-border/50 space-y-8">
+        <div className="text-center space-y-2">
+          <h1 className="text-3xl font-bold tracking-tight">Record Your Notes</h1>
+          <p className="text-muted-foreground">Select a student and objectives, then start recording</p>
+        </div>
+
+        <div className="space-y-6">
+          {/* Student/Objective row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-sm font-medium">Student</label>
               {isLoadingData ? (
-                <div className="h-10 flex items-center justify-center">
+                <div className="h-11 flex items-center justify-center">
                   <LoadingSpinner size="small" />
                 </div>
               ) : students.length > 0 ? (
-                <Select value={selectedStudent} onValueChange={setSelectedStudent}>
-                  <SelectTrigger>
+                <Select
+                  value={selectedStudent}
+                  onValueChange={setSelectedStudent}
+                >
+                  <SelectTrigger className="h-11 w-full">
                     <SelectValue placeholder="Select a student" />
                   </SelectTrigger>
                   <SelectContent>
@@ -119,63 +271,125 @@ export default function Home() {
                   </SelectContent>
                 </Select>
               ) : (
-                <div className="h-10 flex items-center justify-center text-muted-foreground">
+                <div className="h-11 flex items-center justify-center text-muted-foreground bg-muted/30 rounded-md px-3">
                   No students available
                 </div>
               )}
             </div>
-            
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Objective</label>
+
+            <div className="space-y-2 text-sm">
+              <label>Objectives</label>
               {!selectedStudent ? (
-                <div className="h-10 flex items-center justify-center text-muted-foreground">
+                <div className="h-11 flex items-center justify-center text-muted-foreground bg-muted/30 rounded-md px-3">
                   Select a student first
                 </div>
+              ) : isLoadingData ? (
+                <div className="h-11 flex items-center justify-center">
+                  <LoadingSpinner size="small" />
+                </div>
               ) : objectives.length > 0 ? (
-                <Select value={selectedObjective} onValueChange={setSelectedObjective}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select an objective" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {objectives.map((objective) => (
-                      <SelectItem key={objective.id} value={objective.id}>
-                        {objective.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="space-y-2">
+                  <Popover open={openObjectives} onOpenChange={setOpenObjectives}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={openObjectives}
+                        className="w-full justify-between h-11"
+                      >
+                        {selectedObjectives.length > 0
+                          ? `${selectedObjectives.length} selected`
+                          : "Select objectives..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0">
+                      <Command>
+                        <CommandInput placeholder="Search objectives..." className="h-11" />
+                        <CommandEmpty className="py-6 text-center text-sm text-muted-foreground">
+                          No objectives found.
+                        </CommandEmpty>
+                        <CommandGroup className="max-h-60 overflow-auto">
+                          {objectives.map((obj) => (
+                            <CommandItem
+                              key={obj.id}
+                              onSelect={() => toggleObjective(obj.id)}
+                              className="h-11"
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  selectedObjectives.includes(obj.id) ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              {obj.description}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  
+                  {selectedObjectives.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {selectedObjectives.map((objId) => {
+                        const obj = objectives.find(o => o.id === objId);
+                        return obj ? (
+                          <Badge 
+                            key={obj.id} 
+                            variant="secondary"
+                            className="flex items-center gap-1 py-1 px-2"
+                          >
+                            {obj.description}
+                            <X 
+                              className="h-3 w-3 cursor-pointer" 
+                              onClick={() => removeObjective(obj.id)}
+                            />
+                          </Badge>
+                        ) : null;
+                      })}
+                    </div>
+                  )}
+                </div>
               ) : (
-                <div className="h-10 flex items-center justify-center text-muted-foreground">
+                <div className="h-11 flex items-center justify-center text-muted-foreground bg-muted/30 rounded-md px-3">
                   No objectives available
                 </div>
               )}
             </div>
           </div>
-          
+
+          {/* Error alert */}
           {error && (
-            <div className="p-3 rounded-md bg-destructive/10 text-destructive text-sm">
+            <div className="p-4 rounded-md bg-destructive/10 text-destructive text-sm border border-destructive/20">
               {error}
             </div>
           )}
-          
+
+          {/* Transcript */}
           <div className="space-y-2">
             <label className="text-sm font-medium">Notes</label>
-            <Textarea 
-              placeholder="Your notes will appear here..." 
-              className="min-h-[200px] resize-none"
+            <Textarea
+              placeholder="Your notes will appear here..."
+              className="min-h-[250px] resize-none border-muted-foreground/20 focus:border-primary"
               value={transcript}
               onChange={(e) => setTranscript(e.target.value)}
             />
           </div>
-          
-          <div className="flex justify-center">
-            <Button 
-              onClick={toggleRecording} 
+
+          {/* Record button */}
+          <div className="flex justify-center pt-4">
+            <Button
+              onClick={toggleRecording}
               variant={isRecording ? "destructive" : "default"}
               size="lg"
-              className="rounded-full w-16 h-16 p-0 flex items-center justify-center"
+              className={`rounded-full w-20 h-20 p-0 flex items-center justify-center transition-all duration-300 ${
+                isRecording 
+                  ? "bg-destructive hover:bg-destructive/90 shadow-lg shadow-destructive/20" 
+                  : "bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20"
+              }`}
             >
-              {isRecording ? <MicOff className="h-6 w-6" /> : <Mic className="h-6 w-6" />}
+              {isRecording ? <MicOff className="h-8 w-8" /> : <Mic className="h-8 w-8" />}
             </Button>
           </div>
         </div>

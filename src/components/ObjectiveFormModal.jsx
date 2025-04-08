@@ -51,23 +51,15 @@ const objectiveFormSchema = z.object({
   }),
 });
 
-// Mock subject areas - replace with API call in production
-const defaultSubjectAreas = [
-  { id: '1', name: 'Mathematics' },
-  { id: '2', name: 'Reading' },
-  { id: '3', name: 'Writing' },
-  { id: '4', name: 'Science' },
-  { id: '5', name: 'Social Studies' },
-];
-
-export function ObjectiveFormModal({ onSuccess, students, open, setOpen }) {
+export function ObjectiveFormModal({ onSuccess, students, open, onOpenChange, onStudentOpenChange }) {
   const { session } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showStudentForm, setShowStudentForm] = useState(false);
   const [isLoadingStudents, setIsLoadingStudents] = useState(false);
-  const [subjectAreas, setSubjectAreas] = useState(defaultSubjectAreas);
+  const [subjectAreas, setSubjectAreas] = useState([]);
+  const [isLoadingSubjectAreas, setIsLoadingSubjectAreas] = useState(false);
   const [newSubjectArea, setNewSubjectArea] = useState('');
   const [isAddingSubjectArea, setIsAddingSubjectArea] = useState(false);
+  const [isCreatingSubjectArea, setIsCreatingSubjectArea] = useState(false);
 
   const form = useForm({
     resolver: zodResolver(objectiveFormSchema),
@@ -78,6 +70,13 @@ export function ObjectiveFormModal({ onSuccess, students, open, setOpen }) {
     }
   });
 
+  // Fetch subject areas when modal opens
+  useEffect(() => {
+    if (open) {
+      fetchSubjectAreas();
+    }
+  }, [open]);
+
   // Reset form when modal opens
   useEffect(() => {
     if (open) {
@@ -85,18 +84,49 @@ export function ObjectiveFormModal({ onSuccess, students, open, setOpen }) {
     }
   }, [open, form]);
 
+  const fetchSubjectAreas = async () => {
+    if (!session) return;
+    
+    setIsLoadingSubjectAreas(true);
+    
+    try {
+      const response = await authorizedFetch('/objectives/subject-areas', session?.access_token, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch subject areas: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log("subject areas", data);
+      setSubjectAreas(data);
+    } catch (error) {
+      console.error('Error fetching subject areas:', error);
+      toast.error('Failed to load subject areas. Please try again.');
+    } finally {
+      setIsLoadingSubjectAreas(false);
+    }
+  };
+
   const onSubmit = async (data) => {
     if (!session) return;
     
     setIsSubmitting(true);
     
     try {
-      const response = await authorizedFetch('/objectives', session?.access_token, {
+      const response = await authorizedFetch('/objectives/objective', session?.access_token, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          student_id: data.studentId,
+          subject_area_id: data.subjectArea,
+          description: data.objectiveDescription
+        }),
       });
       
       if (!response.ok) {
@@ -105,7 +135,7 @@ export function ObjectiveFormModal({ onSuccess, students, open, setOpen }) {
       
       toast.success('Objective added successfully');
       form.reset();
-      setOpen(false);
+      onOpenChange(false);   
       
       if (onSuccess) {
         onSuccess();
@@ -119,43 +149,48 @@ export function ObjectiveFormModal({ onSuccess, students, open, setOpen }) {
   };
 
   const handleCancel = () => {
-    setOpen(false);
+    onOpenChange(false);
   };
 
-  const handleAddSubjectArea = () => {
-    if (!newSubjectArea.trim()) return;
+  const handleAddSubjectArea = async () => {
+    if (!newSubjectArea.trim() || !session) return;
     
-    const newId = (subjectAreas.length + 1).toString();
-    const newArea = { id: newId, name: newSubjectArea.trim() };
+    setIsCreatingSubjectArea(true);
     
-    setSubjectAreas([...subjectAreas, newArea]);
-    form.setValue('subjectArea', newId);
-    setNewSubjectArea('');
-    setIsAddingSubjectArea(false);
-  };
-
-  const handleStudentAdded = () => {
-    setShowStudentForm(false);
-    // Refresh the students list
-    if (onSuccess) {
-      onSuccess();
+    try {
+      const response = await authorizedFetch('/objectives/subject-area', session?.access_token, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name: newSubjectArea.trim() }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to create subject area: ${response.status}`);
+      }
+      
+      const newArea = await response.json();
+      setSubjectAreas([...subjectAreas, newArea]);
+      form.setValue('subjectArea', newArea.id);
+      setNewSubjectArea('');
+      setIsAddingSubjectArea(false);
+      toast.success('Subject area added successfully');
+    } catch (error) {
+      console.error('Error creating subject area:', error);
+      toast.error('Failed to add subject area. Please try again.');
+    } finally {
+      setIsCreatingSubjectArea(false);
     }
-    // Reopen the objective form
-    setOpen(true);
   };
 
-  if (showStudentForm) {
-    return (
-      <StudentFormModal 
-        onSuccess={handleStudentAdded} 
-        onCancel={handleCancel}
-        onOpenChange={setOpen}
-      />
-    );
-  }
+  const toggleStudentForm = () => {
+    onOpenChange(false);
+    onStudentOpenChange(true);
+  };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         <Button variant="outline">
           <Plus className="mr-2 h-4 w-4" />
@@ -191,7 +226,7 @@ export function ObjectiveFormModal({ onSuccess, students, open, setOpen }) {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {students.map((student) => (
+                          {students && students.map((student) => (
                             <SelectItem key={student.id} value={student.id}>
                               {student.name}
                             </SelectItem>
@@ -201,7 +236,7 @@ export function ObjectiveFormModal({ onSuccess, students, open, setOpen }) {
                       <Button 
                         type="button" 
                         variant="outline"
-                        onClick={() => setShowStudentForm(true)}
+                        onClick={toggleStudentForm}
                       >
                         <Plus className="h-4 w-4" />
                       </Button>
@@ -236,8 +271,9 @@ export function ObjectiveFormModal({ onSuccess, students, open, setOpen }) {
                           type="button" 
                           variant="outline"
                           onClick={handleAddSubjectArea}
+                          disabled={isCreatingSubjectArea}
                         >
-                          Add
+                          {isCreatingSubjectArea ? 'Adding...' : 'Add'}
                         </Button>
                         <Button 
                           type="button" 
@@ -256,6 +292,7 @@ export function ObjectiveFormModal({ onSuccess, students, open, setOpen }) {
                           onValueChange={field.onChange} 
                           defaultValue={field.value}
                           className="flex-1"
+                          disabled={isLoadingSubjectAreas}
                         >
                           <FormControl>
                             <SelectTrigger>
@@ -263,7 +300,7 @@ export function ObjectiveFormModal({ onSuccess, students, open, setOpen }) {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {subjectAreas.map((area) => (
+                            {subjectAreas && subjectAreas.map((area) => (
                               <SelectItem key={area.id} value={area.id}>
                                 {area.name}
                               </SelectItem>

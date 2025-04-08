@@ -58,6 +58,7 @@ export default function StudentsPage() {
       }
       
       const data = await response.json();
+      console.log("Students data", data);
       setStudents(data);
     } 
     catch (err) {
@@ -106,7 +107,7 @@ export default function StudentsPage() {
         <StudentFormModal onSuccess={handleStudentAdded} open={showStudentModal}
       onOpenChange={setShowStudentModal}/>
         <ObjectiveFormModal onSuccess={handleStudentAdded} students={students} open={showObjectiveModal}
-      onOpenChange={setShowObjectiveModal}/>
+      onOpenChange={setShowObjectiveModal} onStudentOpenChange={setShowStudentModal}/>
       </div>
 
       {error && (
@@ -168,14 +169,6 @@ export default function StudentsPage() {
                   )}
                 </div>
               </CardContent>
-              <CardFooter className="flex justify-between pt-2">
-                <Button variant="outline" size="sm">
-                  View Details
-                </Button>
-                <Button size="sm">
-                  Start Session
-                </Button>
-              </CardFooter>
             </Card>
           ))}
         </div>
