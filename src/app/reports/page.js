@@ -86,18 +86,7 @@ export default function ReportsPage() {
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric',
-      year: 'numeric'
-    });
-  };
-
-  const getProgressColor = (score) => {
-    if (score >= 90) return 'bg-green-500';
-    if (score >= 70) return 'bg-blue-500';
-    if (score >= 50) return 'bg-yellow-500';
-    return 'bg-red-500';
+    return date.toISOString().split('T')[0];
   };
 
   const getUniqueStudents = () => {
@@ -107,6 +96,44 @@ export default function ReportsPage() {
   const getUniqueSubjects = () => {
     return [...new Set(reports.map(report => report.objective.subject_area.name))];
   };
+
+  const handleExport = () => {
+    const headers = [
+      "Date",
+      "Student",
+      "Subject Area",
+      "Objective",
+      "Summary",
+      "Progress (+/-)"
+    ];
+  
+    const rows = filteredReports.map((report) => [
+      formatDate(report.created_at),
+      report.student.name,
+      report.objective.subject_area.name,
+      report.objective.description,
+      report.summary || report.raw_input,
+      `${report.progress_delta > 0 ? `+${report.progress_delta}%` : `${report.progress_delta || 0}%`}`,
+    ]);
+  
+    // Combine headers and rows
+    const csvContent = [
+      headers.join(","), // Header row
+      ...rows.map(row => row.join(",")) // Data rows
+    ].join("\n");
+  
+    // Create a Blob from the CSV string
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  
+    // Create an anchor element to trigger the download
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'reports.csv'; // Specify the filename
+    document.body.appendChild(link); // Append the link to the body
+    link.click(); // Simulate the click to download the file
+    document.body.removeChild(link); // Clean up the DOM
+  };
+  
 
   const filteredReports = reports.filter(report => {
     const matchesSearch = 
@@ -127,9 +154,9 @@ export default function ReportsPage() {
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Reports</h1>
         <div className="flex gap-2">
-          <Button variant="outline" className="flex items-center gap-2">
+          <Button variant="outline" className="flex items-center gap-2" onClick={handleExport}>
             <Download className="h-4 w-4" />
-            Export
+            Export view to CSV
           </Button>
         </div>
       </div>
