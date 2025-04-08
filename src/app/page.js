@@ -85,7 +85,12 @@ export default function Home() {
       setError(null);
 
       try {
-        const response = await authorizedFetch('/students', session?.access_token);
+        const response = await authorizedFetch('/students/students', session?.access_token, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
         
         if (!response.ok) {
           throw new Error(`Failed to fetch students: ${response.status}`);

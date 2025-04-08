@@ -45,7 +45,7 @@ export default function StudentsPage() {
     setError(null);
     
     try {
-      const response = await authorizedFetch('/students', session?.access_token, {
+      const response = await authorizedFetch('/students/students', session?.access_token, {
         headers: {
           'Content-Type': 'application/json',
         },

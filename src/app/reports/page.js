@@ -59,7 +59,7 @@ export default function ReportsPage() {
       
       try {
         // Fetch data from the backend API
-        const response = await authorizedFetch('/sessions', session?.access_token, {
+        const response = await authorizedFetch('/sessions/sessions', session?.access_token, {
           headers: {
             'Content-Type': 'application/json',
           },

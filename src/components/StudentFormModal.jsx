@@ -73,7 +73,7 @@ export function StudentFormModal({ onSuccess, onCancel, open, onOpenChange }) {
     setIsSubmitting(true);
     
     try {
-      const response = await authorizedFetch('/students', session?.access_token, {
+      const response = await authorizedFetch('/students/student', session?.access_token, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
