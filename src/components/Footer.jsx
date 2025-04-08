@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 
 export const Footer = () => {
   return (
-    <footer className="border-t bg-background px-4 py-3 text-muted-foreground text-xs">
+    <footer className="fixed bottom-0 w-full border-t bg-background px-4 py-3 text-muted-foreground text-xs z-50">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-2">
         <p>© {new Date().getFullYear()} IEP Tracker. All rights reserved.</p>
 

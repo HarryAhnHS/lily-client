@@ -99,7 +99,7 @@ export default function StudentsPage() {
   if (loading) return <LoadingSpinner />;
 
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="h-full container mx-auto py-8 px-4">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">My Students</h1>
         <StudentFormModal onSuccess={handleStudentAdded} open={showStudentModal}

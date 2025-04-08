@@ -297,7 +297,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 flex flex-col items-center justify-center p-6">
+    <div className="h-full bg-gradient-to-b from-background to-muted/20 flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-3xl rounded-xl bg-card p-8 shadow-lg border border-border/50 space-y-8">
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold tracking-tight">Record Your Notes</h1>

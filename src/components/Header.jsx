@@ -5,6 +5,7 @@ import { useAuth } from "@/app/context/auth-context"
 import { supabase } from '@/services/supabase';
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import { Settings } from "lucide-react";
 
 export const Header = () => {
   const { session, loading } = useAuth();
@@ -27,10 +28,15 @@ export const Header = () => {
               <div className="text-sm text-muted-foreground">
                 Welcome, <span className="font-medium text-foreground">{session.user.email}</span>
               </div>
-              <Button onClick={handleSignOut}>Sign Out</Button>
+              <Button variant="outline" onClick={handleSignOut}>Sign Out</Button>
             </>
           ) : (
-            <Button onClick={() => router.push('/login')}>Log In</Button>
+            <Button variant="outline" onClick={() => router.push('/login')}>Log In</Button>
+          )}
+          {!loading && session?.user && (
+            <Button variant="outline" size="icon">
+              <Settings className="h-5 w-5" />
+            </Button>
           )}
           <ModeToggle />
         </div>
