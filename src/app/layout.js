@@ -8,17 +8,9 @@ import { Loader2 } from 'lucide-react';
 import './globals.css';
 
 function LayoutShell({ children }) {
-  const { session, loading } = useAuth();
-  const router = useRouter();
+  const { loading } = useAuth();
 
-  useEffect(() => {
-    if (!loading && !session) {
-      router.replace('/login'); // Redirect to login if not authenticated
-    }
-  }, [loading, session, router]);
-
-  if (loading || (!loading && !session)) return <Loader2 />;
-
+  if (loading) return <Loader2 className="animate-spin mx-auto" />;
   return children;
 }
 

@@ -1,24 +1,21 @@
-// src/app/page.js - root authenticated page
 'use client';
-import { useEffect, useState } from 'react';
-import supabase from '@/lib/supabase'; // <- frontend supabase-js client
 
+import { useAuth } from '@/app/context/auth-context';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
+import LoadingSpinner from '@/components/LoadingSpinner';
 export default function Home() {
-  const [session, setSession] = useState(null);
+  const { session, loading } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-    });
+    if (!loading && !session) {
+      router.replace('/login');
+    }
+  }, [loading, session, router]);
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+  if (loading) return <LoadingSpinner />; 
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();

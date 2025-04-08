@@ -1,11 +1,13 @@
 // src/app/login/page.js
-
 'use client';
 
 import { useState } from 'react';
-import { supabase } from '../../lib/supabase';
-import { useAuth } from '@/context/auth-context';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/app/context/auth-context';
 import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import LoadingSpinner from '@/components/LoadingSpinner';
+
 export default function LoginPage() {
     const { session } = useAuth();
     const router = useRouter();
@@ -37,6 +39,8 @@ export default function LoginPage() {
         setLoading(false);
         }
     };
+
+    if (loading) return <LoadingSpinner />;
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-gray-50">
