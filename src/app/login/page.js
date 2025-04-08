@@ -20,12 +20,13 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
 
+    console.log("Sign in with google redirectTo", `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`)
+
     try {
-        console.log("Sign in with google redirectTo", `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`)
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+          redirectTo: `https://mirae.up.railway.app/auth/callback`,
           flow: 'pkce',
         },
       });
