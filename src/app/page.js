@@ -3,7 +3,7 @@
 import { useAuth } from '@/app/context/auth-context';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/services/supabase';
 import LoadingSpinner from '@/components/LoadingSpinner';
 export default function Home() {
   const { session, loading } = useAuth();

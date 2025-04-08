@@ -1,26 +1,25 @@
 // app/layout.js
 'use client';
 
-import { AuthProvider, useAuth } from '@/app/context/auth-context';
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
+import { AuthProvider } from '@/app/context/auth-context';
+import { Header } from '@/components/Header';
+import { Footer } from '@/components/Footer';
 import './globals.css';
-
-function LayoutShell({ children }) {
-  const { loading } = useAuth();
-
-  if (loading) return <Loader2 className="animate-spin mx-auto" />;
-  return children;
-}
+import { ThemeProvider } from 'next-themes';
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
-      <body>
-        <AuthProvider>
-          <LayoutShell>{children}</LayoutShell>
-        </AuthProvider>
+    <html lang="en" suppressHydrationWarning>
+      <body className='bg-background text-foreground flex flex-col min-h-screen'>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <AuthProvider>
+            <Header />
+            <main className='flex-1 mt-16 min-h-screen'>
+              {children}
+            </main>
+            <Footer />
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
