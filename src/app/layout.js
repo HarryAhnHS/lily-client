@@ -2,6 +2,7 @@
 'use client';
 
 import { AuthProvider } from '@/app/context/auth-context';
+import { SidebarProvider } from '@/app/context/sidebar-context';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import './globals.css';
@@ -9,22 +10,23 @@ import { ThemeProvider } from 'next-themes';
 import { Sidebar } from '@/components/Sidebar';
 
 export default function RootLayout({ children }) {
-  
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className='bg-background text-foreground flex flex-col min-h-screen'>
+      <body className='bg-background text-foreground'>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <AuthProvider>
-            <main className='flex-1 mt-16 min-h-screen flex'>
-              <Sidebar />
-              <div className='flex-1 flex flex-col'>
-                <Header />
-                <div className={`h-full ml-36 flex-1 p-6`}>
-                  {children}
+            <SidebarProvider>
+              <div className="min-h-screen flex">
+                <Sidebar />
+                <div className="flex-1 flex flex-col">
+                  <Header />
+                  <main className="flex-1 pt-16 pl-16 transition-all duration-300">
+                    {children}
+                  </main>
+                  <Footer />
                 </div>
-                <Footer />
               </div>
-            </main>
+            </SidebarProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

@@ -300,36 +300,33 @@ export default function Home() {
   };
 
   if (loading) {
-    return <LoadingSpinner />;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="w-full px-6 py-4 border-b">
-        <div className="max-w-3xl mx-auto">
-          <h1 className="text-2xl font-bold">MIRAE</h1>
-        </div>
-      </header>
-
       <main className="max-w-3xl mx-auto px-6 py-8 space-y-6">
         {/* Greeting */}
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
-            <Bell className="w-4 h-4" />
+          <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
+            <Bell className="w-4 h-4 text-white/80" />
           </div>
-          <h2 className="text-xl">Good morning, Ms. Brown</h2>
+          <h2 className="text-xl text-white/80">Good morning, {session?.user?.email}</h2>
         </div>
 
         {/* Recording Section */}
         <div className="space-y-6">
-          <div className="rounded-2xl overflow-hidden bg-gradient-to-br from-blue-50/50 via-purple-50/50 to-pink-50/50 dark:from-blue-950/50 dark:via-purple-950/50 dark:to-pink-950/50 backdrop-blur-xl border border-white/10">
+          <div className="rounded-2xl overflow-hidden bg-gradient-to-br from-green-950/50 via-yellow-950/50 to-black backdrop-blur-xl">
             <div className="p-6">
               <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
                 {/* Add New Session Button */}
                 <Button
                   variant="ghost"
-                  className="w-full flex items-center gap-2 justify-start hover:bg-white/10 dark:hover:bg-white/5 h-12"
+                  className="w-full flex items-center gap-2 justify-start hover:bg-white/10 text-white/80 h-12"
                   disabled={isRecording}
                 >
                   <Play className="w-4 h-4" />
@@ -338,8 +335,10 @@ export default function Home() {
 
                 {/* Student/Objective Selection */}
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Student</label>
+
+                  {/* Student selection */}
+                  <div className="flex flex-col gap-2 text-sm">
+                    <label className="font-medium text-white/80">Student</label>
                     {isLoadingData ? (
                       <div className="h-11 flex items-center justify-center">
                         <LoadingSpinner size="small" />
@@ -352,7 +351,7 @@ export default function Home() {
                           setSelectedStudent(student || null);
                         }}
                       >
-                        <SelectTrigger className="h-11 w-full">
+                        <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select a student" />
                         </SelectTrigger>
                         <SelectContent>
@@ -370,8 +369,9 @@ export default function Home() {
                     )}
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Objectives</label>
+                  {/* Objectives selection */}
+                  <div className="flex flex-col gap-2 text-sm">
+                    <label className="font-medium text-white/80">Objectives</label>
                     {!selectedStudent ? (
                       <div className="h-11 flex items-center justify-center text-muted-foreground bg-muted/30 rounded-md px-3">
                         Select a student first
@@ -381,14 +381,14 @@ export default function Home() {
                         <LoadingSpinner size="small" />
                       </div>
                     ) : objectives.length > 0 ? (
-                      <div className="space-y-2">
+                      <div>
                         <Popover open={openObjectives} onOpenChange={setOpenObjectives}>
                           <PopoverTrigger asChild>
                             <Button
                               variant="outline"
                               role="combobox"
                               aria-expanded={openObjectives}
-                              className="w-full justify-between h-11"
+                              className="w-full justify-between"
                             >
                               {selectedObjectives.length > 0
                                 ? `${selectedObjectives.length} selected`
@@ -447,6 +447,7 @@ export default function Home() {
                       </div>
                     )}
                   </div>
+
                 </div>
 
                 {/* Error alert */}
@@ -457,24 +458,10 @@ export default function Home() {
                 )}
 
                 {/* Recording UI */}
-                <div className="flex flex-col items-center justify-center py-12 space-y-6">
-                  <Button
-                    type="button"
-                    onClick={toggleRecording}
-                    variant={isRecording ? "destructive" : "default"}
-                    size="lg"
-                    className={`rounded-full w-20 h-20 p-0 flex items-center justify-center transition-all duration-300 ${
-                      isRecording 
-                        ? "bg-destructive hover:bg-destructive/90 shadow-lg shadow-destructive/20" 
-                        : "bg-white dark:bg-white/10 hover:bg-white/90 dark:hover:bg-white/20 shadow-lg"
-                    }`}
-                  >
-                    {isRecording ? <MicOff className="h-8 w-8" /> : <Mic className="h-8 w-8" />}
-                  </Button>
-
+                <div className="flex flex-col items-center justify-center py-4 space-y-4">
                   <Textarea
                     placeholder="Your notes will appear here..."
-                    className="min-h-[150px] resize-none bg-white/50 dark:bg-white/5 border-white/20 focus:border-white/30"
+                    className="min-h-[150px] resize-none bg-white/10 border-white/10 focus:border-white/20 text-white/80 placeholder:text-white/40"
                     value={transcript}
                     onChange={(e) => setTranscript(e.target.value)}
                     required
@@ -483,7 +470,7 @@ export default function Home() {
                   <Button
                     type="submit"
                     disabled={!selectedStudent || selectedObjectives.length === 0 || !transcript.trim() || isSubmitting}
-                    className="w-full bg-white/90 dark:bg-white/10 hover:bg-white dark:hover:bg-white/20"
+                    className="w-full bg-white/20 hover:bg-white/30 text-white/80 disabled:bg-white/10 disabled:text-white/40"
                   >
                     {isSubmitting ? (
                       <>
@@ -497,6 +484,18 @@ export default function Home() {
                       </>
                     )}
                   </Button>
+                  <Button
+                    type="button"
+                    onClick={toggleRecording}
+                    variant={isRecording ? "destructive" : "default"}
+                    className={`rounded-full w-16 h-16 p-0 flex items-center justify-center transition-all duration-300 ${
+                      isRecording 
+                        ? "bg-destructive hover:bg-destructive/90 shadow-lg shadow-destructive/20" 
+                        : "bg-white/20 hover:bg-white/30 shadow-lg text-white"
+                    }`}
+                  >
+                    {isRecording ? <MicOff className="h-6 w-6" /> : <Mic className="h-6 w-6" />}
+                  </Button>
                 </div>
               </form>
             </div>
@@ -504,13 +503,13 @@ export default function Home() {
         </div>
 
         {/* Weekly Review Section */}
-        <div className="rounded-2xl overflow-hidden bg-gradient-to-br from-blue-50/50 via-purple-50/50 to-pink-50/50 dark:from-blue-950/50 dark:via-purple-950/50 dark:to-pink-950/50 backdrop-blur-xl border border-white/10">
+        <div className="rounded-2xl overflow-hidden bg-gradient-to-br from-green-950/50 via-yellow-950/50 to-black backdrop-blur-xl">
           <div className="p-6 space-y-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="p-1 bg-white/10 dark:bg-white/5 rounded">
+                <div className="p-1 bg-white/10 rounded">
                   <svg
-                    className="w-4 h-4"
+                    className="w-4 h-4 text-white/80"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -523,10 +522,10 @@ export default function Home() {
                     />
                   </svg>
                 </div>
-                <h3 className="font-medium">Weekly Review</h3>
+                <h3 className="font-medium text-white/80">Weekly Review</h3>
               </div>
               <Select defaultValue="this-week">
-                <SelectTrigger className="w-[140px] bg-white/50 dark:bg-white/5 border-white/20">
+                <SelectTrigger className="w-[140px] bg-white/10 border-white/10 text-white/80">
                   <SelectValue placeholder="Select period" />
                 </SelectTrigger>
                 <SelectContent>
@@ -538,25 +537,25 @@ export default function Home() {
             </div>
 
             <div>
-              <div className="text-4xl font-bold mb-2">60%</div>
-              <div className="text-sm text-muted-foreground mb-2">
+              <div className="text-4xl font-bold mb-2 text-white">60%</div>
+              <div className="text-sm text-white/60 mb-2">
                 12/20 objectives logged this week
               </div>
-              <Progress value={60} className="h-2 bg-white/20" />
-              <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
+              <Progress value={60} className="h-2 bg-white/10" />
+              <div className="flex items-center gap-2 mt-2 text-sm text-white/60">
                 <Bell className="w-4 h-4" />
                 <span>8 objectives left</span>
               </div>
             </div>
 
             {/* Student Progress Card */}
-            <div className="bg-white/10 dark:bg-white/5 rounded-lg p-4">
+            <div className="bg-white/10 rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
                 <div>
-                  <div className="font-medium">Tyler Washington</div>
-                  <div className="text-sm text-muted-foreground">(Language)</div>
+                  <div className="font-medium text-white/80">Tyler Washington</div>
+                  <div className="text-sm text-white/60">(Language)</div>
                 </div>
-                <Button variant="ghost" size="icon" className="hover:bg-white/10">
+                <Button variant="ghost" size="icon" className="hover:bg-white/10 text-white/60">
                   <svg
                     className="w-4 h-4"
                     fill="none"
@@ -572,7 +571,7 @@ export default function Home() {
                   </svg>
                 </Button>
               </div>
-              <div className="text-sm text-muted-foreground mb-2">
+              <div className="text-sm text-white/60 mb-2">
                 Help Tyler learn how to enunciate more clearly
               </div>
               <div className="flex gap-1">
@@ -580,7 +579,7 @@ export default function Home() {
                   <div
                     key={i}
                     className={`h-1 flex-1 rounded-full ${
-                      i === 3 ? "bg-primary" : "bg-white/20 dark:bg-white/10"
+                      i === 3 ? "bg-primary" : "bg-white/10"
                     }`}
                   />
                 ))}

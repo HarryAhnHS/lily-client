@@ -6,22 +6,19 @@ import { useEffect, useState } from 'react';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { authorizedFetch } from '@/services/api';
 import { StudentFormModal } from '@/components/StudentFormModal';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
-import { 
-  Avatar, 
-  AvatarFallback, 
-  AvatarImage 
-} from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
 import { ObjectiveFormModal } from '@/components/ObjectiveFormModal';
+import { Users, Plus, Filter, MoreHorizontal, Check, X, Activity } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function StudentsPage() {
   const { session, loading } = useAuth();
@@ -99,85 +96,173 @@ export default function StudentsPage() {
   if (loading) return <LoadingSpinner />;
 
   return (
-    <div className="h-full container mx-auto py-8 px-4">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold tracking-tight">My Students</h1>
-        <div className="flex gap-2">
-          <ObjectiveFormModal
-            onSuccess={handleStudentAdded}
-            students={students}
-            open={showObjectiveModal}
-            onOpenChange={setShowObjectiveModal}
-            onStudentOpenChange={setShowStudentModal}
-          />
-          <StudentFormModal
-            onSuccess={handleStudentAdded}
-            open={showStudentModal}
-            onOpenChange={setShowStudentModal}
-          />
+    <div className="min-h-screen bg-background">
+      <div className="rounded-3xl overflow-hidden bg-gradient-to-br from-green-950/50 via-yellow-950/50 to-black backdrop-blur-xl">
+        <div className="p-6 space-y-6">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
+                <Users className="w-5 h-5 text-white/80" />
+              </div>
+              <h1 className="text-2xl font-semibold text-white/80">Students</h1>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Select defaultValue="this-week">
+                <SelectTrigger className="bg-white/10 border-white/10 text-white/80">
+                  <SelectValue placeholder="This Week" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="this-week">This Week</SelectItem>
+                  <SelectItem value="last-week">Last Week</SelectItem>
+                  <SelectItem value="this-month">This Month</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button variant="ghost" size="icon" className="rounded-full bg-white/10 text-white/80">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Filters */}
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              className="bg-white/10 border-white/10 text-white/80 hover:bg-white/20"
+            >
+              <Filter className="w-4 h-4 mr-2" />
+              Filter By
+            </Button>
+            {/* Example filters - these would be dynamic based on your data */}
+            <Badge 
+              variant="secondary" 
+              className="bg-white/10 text-white/80 hover:bg-white/20 cursor-pointer flex items-center gap-1"
+            >
+              3rd Grade
+              <X className="h-3 w-3" />
+            </Badge>
+            <Badge 
+              variant="secondary" 
+              className="bg-white/10 text-white/80 hover:bg-white/20 cursor-pointer flex items-center gap-1"
+            >
+              Maths
+              <X className="h-3 w-3" />
+            </Badge>
+          </div>
+
+          {/* Error Message */}
+          {error && (
+            <div className="p-4 rounded-md bg-destructive/10 text-destructive text-sm">
+              {error}
+            </div>
+          )}
+
+          {/* Loading State */}
+          {isLoading ? (
+            <div className="flex justify-center items-center h-64">
+              <LoadingSpinner />
+            </div>
+          ) : students.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {students.map((student) => {
+                const objectives = student.objectives || [];
+                return (
+                  <div
+                    key={student.id}
+                    className="bg-black/40 rounded-xl p-6 space-y-4"
+                  >
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="text-xl font-semibold text-white/90">{student.name}</h3>
+                        <p className="text-sm text-white/60">{formatDate(student.last_session_date)}</p>
+                      </div>
+                      <Button variant="ghost" size="icon" className="text-white/60 hover:text-white/80">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-white/60">Overall Progress:</span>
+                        <span className="text-sm font-medium text-white/80">
+                          {student.progress || 65}%
+                        </span>
+                      </div>
+                      <Progress 
+                        value={student.progress || 65} 
+                        className="h-2 bg-white/10"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-white/60">Objectives:</span>
+                        <span className="text-sm text-white/60">
+                          {objectives.filter(o => o.completed).length}/{objectives.length}
+                        </span>
+                      </div>
+                      {objectives.map((objective) => (
+                        <div
+                          key={objective.id}
+                          className="bg-white/5 rounded-lg p-3 flex items-center justify-between"
+                        >
+                          <span className="text-sm text-white/80">{objective.description}</span>
+                          {objective.completed ? (
+                            <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center">
+                              <Check className="w-3 h-3 text-green-500" />
+                            </div>
+                          ) : (
+                            <div className="w-5 h-5">
+                              <Activity className="w-3 h-3 text-white/40" />
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                      <Button
+                        variant="ghost"
+                        className="w-full bg-white/5 text-white/60 hover:bg-white/10 hover:text-white/80"
+                        onClick={() => setShowObjectiveModal(true)}
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Objective
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-12 text-white/60">
+              <h3 className="text-lg font-medium mb-2">No students found</h3>
+              <p className="mb-4">
+                You don&apos;t have any students assigned to you yet.
+              </p>
+              <Button
+                onClick={() => setShowStudentModal(true)}
+                className="bg-white/10 text-white/80 hover:bg-white/20"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Student
+              </Button>
+            </div>
+          )}
         </div>
       </div>
-  
-      {error && (
-        <div className="p-4 mb-6 rounded-md bg-destructive/10 text-destructive">
-          {error}
-        </div>
-      )}
-  
-      {isLoading ? (
-        <div className="flex justify-center items-center h-64">
-          <LoadingSpinner />
-        </div>
-      ) : students.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {students.map((student) => {
-            const objectives = student.objectives || [];
-            const previewObjectives = objectives.slice(0, 2);
-  
-            return (
-              <Card key={student.id} className="h-56 shadow-sm border border-border rounded-xl p-4 flex flex-col justify-between">
-                <div className="flex items-center gap-4">
-                  <Avatar className="h-12 w-12">
-                    <AvatarImage src={student.avatar_url} alt={student.name} />
-                    <AvatarFallback>{getInitials(student.name)}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h2 className="text-lg font-semibold">{student.name}</h2>
-                    <p className="text-sm text-muted-foreground">Grade {student.grade_level}</p>
-                  </div>
-                </div>
-  
-                <div className="flex-1 flex flex-col gap-1">
-                  <Badge variant="secondary" className="w-fit text-xs mb-1">
-                    {objectives.length} objective{objectives.length !== 1 && 's'}
-                  </Badge>
-                  {previewObjectives.length > 0 ? (
-                    previewObjectives.map((obj) => (
-                      <p key={obj.id} className="text-sm text-muted-foreground truncate">
-                        • {obj.description}
-                      </p>
-                    ))
-                  ) : (
-                    <p className="text-sm text-muted-foreground italic">No objectives yet</p>
-                  )}
-                </div>
-  
-                <div className="text-xs text-muted-foreground">
-                  Last session: {formatDate(student.last_session_date)}
-                </div>
-              </Card>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="text-center py-12">
-          <h3 className="text-lg font-medium mb-2">No students found</h3>
-          <p className="text-muted-foreground mb-4">
-            You don&apos;t have any students assigned to you yet.
-          </p>
-        </div>
-      )}
+
+      {/* Modals */}
+      <ObjectiveFormModal
+        onSuccess={handleStudentAdded}
+        students={students}
+        open={showObjectiveModal}
+        onOpenChange={setShowObjectiveModal}
+        onStudentOpenChange={setShowStudentModal}
+      />
+      <StudentFormModal
+        onSuccess={handleStudentAdded}
+        open={showStudentModal}
+        onOpenChange={setShowStudentModal}
+      />
     </div>
   );
-  
 }
