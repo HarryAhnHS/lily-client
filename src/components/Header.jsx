@@ -13,19 +13,8 @@ export const Header = () => {
   const { isExpanded, toggleSidebar } = useSidebarContext();
 
   return (
-    <header className="fixed top-0 right-0 left-0 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex h-16 items-center gap-4 px-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-9 w-9 shrink-0"
-          onClick={toggleSidebar}
-        >
-          <Menu className="h-5 w-5" />
-          <span className="sr-only">Toggle sidebar</span>
-        </Button>
-        
-        <div className="flex-1" />
+    <header className="fixed top-0 right-0 left-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="flex h-14 justify-end items-center gap-4 px-4">
         
         <div className="flex items-center gap-4">
           {!loading && session?.user && (

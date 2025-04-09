@@ -35,55 +35,73 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        "fixed left-0 top-16 z-20 h-[calc(100vh-4rem)] bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-all duration-300 ease-in-out",
+        "fixed left-0 top-0 h-screen z-100 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-all duration-300 ease-in-out",
         isExpanded ? "w-48" : "w-16",
         "transform-gpu"
       )}
     >
-        <div className="h-full space-y-4 pt-4 pb-16">
+        <div className="h-full space-y-4 pt-1 pb-16">
             <div className="h-full px-3 py-2 flex flex-col gap-2">
                 {/* Buttons start here */}
                 <div className="space-y-2 flex-1">
+                    <Button
+                        onClick={toggleSidebar}
+                        variant="ghost"
+                        className="gap-0 flex items-center px-3 py-2 rounded-lg transition-all duration-200 
+                        text-muted-foreground hover:bg-accent hover:text-accent-foreground justify-center"
+                        >
+                        <Menu className="h-5 w-5 flex-shrink-0" />
+                    </Button>
+
+                    <div className="w-full mt-4 mb-4 border-t border-neutral-600">
+                    </div>
+                    
                     {/* Nav Items */}
                     {navItems.map((item) => (
-                    <Link
+                    <Button
                         key={item.href}
-                        href={item.href}
+                        onClick={() => router.push(item.href)}
+                        variant="ghost"
                         className={cn(
-                        "flex items-center rounded-lg px-3 py-2 text-sm transition-all duration-200",
-                        "hover:bg-accent hover:text-accent-foreground",
-                        pathname === item.href ? "bg-accent/50 text-accent-foreground" : "text-muted-foreground",
-                        !isExpanded && "justify-center"
+                        "gap-0 flex items-center px-3 py-2 rounded-lg transition-all duration-200 text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                        isExpanded ? "w-full justify-start" : "justify-center",
+                        pathname === item.href && "bg-accent text-accent-foreground"
                         )}
                     >
-                        <item.icon className={cn("h-4 w-4", isExpanded && "mr-2")} />
-                        <span className={cn(
-                            "transition-all duration-200 overflow-hidden",
-                            isExpanded ? "opacity-100 w-auto" : "opacity-0 w-0"
-                        )}>
-                            {item.label}
+                        <item.icon className="h-5 w-5 flex-shrink-0" />
+                        <span
+                        className={cn(
+                            "whitespace-nowrap overflow-hidden transition-all duration-300",
+                            isExpanded ? "opacity-100 max-w-[200px] ml-2" : "opacity-0 max-w-0 ml-0"
+                        )}
+                        >
+                        {item.label}
                         </span>
-                    </Link>
+                    </Button>
                     ))}
 
+                    <div className="w-full mt-4 mb-4 border-t border-neutral-600">
+                    </div>
+
                     {/* Sign Out Button */}
-                    <a
+                    <Button
                     onClick={handleSignOut}
+                    variant="ghost"
                     className={cn(
-                        "flex items-center rounded-lg px-3 py-2 text-sm transition-all duration-200",
-                        "hover:bg-accent hover:text-accent-foreground",
-                        "text-muted-foreground cursor-pointer ",
-                        !isExpanded && "justify-center"
+                        "gap-0 flex items-center px-3 py-2 rounded-lg transition-all duration-200 text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                        isExpanded ? "w-full justify-start" : "justify-center"
                     )}
                     >
-                        <LogOut className={cn("h-4 w-4", isExpanded && "mr-2")} />
-                        <span className={cn(
-                            "transition-all duration-200 overflow-hidden h-[20px]",
-                            isExpanded ? "opacity-100 w-auto" : "opacity-0 w-0"
-                        )}>
-                            Sign Out
-                        </span>
-                    </a>
+                    <LogOut className="h-5 w-5 flex-shrink-0" />
+                    <span
+                        className={cn(
+                        "whitespace-nowrap overflow-hidden transition-all duration-300",
+                        isExpanded ? "opacity-100 max-w-[200px] ml-2" : "opacity-0 max-w-0 ml-0"
+                        )}
+                    >
+                        Sign Out
+                    </span>
+                    </Button>
                 </div>
             </div>
         </div>
