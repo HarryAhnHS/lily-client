@@ -25,13 +25,15 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Check, ChevronsUpDown, Mic, MicOff, Send } from "lucide-react";
+import { Check, ChevronsUpDown, Mic, MicOff, Send, Play, Bell } from "lucide-react";
 import { authorizedFetch } from "@/services/api";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
 import { toast } from "sonner";
 import { MultiAnalysisReviewModal } from "@/components/MultiAnalysisReviewModal";
+import { Card, CardContent } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 
 // Import from @google/genai
 import {
@@ -302,204 +304,306 @@ export default function Home() {
   }
 
   return (
-    <div className="h-full flex flex-col items-center justify-center p-6">
-      <div className="w-full max-w-3xl rounded-xl bg-card p-8 shadow-lg border border-border/50 space-y-8">
-        <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">Record Your Notes</h1>
-          <p className="text-muted-foreground">Select a student and objectives, then start recording</p>
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="w-full px-6 py-4 border-b">
+        <div className="max-w-3xl mx-auto">
+          <h1 className="text-2xl font-bold">MIRAE</h1>
+        </div>
+      </header>
+
+      <main className="max-w-3xl mx-auto px-6 py-8 space-y-6">
+        {/* Greeting */}
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
+            <Bell className="w-4 h-4" />
+          </div>
+          <h2 className="text-xl">Good morning, Ms. Brown</h2>
         </div>
 
-        <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
-          {/* Student/Objective row */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Student</label>
-              {isLoadingData ? (
-                <div className="h-11 flex items-center justify-center">
-                  <LoadingSpinner size="small" />
-                </div>
-              ) : students.length > 0 ? (
-                <Select
-                  value={selectedStudent?.id}
-                  onValueChange={(id) => {
-                    const student = students.find((s) => s.id === id);
-                    setSelectedStudent(student || null);
-                  }}
+        {/* Recording Section */}
+        <div className="space-y-6">
+          <div className="rounded-2xl overflow-hidden bg-gradient-to-br from-blue-50/50 via-purple-50/50 to-pink-50/50 dark:from-blue-950/50 dark:via-purple-950/50 dark:to-pink-950/50 backdrop-blur-xl border border-white/10">
+            <div className="p-6">
+              <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
+                {/* Add New Session Button */}
+                <Button
+                  variant="ghost"
+                  className="w-full flex items-center gap-2 justify-start hover:bg-white/10 dark:hover:bg-white/5 h-12"
+                  disabled={isRecording}
                 >
-                  <SelectTrigger className="h-11 w-full">
-                    <SelectValue placeholder="Select a student" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {students.map((student) => (
-                      <SelectItem key={student.id} value={student.id}>
-                        {student.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ) : (
-                <div className="h-11 flex items-center justify-center text-muted-foreground bg-muted/30 rounded-md px-3">
-                  No students available
-                </div>
-              )}
-            </div>
+                  <Play className="w-4 h-4" />
+                  <span>Add New Session</span>
+                </Button>
 
-            <div className="space-y-2 text-sm">
-              <label>Objectives</label>
-              {!selectedStudent ? (
-                <div className="h-11 flex items-center justify-center text-muted-foreground bg-muted/30 rounded-md px-3">
-                  Select a student first
-                </div>
-              ) : isLoadingData ? (
-                <div className="h-11 flex items-center justify-center">
-                  <LoadingSpinner size="small" />
-                </div>
-              ) : objectives.length > 0 ? (
-                <div className="space-y-2">
-                  <Popover open={openObjectives} onOpenChange={setOpenObjectives}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        aria-expanded={openObjectives}
-                        className="w-full justify-between h-11"
+                {/* Student/Objective Selection */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Student</label>
+                    {isLoadingData ? (
+                      <div className="h-11 flex items-center justify-center">
+                        <LoadingSpinner size="small" />
+                      </div>
+                    ) : students.length > 0 ? (
+                      <Select
+                        value={selectedStudent?.id}
+                        onValueChange={(id) => {
+                          const student = students.find((s) => s.id === id);
+                          setSelectedStudent(student || null);
+                        }}
                       >
-                        {selectedObjectives.length > 0
-                          ? `${selectedObjectives.length} selected`
-                          : "Select objectives..."}
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-full p-0">
-                      <Command>
-                        <CommandInput placeholder="Search objectives..." className="h-11" />
-                        <CommandEmpty className="py-6 text-center text-sm text-muted-foreground">
-                          No objectives found.
-                        </CommandEmpty>
-                        <CommandGroup className="max-h-60 overflow-auto">
-                          {objectives.map((obj) => (
-                            <CommandItem
-                              key={obj.id}
-                              onSelect={() => toggleObjective(obj.id)}
-                              className="h-11"
-                            >
-                              <Check
-                                className={cn(
-                                  "mr-2 h-4 w-4",
-                                  selectedObjectives.includes(obj) ? "opacity-100" : "opacity-0"
-                                )}
-                              />
-                              {obj.description}
-                            </CommandItem>
+                        <SelectTrigger className="h-11 w-full">
+                          <SelectValue placeholder="Select a student" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {students.map((student) => (
+                            <SelectItem key={student.id} value={student.id}>
+                              {student.name}
+                            </SelectItem>
                           ))}
-                        </CommandGroup>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                  
-                  {selectedObjectives.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-2"> 
-                      {selectedObjectives.map((obj) =>
-                        obj && obj.id ? (
-                          <Badge
-                            key={obj.id}
-                            variant="secondary"
-                            className="flex items-center gap-1 py-1 px-2"
-                          >
-                            {obj.description}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <div className="h-11 flex items-center justify-center text-muted-foreground bg-muted/30 rounded-md px-3">
+                        No students available
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Objectives</label>
+                    {!selectedStudent ? (
+                      <div className="h-11 flex items-center justify-center text-muted-foreground bg-muted/30 rounded-md px-3">
+                        Select a student first
+                      </div>
+                    ) : isLoadingData ? (
+                      <div className="h-11 flex items-center justify-center">
+                        <LoadingSpinner size="small" />
+                      </div>
+                    ) : objectives.length > 0 ? (
+                      <div className="space-y-2">
+                        <Popover open={openObjectives} onOpenChange={setOpenObjectives}>
+                          <PopoverTrigger asChild>
                             <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-3 w-3 cursor-pointer ml-1"
-                              onClick={() => removeObjective(obj.id)}
+                              variant="outline"
+                              role="combobox"
+                              aria-expanded={openObjectives}
+                              className="w-full justify-between h-11"
                             >
-                              <X className="h-3 w-3" />
+                              {selectedObjectives.length > 0
+                                ? `${selectedObjectives.length} selected`
+                                : "Select objectives..."}
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
-                          </Badge>
-                        ) : null
-                      )}
-                    </div>
-                  )}
+                          </PopoverTrigger>
+                          <PopoverContent className="w-full p-0">
+                            <Command>
+                              <CommandInput placeholder="Search objectives..." className="h-11" />
+                              <CommandEmpty className="py-6 text-center text-sm text-muted-foreground">
+                                No objectives found.
+                              </CommandEmpty>
+                              <CommandGroup className="max-h-60 overflow-auto">
+                                {objectives.map((obj) => (
+                                  <CommandItem
+                                    key={obj.id}
+                                    onSelect={() => toggleObjective(obj.id)}
+                                    className="h-11"
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        selectedObjectives.includes(obj) ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                    {obj.description}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
+                        
+                        {selectedObjectives.length > 0 && (
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {selectedObjectives.map((obj) => (
+                              <Badge
+                                key={obj.id}
+                                variant="secondary"
+                                className="flex items-center gap-1 py-1 px-2"
+                              >
+                                {obj.description}
+                                <X
+                                  className="h-3 w-3 cursor-pointer"
+                                  onClick={() => removeObjective(obj.id)}
+                                />
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="h-11 flex items-center justify-center text-muted-foreground bg-muted/30 rounded-md px-3">
+                        No objectives available
+                      </div>
+                    )}
+                  </div>
                 </div>
-              ) : (
-                <div className="h-11 flex items-center justify-center text-muted-foreground bg-muted/30 rounded-md px-3">
-                  No objectives available
+
+                {/* Error alert */}
+                {error && (
+                  <div className="p-4 rounded-md bg-destructive/10 text-destructive text-sm border border-destructive/20">
+                    {error}
+                  </div>
+                )}
+
+                {/* Recording UI */}
+                <div className="flex flex-col items-center justify-center py-12 space-y-6">
+                  <Button
+                    type="button"
+                    onClick={toggleRecording}
+                    variant={isRecording ? "destructive" : "default"}
+                    size="lg"
+                    className={`rounded-full w-20 h-20 p-0 flex items-center justify-center transition-all duration-300 ${
+                      isRecording 
+                        ? "bg-destructive hover:bg-destructive/90 shadow-lg shadow-destructive/20" 
+                        : "bg-white dark:bg-white/10 hover:bg-white/90 dark:hover:bg-white/20 shadow-lg"
+                    }`}
+                  >
+                    {isRecording ? <MicOff className="h-8 w-8" /> : <Mic className="h-8 w-8" />}
+                  </Button>
+
+                  <Textarea
+                    placeholder="Your notes will appear here..."
+                    className="min-h-[150px] resize-none bg-white/50 dark:bg-white/5 border-white/20 focus:border-white/30"
+                    value={transcript}
+                    onChange={(e) => setTranscript(e.target.value)}
+                    required
+                  />
+
+                  <Button
+                    type="submit"
+                    disabled={!selectedStudent || selectedObjectives.length === 0 || !transcript.trim() || isSubmitting}
+                    className="w-full bg-white/90 dark:bg-white/10 hover:bg-white dark:hover:bg-white/20"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <LoadingSpinner size="small" className="mr-2" />
+                        <span>Analyzing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Send className="h-4 w-4 mr-2" />
+                        <span>Submit</span>
+                      </>
+                    )}
+                  </Button>
                 </div>
-              )}
+              </form>
             </div>
           </div>
+        </div>
 
-          {/* Error alert */}
-          {error && (
-            <div className="p-4 rounded-md bg-destructive/10 text-destructive text-sm border border-destructive/20">
-              {error}
+        {/* Weekly Review Section */}
+        <div className="rounded-2xl overflow-hidden bg-gradient-to-br from-blue-50/50 via-purple-50/50 to-pink-50/50 dark:from-blue-950/50 dark:via-purple-950/50 dark:to-pink-950/50 backdrop-blur-xl border border-white/10">
+          <div className="p-6 space-y-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="p-1 bg-white/10 dark:bg-white/5 rounded">
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                    />
+                  </svg>
+                </div>
+                <h3 className="font-medium">Weekly Review</h3>
+              </div>
+              <Select defaultValue="this-week">
+                <SelectTrigger className="w-[140px] bg-white/50 dark:bg-white/5 border-white/20">
+                  <SelectValue placeholder="Select period" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="this-week">This Week</SelectItem>
+                  <SelectItem value="last-week">Last Week</SelectItem>
+                  <SelectItem value="this-month">This Month</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          )}
 
-          {/* Transcript */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Notes</label>
-            <Textarea
-              placeholder="Your notes will appear here..."
-              className="min-h-[250px] resize-none border-muted-foreground/20 focus:border-primary"
-              value={transcript}
-              onChange={(e) => setTranscript(e.target.value)}
-              required
-            />
-          </div>
+            <div>
+              <div className="text-4xl font-bold mb-2">60%</div>
+              <div className="text-sm text-muted-foreground mb-2">
+                12/20 objectives logged this week
+              </div>
+              <Progress value={60} className="h-2 bg-white/20" />
+              <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
+                <Bell className="w-4 h-4" />
+                <span>8 objectives left</span>
+              </div>
+            </div>
 
-          {/* Record and Submit buttons */}
-          <div className="flex justify-center gap-4 pt-4">
-            <Button
-              type="button"
-              onClick={toggleRecording}
-              variant={isRecording ? "destructive" : "default"}
-              size="lg"
-              className={`rounded-full w-20 h-20 p-0 flex items-center justify-center transition-all duration-300 ${
-                isRecording 
-                  ? "bg-destructive hover:bg-destructive/90 shadow-lg shadow-destructive/20" 
-                  : "bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20"
-              }`}
-            >
-              {isRecording ? <MicOff className="h-8 w-8" /> : <Mic className="h-8 w-8" />}
-            </Button>
-            
-            <Button
-              type="submit"
-              disabled={!selectedStudent || selectedObjectives.length === 0 || !transcript.trim() || isSubmitting}
-              size="lg"
-              className="rounded-full px-8 h-20 flex items-center gap-2"
-            >
-              {isSubmitting ? (
-                <>
-                  <LoadingSpinner size="small" />
-                  <span>Analyzing...</span>
-                </>
-              ) : (
-                <>
-                  <Send className="h-5 w-5" />
-                  <span>Submit</span>
-                </>
-              )}
-            </Button>
+            {/* Student Progress Card */}
+            <div className="bg-white/10 dark:bg-white/5 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <div className="font-medium">Tyler Washington</div>
+                  <div className="text-sm text-muted-foreground">(Language)</div>
+                </div>
+                <Button variant="ghost" size="icon" className="hover:bg-white/10">
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                    />
+                  </svg>
+                </Button>
+              </div>
+              <div className="text-sm text-muted-foreground mb-2">
+                Help Tyler learn how to enunciate more clearly
+              </div>
+              <div className="flex gap-1">
+                {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                  <div
+                    key={i}
+                    className={`h-1 flex-1 rounded-full ${
+                      i === 3 ? "bg-primary" : "bg-white/20 dark:bg-white/10"
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
           </div>
-        </form>
-        
-        {/* Analysis Result Modal */}
-        {analysisResults.length > 0 && (  
-          <MultiAnalysisReviewModal
-            isOpen={showAnalysisModal}
-            onClose={() => setShowAnalysisModal(false)}
-            analysisResults={analysisResults}
-            sessionMetadata={{
-              student: selectedStudent,
-              objectives: selectedObjectives,
-              raw_text: transcript,
-            }}
-            access_token={session?.access_token}
-          />
-        )}
-      </div>
+        </div>
+      </main>
+
+      {/* Analysis Result Modal */}
+      {analysisResults.length > 0 && (
+        <MultiAnalysisReviewModal
+          isOpen={showAnalysisModal}
+          onClose={() => setShowAnalysisModal(false)}
+          analysisResults={analysisResults}
+          sessionMetadata={{
+            student: selectedStudent,
+            objectives: selectedObjectives,
+            raw_text: transcript,
+          }}
+          access_token={session?.access_token}
+        />
+      )}
     </div>
   );
 }
