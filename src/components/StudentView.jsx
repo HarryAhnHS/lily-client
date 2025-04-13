@@ -1,8 +1,15 @@
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { ArrowLeft, Check, Plus, Activity, MoreHorizontal, X } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Pencil, Trash2 } from 'lucide-react';
 
-export function StudentView({ student, onBack, onAddObjective }) {
+export function StudentView({ student, onBack, onAddObjective, onEdit, onDelete }) {
   const objectives = student.objectives || [];
 
   const formatDate = (dateString) => {
@@ -17,7 +24,7 @@ export function StudentView({ student, onBack, onAddObjective }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-white/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="relative w-full max-w-4xl bg-gradient-to-br from-green-950/50 via-yellow-950/50 to-black backdrop-blur-xl rounded-3xl overflow-hidden">
         {/* Close button */}
         <Button
@@ -28,6 +35,30 @@ export function StudentView({ student, onBack, onAddObjective }) {
         >
           <X className="h-4 w-4" />
         </Button>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="absolute right-14 top-4 rounded-full bg-white/10 text-white/80 hover:bg-white/20">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-40 bg-black/90 border-white/10">
+            <DropdownMenuItem 
+              className="text-white/80 focus:text-white focus:bg-white/10 cursor-pointer"
+              onClick={() => onEdit(student)}
+            >
+              <Pencil className="h-4 w-4 mr-2" />
+              Edit
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              className="text-red-400 focus:text-red-400 focus:bg-white/10 cursor-pointer"
+              onClick={() => onDelete(student)}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         <div className="max-h-[90vh] overflow-auto">
           <div className="p-6 space-y-6">

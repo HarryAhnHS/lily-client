@@ -1,8 +1,15 @@
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { MoreHorizontal, Check, Plus, Activity } from 'lucide-react';
+import { MoreHorizontal, Check, Plus, Activity, Pencil, Trash2 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ObjectiveItem } from './ObjectiveItem';
 
-export function StudentCard({ student, onAddObjective, onClick }) {
+export function StudentCard({ student, onAddObjective, onClick, onEdit, onDelete, onEditObjective, onDeleteObjective }) {
   const objectives = student.objectives || [];
 
   const formatDate = (dateString) => {
@@ -16,6 +23,11 @@ export function StudentCard({ student, onAddObjective, onClick }) {
     });
   };
 
+  const handleMoreClick = (e) => {
+    // Prevent the card click event from firing when clicking the dropdown
+    e.stopPropagation();
+  };
+
   return (
     <div 
       className="bg-black/40 rounded-xl p-6 space-y-4 cursor-pointer transition-all hover:bg-black/50"
@@ -26,9 +38,35 @@ export function StudentCard({ student, onAddObjective, onClick }) {
           <h3 className="text-xl font-semibold text-white/90">{student.name}</h3>
           <p className="text-sm text-white/60">{formatDate(student.last_session_date)}</p>
         </div>
-        <Button variant="ghost" size="icon" className="text-white/60 hover:text-white/80">
-          <MoreHorizontal className="h-4 w-4" />
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild onClick={handleMoreClick}>
+            <Button variant="ghost" size="icon" className="text-white/60 hover:text-white/80">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-40 bg-black/90 border-white/10">
+            <DropdownMenuItem 
+              className="text-white/80 focus:text-white focus:bg-white/10 cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(student);
+              }}
+            >
+              <Pencil className="h-4 w-4 mr-2" />
+              Edit
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              className="text-red-400 focus:text-red-400 focus:bg-white/10 cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(student);
+              }}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <div className="space-y-2">
@@ -52,21 +90,12 @@ export function StudentCard({ student, onAddObjective, onClick }) {
           </span>
         </div>
         {objectives.map((objective) => (
-          <div
+          <ObjectiveItem
             key={objective.id}
-            className="bg-white/5 rounded-lg p-3 flex items-center justify-between"
-          >
-            <span className="text-sm text-white/80">{objective.description}</span>
-            {objective.completed ? (
-              <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center">
-                <Check className="w-3 h-3 text-green-500" />
-              </div>
-            ) : (
-              <div className="w-5 h-5">
-                <Activity className="w-3 h-3 text-white/40" />
-              </div>
-            )}
-          </div>
+            objective={objective}
+            onEdit={(objective) => onEditObjective(objective)}
+            onDelete={(objective) => onDeleteObjective(objective)}
+          />
         ))}
         <Button
           variant="ghost"

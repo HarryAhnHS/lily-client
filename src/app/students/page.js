@@ -9,17 +9,9 @@ import { StudentFormModal } from '@/components/StudentFormModal';
 import { StudentCard } from '@/components/StudentCard';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
 import { ObjectiveFormModal } from '@/components/ObjectiveFormModal';
 import { Users, Plus, Filter, MoreHorizontal, Check, X, Activity } from 'lucide-react';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { StudentView } from '@/components/StudentView';
 
 export default function StudentsPage() {
@@ -31,6 +23,8 @@ export default function StudentsPage() {
   const [showStudentModal, setShowStudentModal] = useState(false);
   const [showObjectiveModal, setShowObjectiveModal] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
+  const [selectedStudentForEdit, setSelectedStudentForEdit] = useState(null);
+  const [selectedObjectiveForEdit, setSelectedObjectiveForEdit] = useState(null);
 
   useEffect(() => {
     if (!loading && !session) {
@@ -96,6 +90,66 @@ export default function StudentsPage() {
     toast.success('Student added successfully');
   };
 
+  const handleEditStudent = (student) => {
+    setSelectedStudentForEdit(student);
+    setShowStudentModal(true);
+  };
+
+  const handleDeleteStudent = async (student) => {
+    if (!confirm(`Are you sure you want to delete ${student.name}?`)) {
+      return;
+    }
+
+    try {
+      const response = await authorizedFetch(`/students/students/${student.id}`, session?.access_token, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to delete student: ${response.status}`);
+      }
+
+      toast.success('Student deleted successfully');
+      fetchStudents();
+    } catch (err) {
+      console.error('Error deleting student:', err);
+      toast.error('Failed to delete student. Please try again later.');
+    }
+  };
+
+  const handleEditObjective = (objective) => {
+    setSelectedObjectiveForEdit(objective);
+    setShowObjectiveModal(true);
+  };
+
+  const handleDeleteObjective = async (objective) => {
+    if (!confirm(`Are you sure you want to delete this objective?`)) {
+      return;
+    }
+
+    try {
+      const response = await authorizedFetch(`/objectives/objective/${objective.id}`, session?.access_token, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to delete objective: ${response.status}`);
+      }
+
+      toast.success('Objective deleted successfully');
+      fetchStudents();
+    } catch (err) {
+      console.error('Error deleting objective:', err);
+      toast.error('Failed to delete objective. Please try again later.');
+    }
+  };
+
   if (loading) return <LoadingSpinner />;
 
   return (
@@ -121,16 +175,30 @@ export default function StudentsPage() {
               <div className="flex items-center gap-2">
                   {/* Modal Buttons */}
                   <ObjectiveFormModal
-                      onSuccess={handleStudentAdded}
+                      objective={selectedObjectiveForEdit}
+                      onSuccess={() => {
+                        handleStudentAdded();
+                        setSelectedObjectiveForEdit(null);
+                      }}
                       students={students}
                       open={showObjectiveModal}
-                      onOpenChange={setShowObjectiveModal}
+                      onOpenChange={(open) => {
+                        setShowObjectiveModal(open);
+                        if (!open) setSelectedObjectiveForEdit(null);
+                      }}
                       onStudentOpenChange={setShowStudentModal}
                   />
                   <StudentFormModal
-                      onSuccess={handleStudentAdded}
+                      student={selectedStudentForEdit}
+                      onSuccess={() => {
+                        handleStudentAdded();
+                        setSelectedStudentForEdit(null);
+                      }}
                       open={showStudentModal}
-                      onOpenChange={setShowStudentModal}
+                      onOpenChange={(open) => {
+                        setShowStudentModal(open);
+                        if (!open) setSelectedStudentForEdit(null);
+                      }}
                   />
                 <Button variant="ghost" size="icon" className="rounded-full bg-white/10 text-white/80">
                   <MoreHorizontal className="h-4 w-4" />
@@ -184,6 +252,10 @@ export default function StudentsPage() {
                     student={student}
                     onAddObjective={() => setShowObjectiveModal(true)}
                     onClick={() => setSelectedStudent(student)}
+                    onEdit={handleEditStudent}
+                    onDelete={handleDeleteStudent}
+                    onEditObjective={handleEditObjective}
+                    onDeleteObjective={handleDeleteObjective}
                   />
                 ))}
               </div>

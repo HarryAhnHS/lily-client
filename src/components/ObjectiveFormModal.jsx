@@ -39,35 +39,82 @@ import { toast } from 'sonner';
 
 // Form schema for objective
 const objectiveFormSchema = z.object({
-  studentId: z.string({
-    required_error: 'Please select a student.',
-  }),
-  subjectArea: z.string({
-    required_error: 'Please select or enter a subject area.',
-  }),
+  studentId: z.string({ required_error: 'Please select a student.' }),
+  subjectArea: z.string({ required_error: 'Please select a subject area.' }),
+  goal: z.string({ required_error: 'Please select a goal.' }),
   objectiveDescription: z.string().min(10, {
     message: 'Objective description must be at least 10 characters.',
   }),
+  objectiveType: z.enum(['binary', 'trial']),
+  targetAccuracy: z.number().min(0).max(1),
+  targetConsistencyTrials: z.number().int().positive(),
+  targetConsistencySuccesses: z.number().int().positive(),
 });
 
-export function ObjectiveFormModal({ onSuccess, students, open, onOpenChange, onStudentOpenChange }) {
+export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpenChange, onStudentOpenChange }) {
   const { session } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingStudents, setIsLoadingStudents] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState(null);
+
   const [subjectAreas, setSubjectAreas] = useState([]);
   const [isLoadingSubjectAreas, setIsLoadingSubjectAreas] = useState(false);
   const [newSubjectArea, setNewSubjectArea] = useState('');
   const [isAddingSubjectArea, setIsAddingSubjectArea] = useState(false);
   const [isCreatingSubjectArea, setIsCreatingSubjectArea] = useState(false);
 
+  const [goals, setGoals] = useState([]);
+  const [isLoadingGoals, setIsLoadingGoals] = useState(false);
+  const [newGoalTitle, setNewGoalTitle] = useState('');
+  const [isAddingGoal, setIsAddingGoal] = useState(false);
+  const [isCreatingGoal, setIsCreatingGoal] = useState(false);
+  const isEditing = !!objective;
+
   const form = useForm({
     resolver: zodResolver(objectiveFormSchema),
     defaultValues: {
       studentId: '',
       subjectArea: '',
+      goal: '',
       objectiveDescription: '',
+      objectiveType: 'binary',
+      targetAccuracy: 0.8,
+      targetConsistencyTrials: 4,
+      targetConsistencySuccesses: 5
     }
   });
+
+  // Reset form and populate with objective data when modal opens or objective changes
+  useEffect(() => {
+    if (open) {
+      if (objective) {
+        const student = students.find(s => s.id === objective.student_id);
+        setSelectedStudent(student);
+        form.reset({
+          studentId: objective.student_id,
+          subjectArea: objective.subject_area_id,
+          goal: objective.goal_id,
+          objectiveDescription: objective.description,
+          objectiveType: objective.objective_type,
+          targetAccuracy: objective.target_accuracy,
+          targetConsistencyTrials: objective.target_consistency_trials,
+          targetConsistencySuccesses: objective.target_consistency_successes
+        });
+      } else {
+        setSelectedStudent(null);
+        form.reset({
+          studentId: '',
+          subjectArea: '',
+          goal: '',
+          objectiveDescription: '',
+          objectiveType: 'binary',
+          targetAccuracy: 0.8,
+          targetConsistencyTrials: 4,
+          targetConsistencySuccesses: 5
+        });
+      }
+    }
+  }, [open, objective, form, students]);
 
   // Fetch subject areas when modal opens
   useEffect(() => {
@@ -75,13 +122,6 @@ export function ObjectiveFormModal({ onSuccess, students, open, onOpenChange, on
       fetchSubjectAreas();
     }
   }, [open]);
-
-  // Reset form when modal opens
-  useEffect(() => {
-    if (open) {
-      form.reset();
-    }
-  }, [open, form]);
 
   const fetchSubjectAreas = async () => {
     if (!session) return;
@@ -100,7 +140,6 @@ export function ObjectiveFormModal({ onSuccess, students, open, onOpenChange, on
       }
       
       const data = await response.json();
-      console.log("subject areas", data);
       setSubjectAreas(data);
     } catch (error) {
       console.error('Error fetching subject areas:', error);
@@ -110,29 +149,67 @@ export function ObjectiveFormModal({ onSuccess, students, open, onOpenChange, on
     }
   };
 
+  // Update the useEffect for goals fetching
+  useEffect(() => {
+    const subjectId = form.watch('subjectArea');
+    const studentId = form.watch('studentId');
+    if (subjectId && studentId) {
+      fetchGoals(studentId, subjectId);
+    } else {
+      setGoals([]);
+    }
+  }, [form.watch('subjectArea'), form.watch('studentId')]);
+
+  const fetchGoals = async (studentId, subjectAreaId) => {
+    if (!session || !subjectAreaId || !studentId) return;
+
+    setIsLoadingGoals(true);
+    try {
+      const response = await authorizedFetch(
+        `/goals/student/${studentId}/subject-area/${subjectAreaId}`, 
+        session?.access_token
+      );
+      if (!response.ok) throw new Error('Failed to fetch goals');
+      const data = await response.json();
+      setGoals(data);
+    } catch (err) {
+      console.error('Error fetching goals:', err);
+      toast.error('Failed to load goals');
+    } finally {
+      setIsLoadingGoals(false);
+    }
+  };
+
   const onSubmit = async (data) => {
     if (!session) return;
     
     setIsSubmitting(true);
     
     try {
-      const response = await authorizedFetch('/objectives/objective', session?.access_token, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      const url = isEditing 
+        ? `/objectives/objective/${objective.id}`
+        : '/objectives/objective';
+
+      const response = await authorizedFetch(url, session?.access_token, {
+        method: isEditing ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           student_id: data.studentId,
+          goal_id: data.goal,
           subject_area_id: data.subjectArea,
-          description: data.objectiveDescription
+          description: data.objectiveDescription,
+          objective_type: data.objectiveType,
+          target_accuracy: data.targetAccuracy,
+          target_consistency_trials: data.targetConsistencyTrials,
+          target_consistency_successes: data.targetConsistencySuccesses
         }),
       });
       
       if (!response.ok) {
-        throw new Error(`Failed to create objective: ${response.status}`);
+        throw new Error(`Failed to ${isEditing ? 'update' : 'create'} objective: ${response.status}`);
       }
       
-      toast.success('Objective added successfully');
+      toast.success(`Objective ${isEditing ? 'updated' : 'added'} successfully`);
       form.reset();
       onOpenChange(false);   
       
@@ -140,8 +217,8 @@ export function ObjectiveFormModal({ onSuccess, students, open, onOpenChange, on
         onSuccess();
       }
     } catch (error) {
-      console.error('Error creating objective:', error);
-      toast.error('Failed to add objective. Please try again.');
+      console.error(`Error ${isEditing ? 'updating' : 'creating'} objective:`, error);
+      toast.error(`Failed to ${isEditing ? 'update' : 'add'} objective. Please try again.`);
     } finally {
       setIsSubmitting(false);
     }
@@ -170,10 +247,13 @@ export function ObjectiveFormModal({ onSuccess, students, open, onOpenChange, on
       }
       
       const newArea = await response.json();
-      setSubjectAreas([...subjectAreas, newArea]);
+      // Fetch subject areas again to update the list
+      await fetchSubjectAreas();
       form.setValue('subjectArea', newArea.id);
       setNewSubjectArea('');
       setIsAddingSubjectArea(false);
+
+
       toast.success('Subject area added successfully');
     } catch (error) {
       console.error('Error creating subject area:', error);
@@ -182,6 +262,44 @@ export function ObjectiveFormModal({ onSuccess, students, open, onOpenChange, on
       setIsCreatingSubjectArea(false);
     }
   };
+
+  const handleAddGoal = async () => {
+    if (!newGoalTitle.trim() || !session) return;
+    const studentId = form.getValues('studentId');
+    const subjectAreaId = form.getValues('subjectArea');
+
+    if (!studentId || !subjectAreaId) {
+      toast.error('Please select both student and subject area first');
+      return;
+    }
+
+    setIsCreatingGoal(true);
+    try {
+      const response = await authorizedFetch('/goals/goal', session.access_token, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          student_id: studentId,
+          subject_area_id: subjectAreaId,
+          title: newGoalTitle.trim()
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to create goal');
+      const newGoal = await response.json();
+      await fetchGoals(studentId, subjectAreaId);
+      form.setValue('goal', newGoal.id);
+      setNewGoalTitle('');
+      setIsAddingGoal(false);
+      toast.success('Goal added');
+    } catch (err) {
+      console.error('Error creating goal:', err);
+      toast.error('Could not create goal');
+    } finally {
+      setIsCreatingGoal(false);
+    }
+  };
+  
 
   const toggleStudentForm = () => {
     onOpenChange(false);
@@ -193,14 +311,14 @@ export function ObjectiveFormModal({ onSuccess, students, open, onOpenChange, on
       <DialogTrigger asChild>
         <Button variant="outline">
           <Plus className="h-4 w-4" />
-          Add Objective
+          {isEditing ? 'Edit Objective' : 'Add Objective'}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add New Objective</DialogTitle>
+          <DialogTitle>{isEditing ? 'Edit Objective' : 'Add New Objective'}</DialogTitle>
           <DialogDescription>
-            Create a new learning objective for a student.
+            {isEditing ? 'Update the learning objective.' : 'Create a new learning objective for a student.'}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -214,8 +332,15 @@ export function ObjectiveFormModal({ onSuccess, students, open, onOpenChange, on
                     <FormLabel>Student</FormLabel>
                     <div className="flex gap-2">
                       <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          const student = students.find(s => s.id === value);
+                          setSelectedStudent(student);
+                          // Reset dependent fields
+                          form.setValue('subjectArea', '');
+                          form.setValue('goal', '');
+                        }}
+                        value={field.value}
                         disabled={isLoadingStudents}
                         className="flex-1"
                       >
@@ -225,8 +350,8 @@ export function ObjectiveFormModal({ onSuccess, students, open, onOpenChange, on
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {students && students.map((student) => (
-                            <SelectItem key={student.id} value={student.id}>
+                          {students?.map((student) => (
+                            <SelectItem key={`student-${student.id}`} value={student.id}>
                               {student.name}
                             </SelectItem>
                           ))}
@@ -250,12 +375,21 @@ export function ObjectiveFormModal({ onSuccess, students, open, onOpenChange, on
                 name="subjectArea"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Subject Area</FormLabel>
+                    <FormLabel>
+                      Subject Area
+                      {selectedStudent && (
+                        <span className="text-muted-foreground ml-1 text-sm">
+                          for {selectedStudent.name}
+                        </span>
+                      )}
+                    </FormLabel>
                     {isAddingSubjectArea ? (
                       <div className="flex gap-2">
                         <FormControl>
                           <Input
-                            placeholder="Enter new subject area"
+                            placeholder={selectedStudent 
+                              ? `Add new subject area for ${selectedStudent.name}` 
+                              : "Select a student first"}
                             value={newSubjectArea}
                             onChange={(e) => setNewSubjectArea(e.target.value)}
                             onKeyDown={(e) => {
@@ -264,13 +398,14 @@ export function ObjectiveFormModal({ onSuccess, students, open, onOpenChange, on
                                 handleAddSubjectArea();
                               }
                             }}
+                            disabled={!selectedStudent}
                           />
                         </FormControl>
                         <Button 
                           type="button" 
                           variant="outline"
                           onClick={handleAddSubjectArea}
-                          disabled={isCreatingSubjectArea}
+                          disabled={isCreatingSubjectArea || !selectedStudent}
                         >
                           {isCreatingSubjectArea ? 'Adding...' : 'Add'}
                         </Button>
@@ -288,19 +423,28 @@ export function ObjectiveFormModal({ onSuccess, students, open, onOpenChange, on
                     ) : (
                       <div className="flex gap-2">
                         <Select 
-                          onValueChange={field.onChange} 
-                          defaultValue={field.value}
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                            form.setValue('goal', '');
+                          }}
+                          value={field.value}
                           className="flex-1"
-                          disabled={isLoadingSubjectAreas}
+                          disabled={isLoadingSubjectAreas || !selectedStudent}
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select a subject area" />
+                              <SelectValue 
+                                placeholder={
+                                  !selectedStudent 
+                                    ? "Select a student first" 
+                                    : `Select a subject area for ${selectedStudent.name}`
+                                } 
+                              />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {subjectAreas && subjectAreas.map((area) => (
-                              <SelectItem key={area.id} value={area.id}>
+                            {subjectAreas?.map((area) => (
+                              <SelectItem key={`subject-${area.id}`} value={area.id}>
                                 {area.name}
                               </SelectItem>
                             ))}
@@ -310,8 +454,15 @@ export function ObjectiveFormModal({ onSuccess, students, open, onOpenChange, on
                           type="button" 
                           variant="outline"
                           onClick={() => setIsAddingSubjectArea(true)}
+                          disabled={!selectedStudent}
+                          className="relative group"
                         >
                           <Plus className="h-4 w-4" />
+                          {!selectedStudent && (
+                            <span className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 whitespace-nowrap bg-black/80 text-white text-xs rounded px-2 py-1 hidden group-hover:block">
+                              Select a student first
+                            </span>
+                          )}
                         </Button>
                       </div>
                     )}
@@ -320,17 +471,204 @@ export function ObjectiveFormModal({ onSuccess, students, open, onOpenChange, on
                 )}
               />
 
+              {/* Goal */}
+              <FormField
+                control={form.control}
+                name="goal"
+                render={({ field }) => {
+                  const selectedSubjectArea = subjectAreas.find(
+                    area => area.id === form.getValues('subjectArea')
+                  );
+
+                  return (
+                    <FormItem>
+                      <FormLabel>
+                        Goal
+                        {selectedSubjectArea && selectedStudent && (
+                          <span className="text-muted-foreground ml-1 text-sm">
+                            for {selectedSubjectArea.name} for {selectedStudent.name}
+                          </span>
+                        )}
+                      </FormLabel>
+                      {isAddingGoal ? (
+                        <div className="flex gap-2">
+                          <FormControl>
+                            <Input
+                              placeholder={selectedSubjectArea 
+                                ? `Add new goal for ${selectedSubjectArea.name}` 
+                                : "Select a subject area first"}
+                              value={newGoalTitle}
+                              onChange={(e) => setNewGoalTitle(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleAddGoal();
+                                }
+                              }}
+                              disabled={!selectedSubjectArea}
+                            />
+                          </FormControl>
+                          <Button
+                            type="button"
+                            onClick={handleAddGoal}
+                            disabled={isCreatingGoal || !selectedSubjectArea}
+                          >
+                            {isCreatingGoal ? 'Adding...' : 'Add'}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={() => {
+                              setIsAddingGoal(false);
+                              setNewGoalTitle('');
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex gap-2">
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value}
+                            disabled={isLoadingGoals || !selectedSubjectArea}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue 
+                                  placeholder={
+                                    !selectedSubjectArea 
+                                      ? "Select a subject area first" 
+                                      : `Select a goal for ${selectedSubjectArea.name}`
+                                  } 
+                                />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {goals?.map((goal) => (
+                                <SelectItem key={`goal-${goal.id}`} value={goal.id}>
+                                  {goal.title}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setIsAddingGoal(true)}
+                            disabled={!selectedSubjectArea}
+                            className="relative group"
+                          >
+                            <Plus className="h-4 w-4" />
+                            {!selectedSubjectArea && (
+                              <span className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 whitespace-nowrap bg-black/80 text-white text-xs rounded px-2 py-1 hidden group-hover:block">
+                                Select a subject area first
+                              </span>
+                            )}
+                          </Button>
+                        </div>
+                      )}
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
+              />
+
               <FormField
                 control={form.control}
                 name="objectiveDescription"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Objective Description</FormLabel>
+                    <FormLabel>Objective</FormLabel>
                     <FormControl>
                       <Textarea 
                         placeholder="Describe the specific objective in detail" 
                         className="min-h-[100px]"
                         {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="objectiveType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Objective Type</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="binary">Binary</SelectItem>
+                        <SelectItem value="trial">Trial</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="targetAccuracy"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Target Accuracy</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="1"
+                        {...field}
+                        value={field.value ?? ''}
+                        onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="targetConsistencyTrials"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Consistency Trials</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="1"
+                        {...field}
+                        value={field.value ?? ''}
+                        onChange={(e) => field.onChange(parseInt(e.target.value))}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="targetConsistencySuccesses"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Consistency Successes</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="1"
+                        {...field}
+                        value={field.value ?? ''}
+                        onChange={(e) => field.onChange(parseInt(e.target.value))}
                       />
                     </FormControl>
                     <FormMessage />
@@ -348,7 +686,11 @@ export function ObjectiveFormModal({ onSuccess, students, open, onOpenChange, on
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Adding...' : 'Add Objective'}
+                {isSubmitting ? 
+                  (isEditing ? 'Updating...' : 'Adding...') 
+                : 
+                  (isEditing ? 'Update Objective' : 'Add Objective')
+                }
               </Button>
             </DialogFooter>
           </form>

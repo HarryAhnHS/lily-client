@@ -52,9 +52,6 @@ export function Sidebar() {
                         >
                         <Menu className="h-5 w-5 flex-shrink-0" />
                     </Button>
-
-                    <div className="w-full mt-4 mb-4 border-t border-neutral-600">
-                    </div>
                     
                     {/* Nav Items */}
                     {navItems.map((item) => (
@@ -79,9 +76,6 @@ export function Sidebar() {
                         </span>
                     </Button>
                     ))}
-
-                    <div className="w-full mt-4 mb-4 border-t border-neutral-600">
-                    </div>
 
                     {/* Sign Out Button */}
                     <Button

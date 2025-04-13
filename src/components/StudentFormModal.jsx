@@ -47,9 +47,10 @@ const studentFormSchema = z.object({
   disability_type: z.string().optional(),
 });
 
-export function StudentFormModal({ onSuccess, onCancel, open, onOpenChange }) {
+export function StudentFormModal({ student, onSuccess, onCancel, open, onOpenChange }) {
   const { session } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isEditing = !!student;
 
   const form = useForm({
     resolver: zodResolver(studentFormSchema),
@@ -60,12 +61,24 @@ export function StudentFormModal({ onSuccess, onCancel, open, onOpenChange }) {
     }
   });
 
-  // Reset form when modal opens
+  // Reset form and populate with student data when modal opens or student changes
   useEffect(() => {
     if (open) {
-      form.reset();
+      if (student) {
+        form.reset({
+          name: student.name,
+          grade_level: student.grade_level,
+          disability_type: student.disability_type || '',
+        });
+      } else {
+        form.reset({
+          name: '',
+          grade_level: '',
+          disability_type: '',
+        });
+      }
     }
-  }, [open, form]);
+  }, [open, student, form]);
 
   const onSubmit = async (data) => {
     if (!session) return;
@@ -73,8 +86,12 @@ export function StudentFormModal({ onSuccess, onCancel, open, onOpenChange }) {
     setIsSubmitting(true);
     
     try {
-      const response = await authorizedFetch('/students/student', session?.access_token, {
-        method: 'POST',
+      const url = isEditing 
+        ? `/students/student/${student.id}`
+        : '/students/student';
+      
+      const response = await authorizedFetch(url, session?.access_token, {
+        method: isEditing ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -82,10 +99,10 @@ export function StudentFormModal({ onSuccess, onCancel, open, onOpenChange }) {
       });
       
       if (!response.ok) {
-        throw new Error(`Failed to create student: ${response.status}`);
+        throw new Error(`Failed to ${isEditing ? 'update' : 'create'} student: ${response.status}`);
       }
       
-      toast.success('Student added successfully');
+      toast.success(`Student ${isEditing ? 'updated' : 'added'} successfully`);
       form.reset();
       onOpenChange(false);
       
@@ -93,8 +110,8 @@ export function StudentFormModal({ onSuccess, onCancel, open, onOpenChange }) {
         onSuccess();
       }
     } catch (error) {
-      console.error('Error creating student:', error);
-      toast.error('Failed to add student. Please try again.');
+      console.error(`Error ${isEditing ? 'updating' : 'creating'} student:`, error);
+      toast.error(`Failed to ${isEditing ? 'update' : 'add'} student. Please try again.`);
     } finally {
       setIsSubmitting(false);
     }
@@ -112,14 +129,14 @@ export function StudentFormModal({ onSuccess, onCancel, open, onOpenChange }) {
       <DialogTrigger asChild>
         <Button variant="outline">
           <Plus className="h-4 w-4" />
-          Add Student
+          {isEditing ? 'Edit Student' : 'Add Student'}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add New Student</DialogTitle>
+          <DialogTitle>{isEditing ? 'Edit Student' : 'Add New Student'}</DialogTitle>
           <DialogDescription>
-            Enter the student&apos;s information.
+            {isEditing ? 'Update the student\'s information.' : 'Enter the student\'s information.'}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -147,7 +164,7 @@ export function StudentFormModal({ onSuccess, onCancel, open, onOpenChange }) {
                     <FormLabel>Grade Level</FormLabel>
                     <Select 
                       onValueChange={(val) => field.onChange(parseInt(val))} 
-                      defaultValue={field.value?.toString()}
+                      value={field.value?.toString()}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -191,7 +208,7 @@ export function StudentFormModal({ onSuccess, onCancel, open, onOpenChange }) {
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Adding...' : 'Add Student'}
+                {isSubmitting ? (isEditing ? 'Updating...' : 'Adding...') : (isEditing ? 'Update Student' : 'Add Student')}
               </Button>
             </DialogFooter>
           </form>
