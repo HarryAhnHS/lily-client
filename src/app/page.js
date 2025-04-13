@@ -32,8 +32,8 @@ import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
 import { toast } from "sonner";
 import { MultiAnalysisReviewModal } from "@/components/MultiAnalysisReviewModal";
-import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { ManualLogForm } from "@/components/ManualLogForm";
 
 // Import from @google/genai
 import {
@@ -79,7 +79,7 @@ export default function Home() {
     }
   }, [loading, session, router]);
 
-  // Fetch students from API
+  // Fetch students list
   useEffect(() => {
     const fetchStudents = async () => {
       if (!session) return;
@@ -317,6 +317,9 @@ export default function Home() {
           </div>
           <h2 className="text-xl text-white/80">Good morning, {session?.user?.email}</h2>
         </div>
+
+        {/* Manual Log Form - prop students list */}
+        <ManualLogForm students={students}/>
 
         {/* Recording Section */}
         <div className="space-y-6">

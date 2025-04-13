@@ -129,7 +129,7 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
     setIsLoadingSubjectAreas(true);
     
     try {
-      const response = await authorizedFetch('/objectives/subject-areas', session?.access_token, {
+      const response = await authorizedFetch('/subject-areas/subject-areas', session?.access_token, {
         headers: {
           'Content-Type': 'application/json',
         },
@@ -234,7 +234,7 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
     setIsCreatingSubjectArea(true);
     
     try {
-      const response = await authorizedFetch('/objectives/subject-area', session?.access_token, {
+      const response = await authorizedFetch('/subject-areas/subject-area', session?.access_token, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
