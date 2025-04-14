@@ -14,7 +14,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   Form,
@@ -47,7 +46,7 @@ const studentFormSchema = z.object({
   disability_type: z.string().optional(),
 });
 
-export function StudentFormModal({ student, onSuccess, onCancel, open, onOpenChange }) {
+export function StudentFormModal({ student, onSuccess, open, onOpenChange }) {
   const { session } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isEditing = !!student;
@@ -119,19 +118,10 @@ export function StudentFormModal({ student, onSuccess, onCancel, open, onOpenCha
 
   const handleCancel = () => {
     onOpenChange(false);
-    if (onCancel) {
-      onCancel();
-    }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>
-        <Button variant="outline">
-          <Plus className="h-4 w-4" />
-          {isEditing ? 'Edit Student' : 'Add Student'}
-        </Button>
-      </DialogTrigger>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Edit Student' : 'Add New Student'}</DialogTitle>

@@ -1,15 +1,39 @@
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, Check, Activity, MoreHorizontal, X } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Pencil, Trash2 } from 'lucide-react';
+import { authorizedFetch } from '@/services/api';
+import { X, Activity } from 'lucide-react';
+import { toast } from 'sonner';
+import { SortFilterSessionsTable } from '@/components/SortFilterSessionsTable';
+import { useAuth } from '@/app/context/auth-context';
+import { Badge } from '@/components/ui/badge';
 
-export function ObjectiveView({ objective, onBack, onEdit, onDelete }) {
+export default function ObjectiveView({ objective, onBack }) {
+  const [sessions, setSessions] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { session } = useAuth();
+
+  const fetchSessions = async () => {
+    if (!session) return;
+    
+    setIsLoading(true);
+    try {
+      const response = await authorizedFetch(`/sessions/objective/${objective.id}`, session?.access_token);
+      if (!response.ok) throw new Error('Failed to fetch sessions');
+      const data = await response.json();
+      setSessions(data);
+    } catch (error) {
+      console.error('Error fetching sessions:', error);
+      toast.error('Failed to load sessions');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSessions();
+  }, [session, objective.id]);
+
   const formatDate = (dateString) => {
     if (!dateString) return 'Not specified';
     
@@ -21,124 +45,97 @@ export function ObjectiveView({ objective, onBack, onEdit, onDelete }) {
     });
   };
 
+  if (!objective) return null;
+
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-4xl bg-black/40 rounded-3xl overflow-hidden">
-        {/* Header */}
-        <div className="p-6 border-b border-white/10">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="rounded-full bg-white/10 text-white/80 hover:bg-white/20"
-                onClick={onBack}
-              >
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-              <h1 className="text-2xl font-semibold text-white/80">{objective.title || 'Untitled Objective'}</h1>
-            </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full bg-white/10 text-white/80 hover:bg-white/20">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-40 bg-black/90 border-white/10">
-                <DropdownMenuItem 
-                  className="text-white/80 focus:text-white focus:bg-white/10 cursor-pointer"
-                  onClick={onEdit}
-                >
-                  <Pencil className="h-4 w-4 mr-2" />
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  className="text-red-400 focus:text-red-400 focus:bg-white/10 cursor-pointer"
-                  onClick={onDelete}
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
+      <div className="relative w-full max-w-6xl bg-gradient-to-br from-green-950/50 via-yellow-950/50 to-black backdrop-blur-xl rounded-3xl overflow-hidden">
+        {/* Close button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onBack}
+          className="absolute right-4 top-4 rounded-full bg-white/10 text-white/80 hover:bg-white/20 z-10"
+        >
+          <X className="h-4 w-4" />
+        </Button>
 
-        {/* Content */}
         <div className="max-h-[90vh] overflow-auto">
           <div className="p-6 space-y-6">
-            {/* Overview Section */}
-            <div className="bg-black/40 rounded-xl p-6 space-y-4">
-              <h2 className="text-lg font-medium text-white/80">Overview</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-white/60">Subject Area</p>
-                  <p className="text-white/90">{objective.subject_area?.name || 'Not specified'}</p>
+            {/* Header */}
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-lg bg-white/10 flex items-center justify-center">
+                <Activity className="w-6 h-6 text-white/80" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-2xl font-semibold text-white/80">
+                    {objective.description}
+                  </h1>
+                  <Badge variant="outline" className="text-xs bg-white/10">
+                    {objective.objective_type}
+                  </Badge>
                 </div>
-                <div>
-                  <p className="text-sm text-white/60">Objective Type</p>
-                  <p className="text-white/90">{objective.objective_type || 'Not specified'}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-white/60">Created</p>
-                  <p className="text-white/90">{formatDate(objective.createdAt)}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-white/60">Status</p>
-                  <div className="flex items-center gap-2">
-                    {objective.completed ? (
-                      <div className="w-4 h-4 rounded-full bg-green-500/20 flex items-center justify-center">
-                        <Check className="w-3 h-3 text-green-500" />
-                      </div>
-                    ) : (
-                      <div className="w-4 h-4">
-                        <Activity className="w-3 h-3 text-white/40" />
-                      </div>
-                    )}
-                    <span className="text-white/90">{objective.completed ? 'Completed' : 'In Progress'}</span>
-                  </div>
-                </div>
+                <p className="text-sm text-white/60">Created {formatDate(objective.created_at)}</p>
               </div>
             </div>
 
-            {/* Progress Section */}
-            <div className="bg-black/40 rounded-xl p-6 space-y-4">
-              <h2 className="text-lg font-medium text-white/80">Progress</h2>
-              <div className="space-y-4">
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm text-white/60">Overall Progress</span>
-                    <span className="text-sm font-medium text-white/80">
-                      {objective.objective_progress || 0}%
-                    </span>
+            {/* Details Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Left Column - Progress */}
+              <div className="space-y-6">
+                <div className="bg-black/40 rounded-xl p-6 space-y-4">
+                  <h2 className="text-lg font-medium text-white/80">Progress Requirements</h2>
+                  <div className="space-y-4">
+                    {objective.objective_type === 'trial' && (
+                      <div>
+                        <p className="text-sm text-white/60">Target Accuracy</p>
+                        <p className="text-white/90">{objective.target_accuracy * 100}%</p>
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-sm text-white/60">Consistency Target</p>
+                      <p className="text-white/90">
+                        {objective.target_consistency_successes} successes in {objective.target_consistency_trials} trials
+                      </p>
+                    </div>
                   </div>
-                  <Progress value={objective.objective_progress || 0} className="h-2 bg-white/10" />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              </div>
+
+              {/* Right Column - Stats */}
+              <div className="bg-black/40 rounded-xl p-6 space-y-4">
+                <h2 className="text-lg font-medium text-white/80">Current Progress</h2>
+                <div className="space-y-4">
                   <div>
-                    <p className="text-sm text-white/60">Target Accuracy</p>
-                    <p className="text-white/90">{objective.target_accuracy || 'Not specified'}%</p>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm text-white/60">Session Count</span>
+                      <span className="text-sm font-medium text-white/80">
+                        {sessions.length} sessions
+                      </span>
+                    </div>
+                    <Progress value={sessions.length > 0 ? (sessions.length / 10) * 100 : 0} className="h-2 bg-white/10" />
                   </div>
                   <div>
-                    <p className="text-sm text-white/60">Consistency Target</p>
+                    <p className="text-sm text-white/60">Last Session</p>
                     <p className="text-white/90">
-                      {objective.target_consistency_successes || 0}/{objective.target_consistency_trials || 0} successes
+                      {sessions.length > 0 
+                        ? formatDate(sessions[0].created_at)
+                        : 'No sessions yet'}
                     </p>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Description Section */}
+            {/* Sessions Table */}
             <div className="bg-black/40 rounded-xl p-6 space-y-4">
-              <h2 className="text-lg font-medium text-white/80">Description</h2>
-              <p className="text-white/90 whitespace-pre-wrap">{objective.description}</p>
-            </div>
-
-            {/* Goal Section */}
-            <div className="bg-black/40 rounded-xl p-6 space-y-4">
-              <h2 className="text-lg font-medium text-white/80">Goal</h2>
-              <p className="text-white/90 whitespace-pre-wrap">{objective.goal}</p>
+              <h2 className="text-lg font-medium text-white/80">Sessions</h2>
+              <SortFilterSessionsTable 
+                sessions={sessions}
+                showActions={true}
+                onSuccess={fetchSessions}
+              />
             </div>
           </div>
         </div>

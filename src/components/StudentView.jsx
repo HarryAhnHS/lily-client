@@ -8,9 +8,38 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Pencil, Trash2 } from 'lucide-react';
+import { SortFilterSessionsTable } from '@/components/SortFilterSessionsTable';
+import { useState, useEffect } from 'react';
+import { authorizedFetch } from '@/services/api';
+import { useAuth } from '@/app/context/auth-context';
+import { toast } from 'sonner';
 
-export function StudentView({ student, onBack, onAddObjective, onEdit, onDelete }) {
+export function StudentView({ student, onBack, onAddObjective, onEdit, onDelete, onObjectiveClick }) {
+  const { session } = useAuth();
+  const [sessions, setSessions] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const objectives = student.objectives || [];
+
+  const fetchSessions = async () => {
+    if (!session) return;
+    
+    setIsLoading(true);
+    try {
+      const response = await authorizedFetch(`/sessions/student/${student.id}`, session?.access_token);
+      if (!response.ok) throw new Error('Failed to fetch sessions');
+      const data = await response.json();
+      setSessions(data);
+    } catch (error) {
+      console.error('Error fetching sessions:', error);
+      toast.error('Failed to load sessions');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSessions();
+  }, [session, student.id]);
 
   const formatDate = (dateString) => {
     if (!dateString) return 'No sessions yet';
@@ -25,7 +54,7 @@ export function StudentView({ student, onBack, onAddObjective, onEdit, onDelete 
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="relative w-full max-w-4xl bg-gradient-to-br from-green-950/50 via-yellow-950/50 to-black backdrop-blur-xl rounded-3xl overflow-hidden">
+      <div className="relative w-full max-w-6xl bg-gradient-to-br from-green-950/50 via-yellow-950/50 to-black backdrop-blur-xl rounded-3xl overflow-hidden">
         {/* Close button */}
         <Button
           variant="ghost"
@@ -111,30 +140,78 @@ export function StudentView({ student, onBack, onAddObjective, onEdit, onDelete 
                   {objectives.map((objective) => (
                     <div
                       key={objective.id}
-                      className="bg-white/5 rounded-lg p-4 flex items-center justify-between"
+                      className="bg-white/5 rounded-lg p-4 flex items-center justify-between cursor-pointer transition-all hover:bg-white/10 group"
                     >
-                      <span className="text-sm text-white/80">{objective.description}</span>
-                      {objective.completed ? (
-                        <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center">
-                          <Check className="w-4 h-4 text-green-500" />
-                        </div>
-                      ) : (
-                        <div className="w-6 h-6">
-                          <Activity className="w-4 h-4 text-white/40" />
-                        </div>
-                      )}
+                      <div className="flex-1" onClick={() => onObjectiveClick(objective)}>
+                        <span className="text-sm text-white/80">{objective.description}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {objective.completed ? (
+                          <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center">
+                            <Check className="w-4 h-4 text-green-500" />
+                          </div>
+                        ) : (
+                          <div className="w-6 h-6">
+                            <Activity className="w-4 h-4 text-white/40" />
+                          </div>
+                        )}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-6 w-6 rounded-full bg-white/10 text-white/80 hover:bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <MoreHorizontal className="h-3 w-3" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-40 bg-black/90 border-white/10">
+                            <DropdownMenuItem 
+                              className="text-white/80 focus:text-white focus:bg-white/10 cursor-pointer"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onEdit(objective);
+                              }}
+                            >
+                              <Pencil className="h-4 w-4 mr-2" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              className="text-red-400 focus:text-red-400 focus:bg-white/10 cursor-pointer"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onDelete(objective);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </div>
                   ))}
                   <Button
                     variant="ghost"
                     className="w-full bg-white/5 text-white/60 hover:bg-white/10 hover:text-white/80"
-                    onClick={onAddObjective}
+                    onClick={() => onAddObjective(student)}
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     Add Objective
                   </Button>
                 </div>
               </div>
+            </div>
+
+            {/* Sessions Table */}
+            <div className="bg-black/40 rounded-xl p-6 space-y-4">
+              <h2 className="text-lg font-medium text-white/80">Sessions</h2>
+              <SortFilterSessionsTable 
+                sessions={sessions}
+                showActions={true}
+                onSuccess={fetchSessions}
+              />
             </div>
           </div>
         </div>

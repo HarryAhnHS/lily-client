@@ -1,17 +1,14 @@
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { MoreHorizontal, Check, Plus, Activity, Pencil, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ObjectiveItem } from './ObjectiveItem';
 
-export function StudentCard({ student, onAddObjective, onClick, onEdit, onDelete, onEditObjective, onDeleteObjective }) {
-  const objectives = student.objectives || [];
-
+export function StudentCard({ student, onClick, onEdit, onDelete }) {
   const formatDate = (dateString) => {
     if (!dateString) return 'No sessions yet';
     
@@ -24,7 +21,6 @@ export function StudentCard({ student, onAddObjective, onClick, onEdit, onDelete
   };
 
   const handleMoreClick = (e) => {
-    // Prevent the card click event from firing when clicking the dropdown
     e.stopPropagation();
   };
 
@@ -80,31 +76,6 @@ export function StudentCard({ student, onAddObjective, onClick, onEdit, onDelete
           value={student.progress || 65} 
           className="h-2 bg-white/10"
         />
-      </div>
-
-      <div className="space-y-2">
-        <div className="flex justify-between items-center">
-          <span className="text-sm text-white/60">Objectives:</span>
-          <span className="text-sm text-white/60">
-            {objectives.filter(o => o.completed).length}/{objectives.length}
-          </span>
-        </div>
-        {objectives.map((objective) => (
-          <ObjectiveItem
-            key={objective.id}
-            objective={objective}
-            onEdit={(objective) => onEditObjective(objective)}
-            onDelete={(objective) => onDeleteObjective(objective)}
-          />
-        ))}
-        <Button
-          variant="ghost"
-          className="w-full bg-white/5 text-white/60 hover:bg-white/10 hover:text-white/80"
-          onClick={onAddObjective}
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add Objective
-        </Button>
       </div>
     </div>
   );

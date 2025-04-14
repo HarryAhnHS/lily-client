@@ -39,19 +39,31 @@ import { toast } from 'sonner';
 
 // Form schema for objective
 const objectiveFormSchema = z.object({
-  studentId: z.string({ required_error: 'Please select a student.' }),
-  subjectArea: z.string({ required_error: 'Please select a subject area.' }),
-  goal: z.string({ required_error: 'Please select a goal.' }),
+  studentId: z.string({ 
+    required_error: 'Please select a student.' 
+  }).min(1, 'Please select a student.'),
+  subjectArea: z.string({ 
+    required_error: 'Please select a subject area.' 
+  }).min(1, 'Please select a subject area.'),
+  goal: z.string({ 
+    required_error: 'Please select a goal.' 
+  }).min(1, 'Please select a goal.'),
   objectiveDescription: z.string().min(10, {
     message: 'Objective description must be at least 10 characters.',
   }),
-  objectiveType: z.enum(['binary', 'trial']),
-  targetAccuracy: z.number().min(0).max(1),
-  targetConsistencyTrials: z.number().int().positive(),
-  targetConsistencySuccesses: z.number().int().positive(),
+  objectiveType: z.enum(['binary', 'trial'], {
+    required_error: 'Please select an objective type.',
+  }),
+  targetAccuracy: z.number().min(0).max(100).optional(),
+  targetConsistencyTrials: z.number().int().positive({
+    required_error: 'Please enter the number of consistency trials.',
+  }),
+  targetConsistencySuccesses: z.number().int().positive({
+    required_error: 'Please enter the number of consistency successes.',
+  }),
 });
 
-export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpenChange, onStudentOpenChange }) {
+export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpenChange, onStudentOpenChange, selectedStudentForEdit }) {
   const { session } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingStudents, setIsLoadingStudents] = useState(false);
@@ -100,6 +112,19 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
           targetConsistencyTrials: objective.target_consistency_trials,
           targetConsistencySuccesses: objective.target_consistency_successes
         });
+      } else if (selectedStudentForEdit) {
+        // If no objective but student is provided, preselect the student
+        setSelectedStudent(selectedStudentForEdit);
+        form.reset({
+          studentId: selectedStudentForEdit.id,
+          subjectArea: '',
+          goal: '',
+          objectiveDescription: '',
+          objectiveType: 'binary',
+          targetAccuracy: 0.8,
+          targetConsistencyTrials: 4,
+          targetConsistencySuccesses: 5
+        });
       } else {
         setSelectedStudent(null);
         form.reset({
@@ -114,7 +139,9 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
         });
       }
     }
-  }, [open, objective, form, students]);
+  }, [open, objective, form, students, selectedStudentForEdit]);
+
+  console.log("selectedStudentForEdit", selectedStudentForEdit);
 
   // Fetch subject areas when modal opens
   useEffect(() => {
@@ -183,6 +210,12 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
   const onSubmit = async (data) => {
     if (!session) return;
     
+    // Additional validation to ensure all dropdowns are selected
+    if (!data.studentId || !data.subjectArea || !data.goal || !data.objectiveType) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
     setIsSubmitting(true);
     
     try {
@@ -190,19 +223,21 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
         ? `/objectives/objective/${objective.id}`
         : '/objectives/objective';
 
+      const payload = {
+        student_id: data.studentId,
+        goal_id: data.goal,
+        subject_area_id: data.subjectArea,
+        description: data.objectiveDescription,
+        objective_type: data.objectiveType,
+        target_accuracy: data.objectiveType === 'trial' && data.targetAccuracy ? data.targetAccuracy : 1,
+        target_consistency_trials: data.targetConsistencyTrials,
+        target_consistency_successes: data.targetConsistencySuccesses
+      };
+
       const response = await authorizedFetch(url, session?.access_token, {
         method: isEditing ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          student_id: data.studentId,
-          goal_id: data.goal,
-          subject_area_id: data.subjectArea,
-          description: data.objectiveDescription,
-          objective_type: data.objectiveType,
-          target_accuracy: data.targetAccuracy,
-          target_consistency_trials: data.targetConsistencyTrials,
-          target_consistency_successes: data.targetConsistencySuccesses
-        }),
+        body: JSON.stringify(payload),
       });
       
       if (!response.ok) {
@@ -329,7 +364,7 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
                 name="studentId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Student</FormLabel>
+                    <FormLabel>Student <span className="text-red-500">*</span></FormLabel>
                     <div className="flex gap-2">
                       <Select 
                         onValueChange={(value) => {
@@ -597,11 +632,11 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
                 name="objectiveType"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Objective Type</FormLabel>
+                    <FormLabel>Objective Type <span className="text-red-500">*</span></FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select type" />
+                          <SelectValue placeholder="Select an objective type" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -609,32 +644,50 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
                         <SelectItem value="trial">Trial</SelectItem>
                       </SelectContent>
                     </Select>
+                    <FormDescription>
+                      Binary: Simple yes/no or correct/incorrect outcomes. Trial: Multiple attempts with accuracy tracking.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="targetAccuracy"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Target Accuracy</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        max="1"
-                        {...field}
-                        value={field.value ?? ''}
-                        onChange={(e) => field.onChange(parseFloat(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {form.watch('objectiveType') === 'trial' && (
+                <FormField
+                  control={form.control}
+                  name="targetAccuracy"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Target Accuracy (%)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="1"
+                          min="0"
+                          max="100"
+                          {...field}
+                          value={field.value ? Math.round(field.value * 100) : ''}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (value === '') {
+                              field.onChange('');
+                            } else {
+                              const percentage = parseFloat(value);
+                              if (!isNaN(percentage)) {
+                                field.onChange(percentage / 100);
+                              }
+                            }
+                          }}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        The minimum accuracy percentage required for success (e.g., 80 for 80%).
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
 
               <FormField
                 control={form.control}
@@ -651,6 +704,9 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
                         onChange={(e) => field.onChange(parseInt(e.target.value))}
                       />
                     </FormControl>
+                    <FormDescription>
+                      Number of consecutive trials required to demonstrate consistency.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -671,6 +727,9 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
                         onChange={(e) => field.onChange(parseInt(e.target.value))}
                       />
                     </FormControl>
+                    <FormDescription>
+                      Number of successful trials required within the consistency period.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
