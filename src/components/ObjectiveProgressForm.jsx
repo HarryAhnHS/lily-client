@@ -42,18 +42,30 @@ export function ObjectiveProgressForm({ objectives, onBack, onSuccess }) {
         const isBinary = objective.objective_type === 'binary';
         const successValue = formData[objective.id]?.success === 'yes';
         
-        return {
+        const basePayload = {
           student_id: objective.student_id,
           objective_id: objective.id,
           memo: formData[objective.id]?.memo || '',
           created_at: new Date().toISOString(),
-          trials_completed: isBinary
-            ? (successValue ? 1 : 0)
-            : parseInt(formData[objective.id]?.successes || 0),
-          trials_total: isBinary
-            ? 1
-            : parseInt(formData[objective.id]?.trials || objective.target_consistency_trials)
         };
+
+        if (isBinary) {
+          return {
+            ...basePayload,
+            trials_completed: successValue ? 1 : 0,
+            trials_total: 1
+          };
+        } else {
+          const trialsCompleted = parseInt(formData[objective.id]?.successes || 0);
+          const trialsTotal = parseInt(formData[objective.id]?.trials || objective.target_consistency_trials);
+          return {
+            ...basePayload,
+            objective_progress: {
+              trials_completed: trialsCompleted,
+              trials_total: trialsTotal
+            }
+          };
+        }
       });
 
       const response = await authorizedFetch('/sessions/session/log', session?.access_token, {

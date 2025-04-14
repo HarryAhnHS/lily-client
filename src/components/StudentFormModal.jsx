@@ -67,7 +67,7 @@ export function StudentFormModal({ student, onSuccess, open, onOpenChange }) {
       if (student) {
         form.reset({
           name: student.name,
-          grade_level: student.grade_level,
+          grade_level: student.grade_level.toString(),
           disability_type: student.disability_type || '',
         });
       } else {

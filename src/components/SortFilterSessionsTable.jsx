@@ -45,6 +45,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { useAuth } from '@/app/context/auth-context';
 import { toast } from 'sonner';
 import { SessionFormModal } from '@/components/SessionFormModal';
+import { authorizedFetch } from '@/services/api';
 
 export function SortFilterSessionsTable({ 
   sessions, 
@@ -66,6 +67,8 @@ export function SortFilterSessionsTable({
   const [selectedSession, setSelectedSession] = useState(null);
   const [showSessionModal, setShowSessionModal] = useState(false);
 
+  console.log("sessions:", sessions);
+
   const handleDateSelect = (range) => {
     setDateRange(range || { from: undefined, to: undefined });
   };
@@ -79,19 +82,37 @@ export function SortFilterSessionsTable({
   };
 
   const getUniqueStudents = () => {
-    return [...new Set(sessions.map(session => session.student))];
+    const uniqueStudents = new Map();
+    sessions.forEach(session => {
+      if (!uniqueStudents.has(session.student.id)) {
+        uniqueStudents.set(session.student.id, session.student);
+      }
+    });
+    return Array.from(uniqueStudents.values());
   };
 
   const getUniqueSubjects = () => {
-    return [...new Set(sessions.map(session => session.objective.subject_area))];
+    const uniqueSubjects = new Map();
+    sessions.forEach(session => {
+      if (!uniqueSubjects.has(session.objective.subject_area.id)) {
+        uniqueSubjects.set(session.objective.subject_area.id, session.objective.subject_area);
+      }
+    });
+    return Array.from(uniqueSubjects.values());
+  };
+
+  const getUniqueGoals = () => {
+    const uniqueGoals = new Map();
+    sessions.forEach(session => {
+      if (session.objective.goal && !uniqueGoals.has(session.objective.goal.id)) {
+        uniqueGoals.set(session.objective.goal.id, session.objective.goal);
+      }
+    });
+    return Array.from(uniqueGoals.values());
   };
 
   const getUniqueObjectiveTypes = () => {
     return [...new Set(sessions.map(session => session.objective.objective_type))];
-  };
-
-  const getUniqueGoals = () => {
-    return [...new Set(sessions.map(session => session.objective.goal))];
   };
 
   const formatDate = (dateString) => {
@@ -115,10 +136,10 @@ export function SortFilterSessionsTable({
         session.objective.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (session.objective.goal && session.objective.goal.title.toLowerCase().includes(searchTerm.toLowerCase()));
       
-      const matchesStudent = filterStudent === 'all' ? true : session.student.name === filterStudent;
-      const matchesSubject = filterSubject === 'all' ? true : session.objective.subject_area.name === filterSubject;
+      const matchesStudent = filterStudent === 'all' ? true : session.student.id === filterStudent;
+      const matchesSubject = filterSubject === 'all' ? true : session.objective.subject_area.id === filterSubject;
       const matchesType = filterType === 'all' ? true : session.objective.objective_type === filterType;
-      const matchesGoal = filterGoal === 'all' ? true : session.objective.goal.title === filterGoal;
+      const matchesGoal = filterGoal === 'all' ? true : (session.objective.goal && session.objective.goal.id === filterGoal);
       
       const sessionDate = new Date(session.created_at);
       const matchesDate = (!dateRange.from || sessionDate >= dateRange.from) && 
@@ -293,7 +314,7 @@ export function SortFilterSessionsTable({
                     <SelectContent>
                       <SelectItem value="all">All Students</SelectItem>
                       {getUniqueStudents().map((student) => (
-                        <SelectItem key={student.id} value={student.name}>
+                        <SelectItem key={student.id} value={student.id}>
                           {student.name}
                         </SelectItem>
                       ))}
@@ -310,7 +331,7 @@ export function SortFilterSessionsTable({
                     <SelectContent>
                       <SelectItem value="all">All Subjects</SelectItem>
                       {getUniqueSubjects().map((subject) => (
-                        <SelectItem key={subject.id} value={subject.name}>
+                        <SelectItem key={subject.id} value={subject.id}>
                           {subject.name}
                         </SelectItem>
                       ))}
@@ -344,7 +365,7 @@ export function SortFilterSessionsTable({
                     <SelectContent>
                       <SelectItem value="all">All Goals</SelectItem>
                       {getUniqueGoals().map((goal) => (
-                        <SelectItem key={goal.id} value={goal.title}>
+                        <SelectItem key={goal.id} value={goal.id}>
                           {goal.title}
                         </SelectItem>
                       ))}
@@ -391,6 +412,7 @@ export function SortFilterSessionsTable({
               <TableHead className="text-muted-foreground">Type</TableHead>
               <TableHead className="text-muted-foreground">Outcome</TableHead>
               <TableHead className="text-muted-foreground">Success</TableHead>
+              <TableHead className="text-muted-foreground">Memo</TableHead>
               {showActions && <TableHead className="w-[50px]"></TableHead>}
             </TableRow>
           </TableHeader>
@@ -398,7 +420,7 @@ export function SortFilterSessionsTable({
             {getFilteredAndSortedSessions().length === 0 ? (
               <TableRow>
                 <TableCell 
-                  colSpan={showActions ? 9 : 8} 
+                  colSpan={showActions ? 10 : 9} 
                   className="h-24 text-center text-muted-foreground"
                 >
                   No sessions available
@@ -406,7 +428,10 @@ export function SortFilterSessionsTable({
               </TableRow>
             ) : (
               getFilteredAndSortedSessions().map((session) => (
-                <TableRow key={session.id} className="hover:bg-muted/50">
+                <TableRow 
+                  key={`${session.id}-${session.objective_progress.id}`} 
+                  className="hover:bg-muted/50"
+                >
                   <TableCell className="font-medium">{formatDate(session.created_at)}</TableCell>
                   <TableCell>{session.student.name}</TableCell>
                   <TableCell>{session.objective.subject_area.name}</TableCell>
@@ -418,6 +443,9 @@ export function SortFilterSessionsTable({
                     <Badge variant={session.objective_progress.is_success ? "success" : "destructive"}>
                       {session.objective_progress.is_success ? "Yes" : "No"}
                     </Badge>
+                  </TableCell>
+                  <TableCell className="max-w-[200px] truncate">
+                    {session.memo || '-'}
                   </TableCell>
                   {showActions && (
                     <TableCell>

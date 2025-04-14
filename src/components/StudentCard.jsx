@@ -1,5 +1,4 @@
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -30,9 +29,17 @@ export function StudentCard({ student, onClick, onEdit, onDelete }) {
       onClick={onClick}
     >
       <div className="flex justify-between items-start">
-        <div>
+        <div className="space-y-1">
           <h3 className="text-xl font-semibold text-white/90">{student.name}</h3>
-          <p className="text-sm text-white/60">{formatDate(student.last_session_date)}</p>
+          <div className="flex items-center gap-2 text-sm text-white/60">
+            <span>Grade {student.grade_level}</span>
+            {student.disability_type && (
+              <span>• {student.disability_type}</span>
+            )}
+          </div>
+          <p className="text-sm text-white/60">
+            {student.objectives?.length || 0} objectives
+          </p>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild onClick={handleMoreClick}>
@@ -63,19 +70,6 @@ export function StudentCard({ student, onClick, onEdit, onDelete }) {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      </div>
-
-      <div className="space-y-2">
-        <div className="flex justify-between items-center">
-          <span className="text-sm text-white/60">Overall Progress:</span>
-          <span className="text-sm font-medium text-white/80">
-            {student.progress || 65}%
-          </span>
-        </div>
-        <Progress 
-          value={student.progress || 65} 
-          className="h-2 bg-white/10"
-        />
       </div>
     </div>
   );
