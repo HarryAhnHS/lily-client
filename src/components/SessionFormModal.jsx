@@ -55,9 +55,8 @@ const sessionFormSchema = z.object({
     required_error: "Please select an objective",
   }),
   memo: z.string().optional(),
-  trials_completed: z.number().int().min(0).optional(),
-  trials_total: z.number().int().min(0).optional(),
-  is_success: z.boolean().optional(),
+  trials_completed: z.number().int().min(0),
+  trials_total: z.number().int().min(0),
 });
 
 export function SessionFormModal({ session, open, onOpenChange, onSuccess }) {
@@ -75,8 +74,7 @@ export function SessionFormModal({ session, open, onOpenChange, onSuccess }) {
       objective_id: '',
       memo: '',
       trials_completed: 0,
-      trials_total: 0,
-      is_success: false,
+      trials_total: 1,
     },
   });
 
@@ -122,7 +120,6 @@ export function SessionFormModal({ session, open, onOpenChange, onSuccess }) {
         memo: session.memo || '',
         trials_completed: session.objective_progress.trials_completed,
         trials_total: session.objective_progress.trials_total,
-        is_success: session.objective_progress.is_success,
       });
       setSelectedObjectiveType(session.objective.objective_type);
     }
@@ -133,12 +130,9 @@ export function SessionFormModal({ session, open, onOpenChange, onSuccess }) {
     
     setIsSubmitting(true);
     try {
-      // Combine date and time
       const datetime = new Date(data.date);
       const [hours, minutes] = data.time.split(':');
       datetime.setHours(parseInt(hours, 10), parseInt(minutes, 10));
-
-      const selectedObjective = objectives.find(obj => obj.id === data.objective_id);
 
       const payload = {
         student_id: session.student.id,
@@ -146,9 +140,8 @@ export function SessionFormModal({ session, open, onOpenChange, onSuccess }) {
         memo: data.memo,
         created_at: datetime.toISOString(),
         objective_progress: {
-          is_success: data.is_success,
-          trials_completed: selectedObjective.objective_type === 'trial' ? data.trials_completed : (data.is_success ? 1 : 0),
-          trials_total: selectedObjective.objective_type === 'trial' ? data.trials_total : 1,
+          trials_completed: data.trials_completed,
+          trials_total: data.trials_total,
         },
       };
 
@@ -201,14 +194,14 @@ export function SessionFormModal({ session, open, onOpenChange, onSuccess }) {
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="space-y-4">
+            <div className="space-y-4 w-full">
               {/* Date and Time */}
-              <div className="flex gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="date"
                   render={({ field }) => (
-                    <FormItem className="flex-1">
+                    <FormItem>
                       <FormLabel>Date</FormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
@@ -250,10 +243,10 @@ export function SessionFormModal({ session, open, onOpenChange, onSuccess }) {
                   control={form.control}
                   name="time"
                   render={({ field }) => (
-                    <FormItem className="flex-1">
+                    <FormItem>
                       <FormLabel>Time</FormLabel>
                       <FormControl>
-                        <Input type="time" {...field} />
+                        <Input type="time" {...field} className="w-full" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -261,12 +254,12 @@ export function SessionFormModal({ session, open, onOpenChange, onSuccess }) {
                 />
               </div>
 
-              {/* Objective Selection */}
+              {/* Objective Selection with fixed width */}
               <FormField
                 control={form.control}
                 name="objective_id"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="w-full">
                     <FormLabel>Objective</FormLabel>
                     <Select
                       value={field.value}
@@ -274,14 +267,41 @@ export function SessionFormModal({ session, open, onOpenChange, onSuccess }) {
                       disabled={isLoadingObjectives}
                     >
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select an objective" />
+                        <SelectTrigger className="w-full">
+                          <SelectValue 
+                            placeholder="Select an objective"
+                            className="w-full truncate pr-2"
+                          >
+                            {field.value && (
+                              <div className="w-[380px] truncate">
+                                {objectives.find(obj => obj.id === field.value)?.description}
+                              </div>
+                            )}
+                          </SelectValue>
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
+                      <SelectContent 
+                        className="w-[400px]"
+                        position="popper"
+                        side="bottom"
+                        align="start"
+                      >
                         {objectives.map((objective) => (
-                          <SelectItem key={objective.id} value={objective.id}>
-                            {objective.description} ({objective.objective_type})
+                          <SelectItem 
+                            key={objective.id} 
+                            value={objective.id}
+                            className="py-2"
+                          >
+                            <div className="flex flex-col gap-1.5">
+                              <div className="flex items-center">
+                                <span className="text-xs font-medium bg-secondary/50 px-2 py-0.5 rounded">
+                                  {objective.objective_type}
+                                </span>
+                              </div>
+                              <p className="text-sm whitespace-normal pr-4 leading-normal">
+                                {objective.description}
+                              </p>
+                            </div>
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -293,7 +313,7 @@ export function SessionFormModal({ session, open, onOpenChange, onSuccess }) {
 
               {/* Progress Section */}
               {selectedObjectiveType === 'trial' ? (
-                <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="trials_completed"
@@ -306,6 +326,7 @@ export function SessionFormModal({ session, open, onOpenChange, onSuccess }) {
                             min="0"
                             {...field}
                             onChange={(e) => field.onChange(parseInt(e.target.value))}
+                            className="w-full"
                           />
                         </FormControl>
                         <FormMessage />
@@ -325,6 +346,7 @@ export function SessionFormModal({ session, open, onOpenChange, onSuccess }) {
                             min="0"
                             {...field}
                             onChange={(e) => field.onChange(parseInt(e.target.value))}
+                            className="w-full"
                           />
                         </FormControl>
                         <FormMessage />
@@ -335,22 +357,25 @@ export function SessionFormModal({ session, open, onOpenChange, onSuccess }) {
               ) : (
                 <FormField
                   control={form.control}
-                  name="is_success"
+                  name="trials_completed"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Success</FormLabel>
                       <FormControl>
                         <RadioGroup
-                          onValueChange={(value) => field.onChange(value === 'true')}
-                          value={field.value ? 'true' : 'false'}
+                          onValueChange={(value) => {
+                            field.onChange(value === 'yes' ? 1 : 0);
+                            form.setValue('trials_total', 1);
+                          }}
+                          value={field.value === 1 ? 'yes' : 'no'}
                           className="flex gap-4"
                         >
                           <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="true" id="success-yes" />
+                            <RadioGroupItem value="yes" id="success-yes" />
                             <Label htmlFor="success-yes">Yes</Label>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="false" id="success-no" />
+                            <RadioGroupItem value="no" id="success-no" />
                             <Label htmlFor="success-no">No</Label>
                           </div>
                         </RadioGroup>
@@ -371,7 +396,7 @@ export function SessionFormModal({ session, open, onOpenChange, onSuccess }) {
                     <FormControl>
                       <Textarea
                         placeholder="Add any additional notes..."
-                        className="min-h-[100px]"
+                        className="min-h-[100px] w-full"
                         {...field}
                       />
                     </FormControl>

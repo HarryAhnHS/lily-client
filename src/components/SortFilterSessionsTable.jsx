@@ -121,11 +121,8 @@ export function SortFilterSessionsTable({
   };
 
   const formatOutcome = (session) => {
-    if (session.objective.objective_type === 'trial') {
-      return `${session.objective_progress.is_success ? 'Success' : 'Failure'}`;
-    } else {
-      return session.objective_progress.is_success ? 'Success' : 'Failure';
-    }
+    const { trials_completed, trials_total } = session.objective_progress;
+    return `${trials_completed}/${trials_total}`;
   };
 
   const getFilteredAndSortedSessions = () => {
@@ -382,11 +379,11 @@ export function SortFilterSessionsTable({
         </Button>
       </div>
 
-      <div className="rounded-md border bg-card">
+      <div className="rounded-md border bg-card overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-muted/50">
-              <TableHead>
+              <TableHead className="w-[100px] min-w-[100px]">
                 <Button
                   variant="ghost"
                   onClick={() => handleSort('date')}
@@ -396,7 +393,7 @@ export function SortFilterSessionsTable({
                   <ArrowUpDown className="h-4 w-4" />
                 </Button>
               </TableHead>
-              <TableHead>
+              <TableHead className="w-[120px] min-w-[120px]">
                 <Button
                   variant="ghost"
                   onClick={() => handleSort('name')}
@@ -406,14 +403,30 @@ export function SortFilterSessionsTable({
                   <ArrowUpDown className="h-4 w-4" />
                 </Button>
               </TableHead>
-              <TableHead className="text-muted-foreground">Subject Area</TableHead>
-              <TableHead className="text-muted-foreground">Goal</TableHead>
-              <TableHead className="text-muted-foreground">Objective</TableHead>
-              <TableHead className="text-muted-foreground">Type</TableHead>
-              <TableHead className="text-muted-foreground">Outcome</TableHead>
-              <TableHead className="text-muted-foreground">Success</TableHead>
-              <TableHead className="text-muted-foreground">Memo</TableHead>
-              {showActions && <TableHead className="w-[50px]"></TableHead>}
+              <TableHead className="w-[120px] min-w-[120px] text-muted-foreground">
+                Subject Area
+              </TableHead>
+              <TableHead className="w-[150px] min-w-[150px] text-muted-foreground">
+                Goal
+              </TableHead>
+              <TableHead className="w-[250px] min-w-[250px] text-muted-foreground">
+                Objective
+              </TableHead>
+              <TableHead className="w-[80px] min-w-[80px] text-muted-foreground">
+                Type
+              </TableHead>
+              <TableHead className="w-[80px] min-w-[80px] text-muted-foreground">
+                Outcome
+              </TableHead>
+              <TableHead className="w-[80px] min-w-[80px] text-muted-foreground">
+                Success
+              </TableHead>
+              <TableHead className="w-[200px] min-w-[200px] text-muted-foreground">
+                Memo
+              </TableHead>
+              {showActions && (
+                <TableHead className="w-[50px] min-w-[50px]"></TableHead>
+              )}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -432,23 +445,41 @@ export function SortFilterSessionsTable({
                   key={`${session.id}-${session.objective_progress.id}`} 
                   className="hover:bg-muted/50"
                 >
-                  <TableCell className="font-medium">{formatDate(session.created_at)}</TableCell>
-                  <TableCell>{session.student.name}</TableCell>
-                  <TableCell>{session.objective.subject_area.name}</TableCell>
-                  <TableCell>{session.objective.goal?.title || 'N/A'}</TableCell>
-                  <TableCell>{session.objective.description}</TableCell>
-                  <TableCell>{session.objective.objective_type}</TableCell>
-                  <TableCell>{formatOutcome(session)}</TableCell>
-                  <TableCell>
+                  <TableCell className="font-medium w-[100px] min-w-[100px]">
+                    {formatDate(session.created_at)}
+                  </TableCell>
+                  <TableCell className="w-[120px] min-w-[120px]">
+                    {session.student.name}
+                  </TableCell>
+                  <TableCell className="w-[120px] min-w-[120px] whitespace-normal">
+                    {session.objective.subject_area.name}
+                  </TableCell>
+                  <TableCell className="w-[150px] min-w-[150px] whitespace-normal">
+                    {session.objective.goal?.title || 'N/A'}
+                  </TableCell>
+                  <TableCell className="w-[250px] min-w-[250px] whitespace-normal">
+                    <div className="line-clamp-3">
+                      {session.objective.description}
+                    </div>
+                  </TableCell>
+                  <TableCell className="w-[80px] min-w-[80px]">
+                    {session.objective.objective_type}
+                  </TableCell>
+                  <TableCell className="w-[80px] min-w-[80px]">
+                    {formatOutcome(session)}
+                  </TableCell>
+                  <TableCell className="w-[80px] min-w-[80px]">
                     <Badge variant={session.objective_progress.is_success ? "success" : "destructive"}>
                       {session.objective_progress.is_success ? "Yes" : "No"}
                     </Badge>
                   </TableCell>
-                  <TableCell className="max-w-[200px] truncate">
-                    {session.memo || '-'}
+                  <TableCell className="w-[200px] min-w-[200px]">
+                    <div className="line-clamp-2">
+                      {session.memo || '-'}
+                    </div>
                   </TableCell>
                   {showActions && (
-                    <TableCell>
+                    <TableCell className="w-[50px] min-w-[50px]">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" className="h-8 w-8 p-0">

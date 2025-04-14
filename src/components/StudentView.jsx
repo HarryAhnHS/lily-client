@@ -13,10 +13,17 @@ import { useState, useEffect } from 'react';
 import { authorizedFetch } from '@/services/api';
 import { useAuth } from '@/app/context/auth-context';
 import { toast } from 'sonner';
-import { useSidebarContext } from '@/app/context/sidebar-context';
 
-export function StudentView({ student, onBack, onAddObjective, onEdit, onDelete, onObjectiveClick }) {
-  const { isExpanded } = useSidebarContext();
+export function StudentView({ 
+  student, 
+  onBack, 
+  onAddObjective, 
+  onEditStudent, 
+  onDeleteStudent, 
+  onEditObjective, 
+  onDeleteObjective, 
+  onObjectiveClick 
+}) {
   const { session } = useAuth();
   const [sessions, setSessions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -77,34 +84,35 @@ export function StudentView({ student, onBack, onAddObjective, onEdit, onDelete,
   }, {});
 
   return (
-    <div className={`fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center ${isExpanded ? 'pl-48' : 'pl-16'}`}>
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="relative w-full max-w-6xl bg-gradient-to-br from-green-950/50 via-yellow-950/50 to-black backdrop-blur-xl rounded-3xl overflow-hidden">
+        {/* Close button */}
         <Button
           variant="ghost"
+          size="icon"
           onClick={onBack}
-          className="absolute left-4 top-4 text-white/80 hover:bg-white/10 flex items-center gap-2"
+          className="absolute right-4 top-4 rounded-full bg-white/10 text-white/80 hover:bg-white/20 z-10"
         >
-          <ArrowLeft className="h-4 w-4" />
-          <span>Back to Students</span>
+          <X className="h-4 w-4" />
         </Button>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="absolute right-4 top-4 rounded-full bg-white/10 text-white/80 hover:bg-white/20">
+            <Button variant="ghost" size="icon" className="absolute right-14 top-4 rounded-full bg-white/10 text-white/80 hover:bg-white/20">
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-40 bg-black/90 border-white/10">
             <DropdownMenuItem 
               className="text-white/80 focus:text-white focus:bg-white/10 cursor-pointer"
-              onClick={() => onEdit(student)}
+              onClick={() => onEditStudent(student)}
             >
               <Pencil className="h-4 w-4 mr-2" />
               Edit
             </DropdownMenuItem>
             <DropdownMenuItem 
               className="text-red-400 focus:text-red-400 focus:bg-white/10 cursor-pointer"
-              onClick={() => onDelete(student)}
+              onClick={() => onDeleteStudent(student)}
             >
               <Trash2 className="h-4 w-4 mr-2" />
               Delete
@@ -113,7 +121,7 @@ export function StudentView({ student, onBack, onAddObjective, onEdit, onDelete,
         </DropdownMenu>
 
         <div className="max-h-[90vh] overflow-auto">
-          <div className="p-6 pt-16 space-y-6">
+          <div className="p-6 space-y-6">
             {/* Header with Student Details */}
             <div className="bg-black/40 rounded-xl p-6">
               <div className="flex items-center gap-3 mb-4">
@@ -197,7 +205,7 @@ export function StudentView({ student, onBack, onAddObjective, onEdit, onDelete,
                                       className="text-white/80 focus:text-white focus:bg-white/10 cursor-pointer"
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        onEdit(objective);
+                                        onEditObjective(objective);
                                       }}
                                     >
                                       <Pencil className="h-4 w-4 mr-2" />
@@ -207,7 +215,7 @@ export function StudentView({ student, onBack, onAddObjective, onEdit, onDelete,
                                       className="text-red-400 focus:text-red-400 focus:bg-white/10 cursor-pointer"
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        onDelete(objective);
+                                        onDeleteObjective(objective);
                                       }}
                                     >
                                       <Trash2 className="h-4 w-4 mr-2" />

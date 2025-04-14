@@ -90,8 +90,8 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
       objectiveDescription: '',
       objectiveType: 'binary',
       targetAccuracy: 0.8,
-      targetConsistencyTrials: 4,
-      targetConsistencySuccesses: 5
+      targetConsistencyTrials: 5,
+      targetConsistencySuccesses: 4
     }
   });
 
@@ -684,29 +684,6 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
 
               <FormField
                 control={form.control}
-                name="targetConsistencyTrials"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Consistency Trials</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min="1"
-                        {...field}
-                        value={field.value ?? ''}
-                        onChange={(e) => field.onChange(parseInt(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Number of consecutive trials required to demonstrate consistency.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
                 name="targetConsistencySuccesses"
                 render={({ field }) => (
                   <FormItem>
@@ -722,6 +699,29 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
                     </FormControl>
                     <FormDescription>
                       Number of successful trials required within the consistency period.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="targetConsistencyTrials"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Consistency Trials</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="1"
+                        {...field}
+                        value={field.value ?? ''}
+                        onChange={(e) => field.onChange(parseInt(e.target.value))}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Number of consecutive trials required to demonstrate consistency.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

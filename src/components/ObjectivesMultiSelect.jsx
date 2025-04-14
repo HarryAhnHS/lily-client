@@ -12,6 +12,8 @@ export function ObjectivesMultiSelect({
 }) {
   const [selectedObjectives, setSelectedObjectives] = useState({});
 
+  console.log("selectedObjectives at objectives multi select", selectedObjectives)
+
   const toggleObjective = (studentId, objective) => {
     setSelectedObjectives(prev => {
       const currentSelected = prev[studentId] || [];
@@ -54,47 +56,75 @@ export function ObjectivesMultiSelect({
                   <div key={subjectArea.id} className="border-l-2 pl-4">
                     <h4 className="text-lg font-medium mb-3">{subjectArea.name}</h4>
                     
-                    {subjectArea.objectives.length > 0 ? (
-                      <div className="space-y-2">
-                        {subjectArea.objectives.map((objective) => (
-                          <div
-                            key={objective.id}
-                            onClick={() => toggleObjective(studentId, objective)}
-                            className={cn(
-                              "flex items-start gap-3 p-2 rounded-md cursor-pointer transition-colors",
-                              isObjectiveSelected(studentId, objective.id)
-                                ? "bg-primary/10"
-                                : "hover:bg-muted"
-                            )}
-                          >
-                            <div className={cn(
-                              "mt-1 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
-                              isObjectiveSelected(studentId, objective.id)
-                                ? "bg-primary text-primary-foreground"
-                                : "opacity-50"
-                            )}>
-                              {isObjectiveSelected(studentId, objective.id) && (
-                                <Check className="h-3 w-3" />
-                              )}
+                    {subjectArea.objective.length > 0 ? (
+                      <div className="space-y-4">
+                        {/* Group objectives by goal */}
+                        {Object.entries(
+                          subjectArea.objective.reduce((acc, obj) => {
+                            const goalId = obj.goal.id;
+                            if (!acc[goalId]) {
+                              acc[goalId] = {
+                                goal: obj.goal,
+                                objectives: []
+                              };
+                            }
+                            acc[goalId].objectives.push(obj);
+                            return acc;
+                          }, {})
+                        ).map(([goalId, { goal, objectives }]) => (
+                          <div key={goalId} className="space-y-2">
+                            <div className="bg-muted p-3 rounded-md">
+                              <h5 className="font-medium text-sm text-muted-foreground">
+                                Goal: {goal.title}
+                              </h5>
                             </div>
-                            <div>
-                              <p className="text-sm">{objective.description}</p>
-                              <div className="flex gap-2 mt-1">
-                                <Badge variant="outline" className="text-xs">
-                                  {objective.objective_type}
-                                </Badge>
-                                {objective.target_accuracy && (
-                                  <Badge variant="outline" className="text-xs">
-                                    {objective.target_accuracy * 100}% accuracy
-                                  </Badge>
-                                )}
-                                <Badge variant="outline" className="text-xs">
-                                  {objective.target_consistency_trials} trials
-                                </Badge>
-                                <Badge variant="outline" className="text-xs">
-                                  {objective.target_consistency_successes} successes
-                                </Badge>
-                              </div>
+                            <div className="space-y-2 pl-4">
+                              {objectives.map((objective) => (
+                                <div
+                                  key={objective.id}
+                                  onClick={() => toggleObjective(studentId, objective)}
+                                  className={cn(
+                                    "flex items-start gap-3 p-2 rounded-md cursor-pointer transition-colors",
+                                    isObjectiveSelected(studentId, objective.id)
+                                      ? "bg-primary/10"
+                                      : "hover:bg-muted"
+                                  )}
+                                >
+                                  <div className={cn(
+                                    "mt-1 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                                    isObjectiveSelected(studentId, objective.id)
+                                      ? "bg-primary text-primary-foreground"
+                                      : "opacity-50"
+                                  )}>
+                                    {isObjectiveSelected(studentId, objective.id) && (
+                                      <Check className="h-3 w-3" />
+                                    )}
+                                  </div>
+                                  <div>
+                                    <p className="text-sm">{objective.description}</p>
+                                    <div className="flex gap-2 mt-1">
+                                      <Badge variant="outline" className="text-xs">
+                                        {objective.objective_type}
+                                      </Badge>
+                                      {objective.target_accuracy && (
+                                        <Badge variant="outline" className="text-xs">
+                                          {objective.target_accuracy * 100}% accuracy
+                                        </Badge>
+                                      )}
+                                      {objective.target_consistency_trials && (
+                                        <Badge variant="outline" className="text-xs">
+                                          {objective.target_consistency_trials} trials
+                                        </Badge>
+                                      )}
+                                      {objective.target_consistency_successes && (
+                                        <Badge variant="outline" className="text-xs">
+                                          {objective.target_consistency_successes} successes
+                                        </Badge>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
                             </div>
                           </div>
                         ))}

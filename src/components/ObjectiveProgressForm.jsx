@@ -40,24 +40,29 @@ export function ObjectiveProgressForm({ objectives, onBack, onSuccess }) {
       // Transform formData object into array of sessions with the exact payload structure
       const sessionsPayload = objectives.map(objective => {
         const isBinary = objective.objective_type === 'binary';
-        const successValue = formData[objective.id]?.success === 'yes';
+        const objectiveData = formData[objective.id] || {};
         
         const basePayload = {
           student_id: objective.student_id,
           objective_id: objective.id,
-          memo: formData[objective.id]?.memo || '',
+          memo: objectiveData.memo || '',
           created_at: new Date().toISOString(),
         };
 
         if (isBinary) {
+          // For binary: trials_completed is 1 for 'yes', 0 for 'no', trials_total always 1
           return {
             ...basePayload,
-            trials_completed: successValue ? 1 : 0,
-            trials_total: 1
+            objective_progress: {
+                trials_completed: objectiveData.success === 'yes' ? 1 : 0,
+                trials_total: 1
+            }
           };
         } else {
-          const trialsCompleted = parseInt(formData[objective.id]?.successes || 0);
-          const trialsTotal = parseInt(formData[objective.id]?.trials || objective.target_consistency_trials);
+          // For trial: use the direct input values from the form
+          const trialsCompleted = parseInt(objectiveData.trials_completed) || 0;
+          const trialsTotal = parseInt(objectiveData.trials_total) || 0;
+          
           return {
             ...basePayload,
             objective_progress: {
@@ -68,6 +73,8 @@ export function ObjectiveProgressForm({ objectives, onBack, onSuccess }) {
         }
       });
 
+      console.log("sessionsPayload", sessionsPayload);
+
       const response = await authorizedFetch('/sessions/session/log', session?.access_token, {
         method: 'POST',
         headers: {
@@ -77,23 +84,6 @@ export function ObjectiveProgressForm({ objectives, onBack, onSuccess }) {
       });
 
       if (!response.ok) throw new Error('Failed to log progress');
-      
-      // Reset form data for all objectives
-      const resetFormData = {};
-      objectives.forEach(objective => {
-        resetFormData[objective.id] = {
-          type: objective.objective_type,
-          target_accuracy: objective.target_accuracy,
-          memo: '',
-          ...(objective.objective_type === 'trial' ? {
-            trials: objective.target_consistency_trials,
-            successes: 0
-          } : {
-            success: ''
-          })
-        };
-      });
-      setFormData(resetFormData);
       
       toast.success('Progress logged successfully', {
         duration: 3000,
@@ -130,29 +120,61 @@ export function ObjectiveProgressForm({ objectives, onBack, onSuccess }) {
     </div>
   );
 
-  const TrialInput = ({ objective }) => (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <Input
-          type="number"
-          min="0"
-          max={formData[objective.id]?.trials || objective.target_consistency_trials}
-          value={formData[objective.id]?.successes || ''}
-          onChange={(e) => handleInputChange(objective.id, 'successes', e.target.value)}
-          className="w-20"
-        />
-        <span>out of</span>
-        <Input
-          type="number"
-          min={objective.target_consistency_trials}
-          value={formData[objective.id]?.trials || objective.target_consistency_trials}
-          onChange={(e) => handleInputChange(objective.id, 'trials', e.target.value)}
-          className="w-20"
-        />
-        <span>trials</span>
+  const TrialInput = ({ objective }) => {
+    const [localSuccesses, setLocalSuccesses] = useState(formData[objective.id]?.trials_completed || '');
+    const [localTrials, setLocalTrials] = useState(formData[objective.id]?.trials_total || '');
+
+    const handleBlur = () => {
+      handleInputChange(objective.id, 'trials_completed', localSuccesses);
+      handleInputChange(objective.id, 'trials_total', localTrials);
+    };
+
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Input
+            type="number"
+            min="0"
+            value={localSuccesses}
+            onChange={(e) => setLocalSuccesses(e.target.value)}
+            onBlur={handleBlur}
+            className="w-20"
+          />
+          <span>out of</span>
+          <Input
+            type="number"
+            min="1"
+            value={localTrials}
+            onChange={(e) => setLocalTrials(e.target.value)}
+            onBlur={handleBlur}
+            className="w-20"
+          />
+          <span>trials</span>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
+
+  // Group objectives by student and goal
+  const groupedObjectives = objectives.reduce((acc, obj) => {
+    const studentId = obj.student.id;
+    const goalId = obj.goal.id;
+    
+    if (!acc[studentId]) {
+      acc[studentId] = {
+        student: obj.student,
+        goals: {}
+      };
+    }
+    if (!acc[studentId].goals[goalId]) {
+      acc[studentId].goals[goalId] = {
+        goal: obj.goal,
+        objectives: []
+      };
+    }
+    acc[studentId].goals[goalId].objectives.push(obj);
+    return acc;
+  }, {});
 
   return (
     <div className="space-y-6">
@@ -165,63 +187,60 @@ export function ObjectiveProgressForm({ objectives, onBack, onSuccess }) {
       </div>
 
       <div className="space-y-8">
-        {objectives.map((objective) => {
-          // Initialize form data for this objective if not exists
-          if (!formData[objective.id]) {
-            setFormData(prev => ({
-              ...prev,
-              [objective.id]: {
-                type: objective.objective_type,
-                target_accuracy: objective.target_accuracy,
-                memo: '',
-                ...(objective.objective_type === 'trial' ? {
-                  trials: objective.target_consistency_trials,
-                  successes: 0
-                } : {
-                  success: ''
-                })
-              }
-            }));
-          }
-
-          return (
-            <div key={objective.id} className="border rounded-lg p-4">
+        {Object.entries(groupedObjectives).map(([studentId, { student, goals }]) => (
+          <div key={studentId} className="space-y-6">
+            <div className="border rounded-lg p-4">
               <div className="space-y-4">
                 <div className="flex flex-col gap-1">
                   <span className="text-sm text-muted-foreground">Student</span>
-                  <h3 className="font-medium">{objective.student_name}</h3>
-                </div>
-                
-                <div className="flex flex-col gap-1">
-                  <span className="text-sm text-muted-foreground">Subject Area</span>
-                  <h4 className="font-medium">{objective.subject_area_name}</h4>
-                </div>
-
-                <div className="flex flex-col gap-1">
-                  <span className="text-sm text-muted-foreground">Objective</span>
-                  <p>{objective.description}</p>
+                  <div>
+                    <h3 className="font-medium">{student.name}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Grade {student.grade_level} • {student.disability_type}
+                    </p>
+                  </div>
                 </div>
 
-                <div className="pt-4">
-                  {objective.objective_type === 'binary' ? (
-                    <BinaryInput objective={objective} />
-                  ) : (
-                    <TrialInput objective={objective} />
-                  )}
-                </div>
+                {Object.entries(goals).map(([goalId, { goal, objectives }]) => (
+                  <div key={goalId} className="border-t pt-4">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-sm text-muted-foreground">Goal</span>
+                      <p className="text-sm">{goal.title}</p>
+                    </div>
 
-                <div className="space-y-2">
-                  <Label>Notes (optional)</Label>
-                  <Textarea
-                    placeholder="Add any memo..."
-                    value={formData[objective.id]?.memo || ''}
-                    onChange={(e) => handleInputChange(objective.id, 'memo', e.target.value)}
-                  />
-                </div>
+                    <div className="space-y-4 mt-4">
+                      {objectives.map((objective) => (
+                        <div key={objective.id} className="border-t pt-4">
+                          <div className="flex flex-col gap-1">
+                            <span className="text-sm text-muted-foreground">Objective</span>
+                            <p className="text-sm">{objective.description}</p>
+                          </div>
+
+                          <div className="pt-4">
+                            {objective.objective_type === 'binary' ? (
+                              <BinaryInput objective={objective} />
+                            ) : (
+                              <TrialInput objective={objective} />
+                            )}
+                          </div>
+
+                          <div className="space-y-2 pt-4">
+                            <Label>Notes (optional)</Label>
+                            <Textarea
+                              placeholder="Add any memo..."
+                              value={formData[objective.id]?.memo || ''}
+                              onChange={(e) => handleInputChange(objective.id, 'memo', e.target.value)}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
 
       <div className="flex justify-end gap-4">

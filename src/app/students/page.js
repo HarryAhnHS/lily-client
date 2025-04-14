@@ -216,8 +216,10 @@ export default function StudentsPage() {
             student={selectedStudent}
             onBack={navigateBack}
             onAddObjective={() => handleOpenObjectiveModal(null, selectedStudent)}
-            onEdit={(student) => handleOpenStudentModal(student)}
-            onDelete={handleDeleteStudent}
+            onEditStudent={(student) => handleOpenStudentModal(student)}
+            onDeleteStudent={handleDeleteStudent}
+            onEditObjective={(objective) => handleOpenObjectiveModal(objective, selectedStudent)}
+            onDeleteObjective={handleDeleteObjective}
             onObjectiveClick={(objective) => navigateToView(VIEW_TYPES.OBJECTIVE, objective)}
           />
         );

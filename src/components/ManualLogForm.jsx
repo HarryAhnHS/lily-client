@@ -96,14 +96,14 @@ export function ManualLogForm({ students }) {
     }
   };
 
-  console.log("studentSubjectAreas", selectedSubjectAreasMap);
-
   const StudentCard = ({ student }) => {
     const isSelected = selectedStudentMap[student.id];
     const subjectAreas = studentSubjectAreas[student.id] || [];
     const selectedSubjectAreas = selectedSubjectAreasMap[student.id] || [];
     const isLoading = loadingSubjectAreasMap[student.id];
     const isOpen = subjectAreasOpenMap[student.id] || false;
+
+    console.log("studentSubjectAreas", selectedSubjectAreasMap);
 
     return (
       <div className="border rounded-lg p-4">
@@ -242,6 +242,17 @@ export function ManualLogForm({ students }) {
         onBack={() => {
           setShowProgressForm(false);
           setShowObjectives(true);
+        }}
+        onSuccess={() => {
+          // Reset all form states
+          setSelectedStudentMap({});
+          setStudentSubjectAreas({});
+          setSelectedSubjectAreasMap({});
+          setLoadingSubjectAreasMap({});
+          setSubjectAreasOpenMap({});
+          setShowObjectives(false);
+          setShowProgressForm(false);
+          setSelectedObjectives({});
         }}
       />
     );
