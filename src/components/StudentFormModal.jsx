@@ -34,14 +34,15 @@ import {
 } from '@/components/ui/select';
 import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
+import { IEPUploadButton } from '@/components/IEPUploadButton';
 
 // Form schema for student
 const studentFormSchema = z.object({
   name: z.string().min(2, {
     message: 'Name must be at least 2 characters.',
   }),
-  grade_level: z.coerce.number().int().min(1).max(12, {
-    message: 'Grade must be between 1 and 12.',
+  grade_level: z.string().min(1, {
+    message: 'Please select a grade level.',
   }),
   disability_type: z.string().optional(),
 });
@@ -129,6 +130,12 @@ export function StudentFormModal({ student, onSuccess, open, onOpenChange }) {
             {isEditing ? 'Update the student\'s information.' : 'Enter the student\'s information.'}
           </DialogDescription>
         </DialogHeader>
+        
+        {/* IEP Upload Button - Moved outside the form */}
+        <div className="flex justify-end mb-4">
+          <IEPUploadButton />
+        </div>
+        
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="space-y-4">
@@ -153,8 +160,8 @@ export function StudentFormModal({ student, onSuccess, open, onOpenChange }) {
                   <FormItem>
                     <FormLabel>Grade Level</FormLabel>
                     <Select 
-                      onValueChange={(val) => field.onChange(parseInt(val))} 
-                      value={field.value?.toString()}
+                      onValueChange={field.onChange}
+                      value={field.value}
                     >
                       <FormControl>
                         <SelectTrigger>
