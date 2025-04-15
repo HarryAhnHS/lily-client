@@ -103,7 +103,6 @@ export function ManualLogForm({ students }) {
     const isLoading = loadingSubjectAreasMap[student.id];
     const isOpen = subjectAreasOpenMap[student.id] || false;
 
-    console.log("studentSubjectAreas", selectedSubjectAreasMap);
 
     return (
       <div className="border rounded-lg p-4">

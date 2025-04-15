@@ -2,10 +2,9 @@
 
 import { useAuth } from "@/app/context/auth-context";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -13,25 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Check, ChevronsUpDown, Mic, MicOff, Send, Play, Bell } from "lucide-react";
+import { Bell } from "lucide-react";
 import { authorizedFetch } from "@/services/api";
-import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
-import { X } from "lucide-react";
-import { toast } from "sonner";
-import { MultiAnalysisReviewModal } from "@/components/MultiAnalysisReviewModal";
 import { Progress } from "@/components/ui/progress";
 import { ManualLogForm } from "@/components/ManualLogForm";
 import { SessionRecorder } from "@/components/SessionRecorder";
@@ -39,8 +21,6 @@ import { SessionRecorder } from "@/components/SessionRecorder";
 // Import from @google/genai
 import {
   GoogleGenAI,
-  createUserContent,
-  createPartFromUri,
 } from "@google/genai";
 
 // Direct client usage of Gemini
@@ -120,7 +100,7 @@ export default function Home() {
 
         {/* Recording Section */}
         <div className="space-y-6">
-          <SessionRecorder access_token={session?.access_token} />
+          <SessionRecorder />
         </div>
 
         {/* Weekly Review Section */}

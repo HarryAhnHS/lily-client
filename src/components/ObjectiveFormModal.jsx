@@ -108,8 +108,8 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
           objectiveDescription: objective.description,
           objectiveType: objective.objective_type,
           targetAccuracy: objective.target_accuracy,
+          targetConsistencySuccesses: objective.target_consistency_successes,
           targetConsistencyTrials: objective.target_consistency_trials,
-          targetConsistencySuccesses: objective.target_consistency_successes
         });
       } else if (selectedStudentForEdit) {
         // If no objective but student is provided, preselect the student
@@ -121,8 +121,8 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
           objectiveDescription: '',
           objectiveType: 'binary',
           targetAccuracy: 0.8,
-          targetConsistencyTrials: 4,
-          targetConsistencySuccesses: 5
+          targetConsistencySuccesses: 4,
+          targetConsistencyTrials: 5
         });
       } else {
         setSelectedStudent(null);
@@ -133,8 +133,8 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
           objectiveDescription: '',
           objectiveType: 'binary',
           targetAccuracy: 0.8,
-          targetConsistencyTrials: 4,
-          targetConsistencySuccesses: 5
+          targetConsistencySuccesses: 5,
+          targetConsistencyTrials: 4
         });
       }
     }
@@ -229,8 +229,8 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
         description: data.objectiveDescription,
         objective_type: data.objectiveType,
         target_accuracy: data.objectiveType === 'trial' && data.targetAccuracy ? data.targetAccuracy : 1,
-        target_consistency_trials: data.targetConsistencyTrials,
-        target_consistency_successes: data.targetConsistencySuccesses
+        target_consistency_successes: data.targetConsistencySuccesses,
+        target_consistency_trials: data.targetConsistencyTrials
       };
 
       const response = await authorizedFetch(url, session?.access_token, {
@@ -698,7 +698,7 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
                       />
                     </FormControl>
                     <FormDescription>
-                      Number of successful trials required within the consistency period.
+                      How many successful trials?
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -721,7 +721,7 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
                       />
                     </FormControl>
                     <FormDescription>
-                      Number of consecutive trials required to demonstrate consistency.
+                      Out of how many trials?
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

@@ -20,6 +20,8 @@ export function ObjectiveProgressForm({ objectives, onBack, onSuccess }) {
   const [formData, setFormData] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  console.log("objectives", objectives);
+
   const handleInputChange = (objectiveId, field, value) => {
     setFormData(prev => ({
       ...prev,

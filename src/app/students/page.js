@@ -8,7 +8,6 @@ import { authorizedFetch } from '@/services/api';
 import { StudentFormModal } from '@/components/StudentFormModal';
 import { StudentCard } from '@/components/StudentCard';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { ObjectiveFormModal } from '@/components/ObjectiveFormModal';
 import { Users, Plus, Filter, MoreHorizontal, Check, X, Activity } from 'lucide-react';
