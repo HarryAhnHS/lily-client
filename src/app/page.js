@@ -96,7 +96,7 @@ export default function Home() {
         </div>
 
         {/* Manual Log Form - prop students list */}
-        <ManualLogForm students={students}/>
+        {/* <ManualLogForm students={students}/> */}
 
         {/* Recording Section */}
         <div className="space-y-6">

@@ -117,10 +117,10 @@ export function SessionRecorder() {
     
     setIsSubmitting(true);
     setError(null);
-    setLoadingStage("analyzing");
+    setLoadingStage(true);
     
     try {
-      // First call to analyze the transcript
+      // Call to analyze the transcript
       const analysisResponse = await authorizedFetch('/transcript/analyze', session?.access_token, {
         method: 'POST',
         headers: {
@@ -137,27 +137,7 @@ export function SessionRecorder() {
 
       // Get the analysis data
       const analysisData = await analysisResponse.json();
-      console.log("analysisResponse data:", analysisData);
-
-      // Update loading stage
-      setLoadingStage("formatting");
-
-      // Second call to format the analysis
-      const formatResponse = await authorizedFetch('/transcript/format', session?.access_token, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(analysisData),
-      });
-
-      if (!formatResponse.ok) {
-        throw new Error(`Failed to format analysis: ${formatResponse.status}`);
-      }
-
-      const formattedData = await formatResponse.json();
-      console.log("formatted data:", formattedData);
-      setAnalyzedSessions(formattedData);
+      setAnalyzedSessions(analysisData);
       
     } catch (err) {
       console.error("Error processing transcript:", err);
@@ -171,20 +151,18 @@ export function SessionRecorder() {
 
   // Loading spinner modal component
   const LoadingModal = () => (
-    <Dialog open={!!loadingStage} onOpenChange={() => {}} aria-describedby="loading-description">
+    <Dialog open={loadingStage === true} onOpenChange={() => {}} aria-describedby="loading-description">
       <DialogContent className="sm:max-w-[425px] flex flex-col items-center justify-center p-10">
         <DialogHeader>
           <DialogTitle>Working on it...</DialogTitle>
           <DialogDescription id="loading-description">
-            {loadingStage === "analyzing" 
-              ? "Extracting key information from your notes" 
-              : "Organizing data and preparing results"}
+            Extracting key information from your notes
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col items-center space-y-4 py-4">
           <LoadingSpinner size="large" />
           <p className="text-center text-lg font-medium mt-4">
-            {loadingStage === "analyzing" ? "Analyzing transcript..." : "Finalizing results..."}
+            Analyzing transcript...
           </p>
         </div>
       </DialogContent>
