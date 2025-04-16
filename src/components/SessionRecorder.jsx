@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Mic, MicOff, Send, Play } from "lucide-react";
+import { Mic, MicOff, Send, Play, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { GoogleGenAI, createUserContent, createPartFromUri } from "@google/genai";
@@ -21,7 +21,7 @@ const ai = new GoogleGenAI({
   apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY,
 });
 
-export function SessionRecorder() {
+export function SessionRecorder({ inDialog = false, onBack, onSuccess, onShowAnalyzedSessions }) {
   const [isRecording, setIsRecording] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [error, setError] = useState(null);
@@ -137,7 +137,15 @@ export function SessionRecorder() {
 
       // Get the analysis data
       const analysisData = await analysisResponse.json();
-      setAnalyzedSessions(analysisData);
+      
+      console.log("Analysis complete, data:", analysisData);
+      
+      if (inDialog && onShowAnalyzedSessions) {
+        // When in dialog, we let the parent component handle the analyzed sessions
+        onShowAnalyzedSessions(analysisData);
+      } else {
+        setAnalyzedSessions(analysisData);
+      }
       
     } catch (err) {
       console.error("Error processing transcript:", err);
@@ -169,24 +177,63 @@ export function SessionRecorder() {
     </Dialog>
   );
 
+  // When analyzing is complete and we have sessions, render the TranscriptObjectiveProgressForm
+  if (analyzedSessions && !inDialog) {
+    return (
+      <TranscriptObjectiveProgressForm 
+        sessions={analyzedSessions}
+        onBack={() => setAnalyzedSessions(null)}
+        onSuccess={() => {
+          setAnalyzedSessions(null);
+          setTranscript("");
+          if (onSuccess) {
+            onSuccess();
+          }
+        }}
+      />
+    );
+  }
+
+  // Determine classes based on whether in dialog or standalone
+  const containerClasses = inDialog 
+    ? "space-y-4" 
+    : "rounded-2xl overflow-hidden bg-gradient-to-br from-green-950/50 via-yellow-950/50 to-black backdrop-blur-xl";
+  
+  const textareaClasses = inDialog
+    ? "min-h-[150px] resize-none"
+    : "min-h-[150px] resize-none bg-white/10 border-white/10 focus:border-white/20 text-white/80 placeholder:text-white/40";
+  
+  const submitButtonClasses = inDialog
+    ? "w-full"
+    : "w-full bg-white/20 hover:bg-white/30 text-white/80 disabled:bg-white/10 disabled:text-white/40";
+  
+  const recordButtonClasses = inDialog
+    ? `rounded-full w-16 h-16 p-0 flex items-center justify-center transition-all duration-300 ${
+        isRecording ? "bg-destructive hover:bg-destructive/90 shadow-lg shadow-destructive/20" : ""
+      }`
+    : `rounded-full w-16 h-16 p-0 flex items-center justify-center transition-all duration-300 ${
+        isRecording 
+          ? "bg-destructive hover:bg-destructive/90 shadow-lg shadow-destructive/20" 
+          : "bg-white/20 hover:bg-white/30 shadow-lg text-white"
+      }`;
+
   return (
-    <div className="rounded-2xl overflow-hidden bg-gradient-to-br from-green-950/50 via-yellow-950/50 to-black backdrop-blur-xl">
+    <div className={containerClasses}>
       {/* Loading Modal */}
       <LoadingModal />
       
-      {analyzedSessions ? (
-        <TranscriptObjectiveProgressForm 
-          sessions={analyzedSessions}
-          onBack={() => setAnalyzedSessions(null)}
-          onSuccess={() => {
-            setAnalyzedSessions(null);
-            setTranscript("");
-          }}
-        />
-      ) : (
-        <div className="p-6">
-          <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
-            {/* Add New Session Button */}
+      <div className={inDialog ? "" : "p-6"}>
+        <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
+          {inDialog && onBack && (
+            <div className="flex items-center mb-4">
+              <Button variant="ghost" onClick={onBack} className="flex items-center gap-2 p-2">
+                <ChevronLeft className="h-4 w-4" />
+                <span>Back</span>
+              </Button>
+            </div>
+          )}
+          
+          {!inDialog && (
             <Button
               variant="ghost"
               className="w-full flex items-center gap-2 justify-start hover:bg-white/10 text-white/80 h-12"
@@ -195,57 +242,53 @@ export function SessionRecorder() {
               <Play className="w-4 h-4" />
               <span>Add New Session</span>
             </Button>
+          )}
 
-            {/* Error alert */}
-            {error && (
-              <div className="p-4 rounded-md bg-destructive/10 text-destructive text-sm border border-destructive/20">
-                {error}
-              </div>
-            )}
-
-            {/* Recording UI */}
-            <div className="flex flex-col items-center justify-center py-4 space-y-4">
-              <Textarea
-                placeholder="Your notes will appear here..."
-                className="min-h-[150px] resize-none bg-white/10 border-white/10 focus:border-white/20 text-white/80 placeholder:text-white/40"
-                value={transcript}
-                onChange={(e) => setTranscript(e.target.value)}
-                required
-              />
-
-              <Button
-                type="submit"
-                disabled={!transcript.trim() || isSubmitting}
-                className="w-full bg-white/20 hover:bg-white/30 text-white/80 disabled:bg-white/10 disabled:text-white/40"
-              >
-                {isSubmitting ? (
-                  <>
-                    <LoadingSpinner size="small" className="mr-2" />
-                    <span>Submitting...</span>
-                  </>
-                ) : (
-                  <>
-                    <Send className="h-4 w-4 mr-2" />
-                    <span>Submit</span>
-                  </>
-                )}
-              </Button>
-              <Button
-                type="button"
-                onClick={toggleRecording}
-                variant={isRecording ? "destructive" : "default"}
-                className={`rounded-full w-16 h-16 p-0 flex items-center justify-center transition-all duration-300 ${
-                  isRecording 
-                    ? "bg-destructive hover:bg-destructive/90 shadow-lg shadow-destructive/20" 
-                    : "bg-white/20 hover:bg-white/30 shadow-lg text-white"
-                }`}
-              >
-                {isRecording ? <MicOff className="h-6 w-6" /> : <Mic className="h-6 w-6" />}
-              </Button>
+          {/* Error alert */}
+          {error && (
+            <div className="p-4 rounded-md bg-destructive/10 text-destructive text-sm border border-destructive/20">
+              {error}
             </div>
-          </form>
-        </div>
-      )}
+          )}
+
+          {/* Recording UI */}
+          <div className="flex flex-col items-center justify-center py-4 space-y-4">
+            <Textarea
+              placeholder="Your notes will appear here..."
+              className={textareaClasses}
+              value={transcript}
+              onChange={(e) => setTranscript(e.target.value)}
+              required
+            />
+
+            <Button
+              type="submit"
+              disabled={!transcript.trim() || isSubmitting}
+              className={submitButtonClasses}
+            >
+              {isSubmitting ? (
+                <>
+                  <LoadingSpinner size="small" className="mr-2" />
+                  <span>Submitting...</span>
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4 mr-2" />
+                  <span>Submit</span>
+                </>
+              )}
+            </Button>
+            <Button
+              type="button"
+              onClick={toggleRecording}
+              variant={isRecording ? "destructive" : "default"}
+              className={recordButtonClasses}
+            >
+              {isRecording ? <MicOff className="h-6 w-6" /> : <Mic className="h-6 w-6" />}
+            </Button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 } 

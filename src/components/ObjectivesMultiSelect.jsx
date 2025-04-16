@@ -4,15 +4,13 @@ import { Badge } from '@/components/ui/badge';
 import { Check, ChevronLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export function ObjectivesMultiSelect({ 
+export function SessionManualObjectiveSelect({ 
   students, 
   selectedSubjectAreasMap, 
   onBack,
   onContinue 
 }) {
   const [selectedObjectives, setSelectedObjectives] = useState({});
-
-  console.log("selectedObjectives at objectives multi select", selectedObjectives)
 
   const toggleObjective = (studentId, objective) => {
     setSelectedObjectives(prev => {
@@ -35,26 +33,41 @@ export function ObjectivesMultiSelect({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" onClick={onBack}>
-          <ChevronLeft className="h-4 w-4 mr-2" />
-          Back
+      <div className="flex items-center gap-4 mb-6">
+        <Button variant="ghost" onClick={onBack} className="flex items-center gap-2 p-2">
+          <ChevronLeft className="h-4 w-4" />
+          <span>Back</span>
         </Button>
-        <h2 className="text-lg font-semibold">Select Objectives</h2>
+        <div>
+          <h2 className="text-xl font-semibold">Select Objectives</h2>
+          <p className="text-sm text-muted-foreground">Choose objectives to track progress for each student</p>
+        </div>
       </div>
 
       <div className="space-y-8">
         {Object.entries(selectedSubjectAreasMap).map(([studentId, subjectAreas]) => {
           const student = students.find(s => s.id === studentId);
+          if (!student) return null;
           
           return (
-            <div key={studentId} className="border rounded-lg p-4">
-              <h3 className="text-xl font-semibold mb-4">{student.name}</h3>
+            <div key={studentId} className="border rounded-lg p-5 bg-card shadow-sm">
+              <h3 className="text-lg font-semibold mb-4 flex items-center">
+                <span className="h-6 w-6 rounded-full bg-primary/20 text-xs flex items-center justify-center mr-2 text-primary font-bold">
+                  {student.name.charAt(0)}
+                </span>
+                <span>{student.name}</span>
+                <span className="text-xs ml-2 text-muted-foreground">
+                  {student.grade_level ? `Grade ${student.grade_level}` : ''} 
+                  {student.disability_type ? ` • ${student.disability_type}` : ''}
+                </span>
+              </h3>
               
               <div className="space-y-6">
                 {subjectAreas.map((subjectArea) => (
-                  <div key={subjectArea.id} className="border-l-2 pl-4">
-                    <h4 className="text-lg font-medium mb-3">{subjectArea.name}</h4>
+                  <div key={subjectArea.id} className="border-l-2 border-primary/30 pl-4">
+                    <h4 className="text-md font-medium mb-3 flex items-center">
+                      <span className="bg-secondary/20 px-2 py-1 rounded text-sm">{subjectArea.name}</span>
+                    </h4>
                     
                     {subjectArea.objective.length > 0 ? (
                       <div className="space-y-4">
@@ -72,26 +85,26 @@ export function ObjectivesMultiSelect({
                             return acc;
                           }, {})
                         ).map(([goalId, { goal, objectives }]) => (
-                          <div key={goalId} className="space-y-2">
-                            <div className="bg-muted p-3 rounded-md">
+                          <div key={goalId} className="space-y-3 mb-5">
+                            <div className="bg-muted/50 p-3 rounded-md">
                               <h5 className="font-medium text-sm text-muted-foreground">
                                 Goal: {goal.title}
                               </h5>
                             </div>
-                            <div className="space-y-2 pl-4">
+                            <div className="space-y-2 pl-4 max-w-3xl">
                               {objectives.map((objective) => (
                                 <div
                                   key={objective.id}
                                   onClick={() => toggleObjective(studentId, objective)}
                                   className={cn(
-                                    "flex items-start gap-3 p-2 rounded-md cursor-pointer transition-colors",
+                                    "flex items-start gap-3 p-3 rounded-md cursor-pointer transition-colors border",
                                     isObjectiveSelected(studentId, objective.id)
-                                      ? "bg-primary/10"
-                                      : "hover:bg-muted"
+                                      ? "bg-primary/5 border-primary/20"
+                                      : "hover:bg-muted border-transparent hover:border-muted-foreground/20"
                                   )}
                                 >
                                   <div className={cn(
-                                    "mt-1 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                                    "mt-1 flex h-5 w-5 items-center justify-center rounded-sm border border-primary",
                                     isObjectiveSelected(studentId, objective.id)
                                       ? "bg-primary text-primary-foreground"
                                       : "opacity-50"
@@ -102,22 +115,22 @@ export function ObjectivesMultiSelect({
                                   </div>
                                   <div>
                                     <p className="text-sm">{objective.description}</p>
-                                    <div className="flex gap-2 mt-1">
-                                      <Badge variant="outline" className="text-xs">
-                                        {objective.objective_type}
+                                    <div className="flex flex-wrap gap-2 mt-2">
+                                      <Badge variant="outline" className="text-xs bg-secondary/10">
+                                        {objective.objective_type === 'binary' ? 'Yes/No' : 'Trial based'}
                                       </Badge>
                                       {objective.target_accuracy && (
-                                        <Badge variant="outline" className="text-xs">
-                                          {objective.target_accuracy * 100}% accuracy
+                                        <Badge variant="outline" className="text-xs bg-secondary/10">
+                                          {Math.round(objective.target_accuracy * 100)}% accuracy
                                         </Badge>
                                       )}
                                       {objective.target_consistency_trials && (
-                                        <Badge variant="outline" className="text-xs">
+                                        <Badge variant="outline" className="text-xs bg-secondary/10">
                                           {objective.target_consistency_trials} trials
                                         </Badge>
                                       )}
                                       {objective.target_consistency_successes && (
-                                        <Badge variant="outline" className="text-xs">
+                                        <Badge variant="outline" className="text-xs bg-secondary/10">
                                           {objective.target_consistency_successes} successes
                                         </Badge>
                                       )}
@@ -130,8 +143,8 @@ export function ObjectivesMultiSelect({
                         ))}
                       </div>
                     ) : (
-                      <p className="text-sm text-muted-foreground italic">
-                        No objectives for this subject area
+                      <p className="text-sm text-muted-foreground italic p-3 bg-muted/20 rounded-md">
+                        No objectives available for this subject area
                       </p>
                     )}
                   </div>
@@ -142,13 +155,14 @@ export function ObjectivesMultiSelect({
         })}
       </div>
 
-      <div className="flex justify-end gap-4">
+      <div className="flex justify-end gap-4 pt-4">
         <Button variant="outline" onClick={onBack}>
           Back
         </Button>
         <Button
           disabled={Object.values(selectedObjectives).every(arr => arr.length === 0)}
           onClick={() => onContinue(selectedObjectives)}
+          className="bg-primary hover:bg-primary/90"
         >
           Continue
         </Button>

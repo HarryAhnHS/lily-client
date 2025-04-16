@@ -1,5 +1,5 @@
 'use client';
-// John and bobby took the same math test today and John got a 75% whereas bobby got only 2 wrong. John struggled with arithmetics. Both took about 60 minutes to complete the test.
+// John and bobby took the same math test today and John got a 75/100 whereas bobby got only 2 wrong. John struggled with arithmetics. Both took about 60 minutes to complete the test.
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
@@ -33,7 +33,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 
-export function TranscriptObjectiveProgressForm({ sessions, onBack, onSuccess, open = true, onOpenChange }) {
+export function TranscriptObjectiveProgressForm({ sessions, onBack, onSuccess, open = true, onOpenChange, inDialog = false }) {
   const { session } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentSessionIndex, setCurrentSessionIndex] = useState(0);
@@ -393,7 +393,204 @@ export function TranscriptObjectiveProgressForm({ sessions, onBack, onSuccess, o
     );
   };
 
-  return (
+  // If not in a dialog, we wrap with Dialog, otherwise just return the content
+  return inDialog ? (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <DialogHeader>
+        <DialogTitle className="flex items-center justify-between">
+          <span>Session {currentSessionIndex + 1} of {sessions.length}</span>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="icon"
+              onClick={handlePreviousSession} 
+              disabled={currentSessionIndex === 0}
+              aria-label="Previous session"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button 
+              variant="outline" 
+              size="icon"
+              onClick={handleNextSession} 
+              disabled={currentSessionIndex === sessions.length - 1}
+              aria-label="Next session"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </DialogTitle>
+        <DialogDescription id="form-description">
+          Review and edit AI-generated session data
+        </DialogDescription>
+      </DialogHeader>
+
+      {/* Transcript Card */}
+      <Card className="overflow-hidden border-muted-foreground/20">
+        <CardHeader className="bg-muted/50 p-3">
+          <CardTitle className="text-sm font-medium">Transcript</CardTitle>
+        </CardHeader>
+        <CardContent className="p-3 text-sm bg-muted/10">
+          <p>{currentSession.raw_input}</p>
+        </CardContent>
+      </Card>
+
+      {/* AI Analysis and Edit Section */}
+      <div className="space-y-5">
+        <div className="flex items-center gap-2">
+          <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center">
+            <CheckCircle className="h-3.5 w-3.5 text-primary" />
+          </div>
+          <h3 className="font-medium text-md">AI Analysis</h3>
+          <span className="text-xs text-muted-foreground">Review and edit as needed</span>
+        </div>
+
+        {/* Student Selection */}
+        <div className="space-y-2">
+          <Label htmlFor="student-select" className="text-sm flex items-center gap-2">
+            Student
+            <span className="text-xs text-muted-foreground font-normal">(Who was this session about?)</span>
+          </Label>
+          <Select 
+            value={currentSessionData.student_id || ''} 
+            onValueChange={(value) => updateField('student_id', value)}
+          >
+            <SelectTrigger id="student-select" className="w-full">
+              <SelectValue placeholder="Select a student" className="w-full truncate pr-2" />
+            </SelectTrigger>
+            <SelectContent 
+              className="max-h-[300px] overflow-y-auto w-full min-w-[300px] max-w-[520px]"
+              side="bottom"
+              align="start"
+            >
+              {currentSession.matches.map((match) => (
+                <SelectItem key={match.student.id} value={match.student.id}>
+                  {match.student.name} {match.student.grade_level ? `(Grade ${match.student.grade_level})` : ''}
+                  {match.student.disability_type && ` • ${match.student.disability_type}`}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Objective Selection */}
+        <div className="space-y-2">
+          <Label htmlFor="objective-select" className="text-sm flex items-center gap-2">
+            Objective
+            <span className="text-xs text-muted-foreground font-normal">(What was being worked on?)</span>
+          </Label>
+          {currentSession.matches[0]?.objectives[0]?.queried_objective_description && (
+            <div className="text-xs text-muted-foreground pl-2 border-l-2 border-primary/30 mb-2">
+              AI detected: {currentSession.matches[0].objectives[0].queried_objective_description}
+            </div>
+          )}
+          {currentObjectives.length > 0 ? (
+            <Select 
+              value={currentSessionData.objective_id || ''} 
+              onValueChange={(value) => updateField('objective_id', value)}
+              disabled={!currentSessionData.student_id || currentObjectives.length === 0}
+            >
+              <SelectTrigger id="objective-select" className="w-full">
+                <SelectValue 
+                  placeholder={currentObjectives.length === 0 ? "No objectives found" : "Select an objective"} 
+                  className="w-full truncate pr-2"
+                />
+              </SelectTrigger>
+              <SelectContent 
+                className="max-h-[300px] overflow-y-auto w-[calc(100vw-80px)] max-w-[520px]"
+                side="bottom"
+                align="start"
+              >
+                {currentObjectives.map((objective) => (
+                  <SelectItem 
+                    key={objective.id} 
+                    value={objective.id}
+                    className="py-2 whitespace-normal break-words text-sm"
+                  >
+                    <div className="truncate w-full max-w-[450px]">{objective.description}</div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <div className="text-sm text-muted-foreground p-2 border rounded bg-muted/10">
+              No objectives available for selected student. Please add objectives first.
+            </div>
+          )}
+        </div>
+
+        {/* Progress Section with Hierarchy */}
+        {currentSelectedObjective && (
+          <Card className="overflow-hidden border-primary/20">
+            <CardHeader className="bg-primary/5 p-3">
+              <CardTitle className="text-sm font-medium flex items-center justify-between">
+                <span>Progress Tracking</span>
+                <div className="text-xs bg-primary/10 px-2 py-0.5 rounded">
+                  {currentSelectedObjective.objective_type === 'binary' ? 'Yes/No' : 'Trial Based'} 
+                </div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 space-y-4">
+              {/* Hierarchical Path Display */}
+              <div className="text-sm space-y-2">
+                <div className="flex flex-col space-y-1">
+                  <div className="flex items-center text-xs text-muted-foreground gap-2">
+                    <span className="bg-secondary/30 px-1.5 py-0.5 rounded-sm">Subject Area</span>
+                    <span>→</span>
+                    <span className="bg-secondary/30 px-1.5 py-0.5 rounded-sm">Goal</span>
+                    <span>→</span>
+                    <span className="bg-primary/20 px-1.5 py-0.5 rounded-sm font-medium">Objective</span>
+                  </div>
+                  <div className="pl-3 border-l-2 border-secondary/30 space-y-1.5 mt-1">
+                    <p className="text-sm">{currentSelectedObjective?.subject_area?.name}</p>
+                    <div className="pl-3 border-l-2 border-secondary/30 space-y-1.5">
+                      <p className="text-sm">{currentSelectedObjective?.goal?.title}</p>
+                      <div className="pl-3 border-l-2 border-primary/30">
+                        <p className="text-sm font-medium">{currentSelectedObjective?.description}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Progress Input */}
+              <div className="pt-3 border-t space-y-2">
+                <Label className="text-sm">Record Progress</Label>
+                <div className="pl-3 border-l-2 border-primary/30 py-2">
+                  {currentSelectedObjective?.objective_type === 'binary' ? (
+                    <BinaryInput />
+                  ) : (
+                    <TrialInput />
+                  )}
+                </div>
+              </div>
+              
+              {/* Memo Input */}
+              <div className="pt-3 border-t space-y-2">
+                <Label htmlFor={`memo-${currentSessionId}`} className="text-sm">Session Notes</Label>
+                <Textarea
+                  id={`memo-${currentSessionId}`}
+                  value={currentSessionData.memo || ''}
+                  onChange={(e) => updateField('memo', e.target.value)}
+                  placeholder="Add any additional notes about this session..."
+                  className="resize-none min-h-[80px] text-sm"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      <DialogFooter>
+        <Button variant="outline" type="button" onClick={onBack}>
+          Cancel
+        </Button>
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? 'Submitting...' : 'Submit All Sessions'}
+        </Button>
+      </DialogFooter>
+    </form>
+  ) : (
     <Dialog 
       open={open} 
       onOpenChange={(isOpen) => {
@@ -412,36 +609,36 @@ export function TranscriptObjectiveProgressForm({ sessions, onBack, onSuccess, o
         }}
         aria-describedby="form-description"
       >
-        <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
-            <span>Session {currentSessionIndex + 1} of {sessions.length}</span>
-            <div className="flex items-center gap-2">
-              <Button 
-                variant="outline" 
-                size="icon"
-                onClick={handlePreviousSession} 
-                disabled={currentSessionIndex === 0}
-                aria-label="Previous session"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button 
-                variant="outline" 
-                size="icon"
-                onClick={handleNextSession} 
-                disabled={currentSessionIndex === sessions.length - 1}
-                aria-label="Next session"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </DialogTitle>
-          <DialogDescription id="form-description">
-            Review and edit AI-generated session data
-          </DialogDescription>
-        </DialogHeader>
-
         <form onSubmit={handleSubmit} className="space-y-6">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              <span>Session {currentSessionIndex + 1} of {sessions.length}</span>
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  onClick={handlePreviousSession} 
+                  disabled={currentSessionIndex === 0}
+                  aria-label="Previous session"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  onClick={handleNextSession} 
+                  disabled={currentSessionIndex === sessions.length - 1}
+                  aria-label="Next session"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </DialogTitle>
+            <DialogDescription id="form-description">
+              Review and edit AI-generated session data
+            </DialogDescription>
+          </DialogHeader>
+
           {/* Transcript Card */}
           <Card className="overflow-hidden border-muted-foreground/20">
             <CardHeader className="bg-muted/50 p-3">
