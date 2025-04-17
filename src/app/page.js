@@ -83,8 +83,15 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <main className="max-w-6xl mx-auto px-4 py-8 space-y-6">
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* Accent background pattern */}
+      <div className="absolute inset-0 z-0">
+        <div className="absolute right-0 top-0 h-[500px] w-[500px] rounded-full bg-primary/5 blur-3xl"></div>
+        <div className="absolute left-0 bottom-0 h-[300px] w-[300px] rounded-full bg-primary/10 blur-3xl"></div>
+        <div className="absolute left-1/4 top-1/3 h-[250px] w-[350px] rounded-full bg-secondary/10 blur-3xl"></div>
+      </div>
+      
+      <main className="max-w-6xl mx-auto px-4 py-8 space-y-6 relative z-10">
         {/* Header with greeting */}
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
@@ -100,10 +107,10 @@ export default function Home() {
         </div>
 
         {/* Session Forms Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left column - Session Input Options */}
           <div className="lg:col-span-1">
-            <Card className="shadow-sm">
+            <Card className="shadow-md border border-border/40 backdrop-blur-sm bg-card/95 h-full">
               <CardHeader className="bg-muted/30 pb-3">
                 <CardTitle className="text-lg font-medium flex items-center gap-2">
                   <ClipboardList className="w-5 h-5 text-primary" />
@@ -116,10 +123,9 @@ export default function Home() {
             </Card>
           </div>
 
-          {/* Right columns - Recent Logs & Weekly Overview */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Recent Logs */}
-            <Card className="shadow-sm">
+          {/* Right column - Recent Logs */}
+          <div className="lg:col-span-1">
+            <Card className="shadow-md border border-border/40 backdrop-blur-sm bg-card/95 h-full">
               <CardHeader className="bg-muted/30 pb-3">
                 <CardTitle className="text-lg font-medium flex items-center gap-2">
                   <div className="w-5 h-5 flex items-center justify-center rounded-full bg-primary/20">
@@ -146,9 +152,11 @@ export default function Home() {
                 </div>
               </CardContent>
             </Card>
-
-            {/* Weekly Overview */}
-            <Card className="shadow-sm">
+          </div>
+          
+          {/* Weekly Overview - Full Width */}
+          <div className="lg:col-span-2">
+            <Card className="shadow-md border border-border/40 backdrop-blur-sm bg-card/95">
               <CardHeader className="bg-muted/30 pb-3">
                 <div className="flex justify-between items-center">
                   <CardTitle className="text-lg font-medium flex items-center gap-2">
@@ -193,7 +201,7 @@ export default function Home() {
                 </div>
 
                 {/* Student Progress Card */}
-                <Card className="overflow-hidden shadow-sm">
+                <Card className="overflow-hidden shadow-sm border border-border/60">
                   <CardHeader className="bg-secondary/10 py-3 px-4">
                     <CardTitle className="text-md font-medium flex items-center justify-between">
                       <div className="flex items-center gap-2">

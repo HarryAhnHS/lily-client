@@ -9,7 +9,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
-import { Mic, Sliders } from 'lucide-react';
+import { Mic, ClipboardEdit } from 'lucide-react';
 import { SessionManualStudentSelect } from './ManualLogForm';
 import { SessionManualObjectiveSelect } from './ObjectivesMultiSelect';
 import { SessionManualProgressForm } from './ObjectiveProgressForm';
@@ -192,7 +192,7 @@ export function SessionFormController({ students, open, onOpenChange }) {
           className="h-32 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-secondary/20 to-secondary/5 hover:from-secondary/30 hover:to-secondary/10 border border-secondary/20"
           variant="outline"
         >
-          <Sliders className="h-8 w-8 mb-2 text-secondary/80" />
+          <ClipboardEdit className="h-8 w-8 mb-2 text-secondary/80" />
           <span className="text-lg font-medium">Manual</span>
         </Button>
       </div>
