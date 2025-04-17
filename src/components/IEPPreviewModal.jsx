@@ -1,23 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { authorizedFetch } from '@/services/api';
 import { useAuth } from '@/app/context/auth-context';
 import { toast } from 'sonner';
-import { FileText, Check, X, ChevronRight, ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Users } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 
 export function IEPPreviewModal({ 
   isOpen, 
@@ -28,7 +21,18 @@ export function IEPPreviewModal({
 }) {
   const { session } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState('student');
+  const [selectedAreas, setSelectedAreas] = useState({});
+  
+  // Initialize the selected areas when iepData changes
+  useEffect(() => {
+    if (iepData && iepData.areas_of_need) {
+      const initialAreas = {};
+      iepData.areas_of_need.forEach(area => {
+        initialAreas[area.area_name] = false;
+      });
+      setSelectedAreas(initialAreas);
+    }
+  }, [iepData]);
 
   const handleSave = async () => {
     if (!session) {
@@ -68,169 +72,146 @@ export function IEPPreviewModal({
     }
   };
 
+  // Toggle area selection
+  const toggleArea = (areaName) => {
+    setSelectedAreas(prev => ({
+      ...prev,
+      [areaName]: !prev[areaName]
+    }));
+  };
+
   if (!iepData) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Preview IEP Data</DialogTitle>
-          <DialogDescription>
-            Review the parsed IEP information before saving to the database.
-          </DialogDescription>
-        </DialogHeader>
-        
-        <div className="flex flex-col space-y-4">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid grid-cols-3 w-full">
-              <TabsTrigger value="student">Student Info</TabsTrigger>
-              <TabsTrigger value="areas">Areas of Need</TabsTrigger>
-              <TabsTrigger value="summary">Summary</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="student" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Student Information</CardTitle>
-                  <CardDescription>Basic information about the student</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Name</p>
-                      <p className="text-lg">{iepData.student_name}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Grade Level</p>
-                      <p className="text-lg">{iepData.grade_level}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Disability Type</p>
-                      <p className="text-lg">{iepData.disability_type || 'Not specified'}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="areas" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Areas of Need</CardTitle>
-                  <CardDescription>Subject areas and associated goals</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {iepData.areas_of_need.map((area, areaIndex) => (
-                    <div key={areaIndex} className="space-y-4">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-base px-3 py-1">
-                          {area.area_name}
-                        </Badge>
-                      </div>
-                      
-                      <div className="pl-4 space-y-4">
-                        {area.goals.map((goal, goalIndex) => (
-                          <div key={goalIndex} className="space-y-2">
-                            <p className="font-medium">Goal: {goal.goal_description}</p>
-                            
-                            <div className="pl-4 space-y-2">
-                              {goal.objectives.map((objective, objIndex) => (
-                                <div key={objIndex} className="flex items-start gap-2">
-                                  <div className="mt-1.5">
-                                    <Check className="h-4 w-4 text-primary" />
-                                  </div>
-                                  <p>{objective.description}</p>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                      
-                      {areaIndex < iepData.areas_of_need.length - 1 && (
-                        <Separator className="my-4" />
-                      )}
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="summary" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Summary</CardTitle>
-                  <CardDescription>Overview of the IEP data</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Student Name</p>
-                      <p className="text-lg">{iepData.student_name}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Grade Level</p>
-                      <p className="text-lg">{iepData.grade_level}</p>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Areas of Need</p>
-                    <div className="flex flex-wrap gap-2 mt-1">
-                      {iepData.areas_of_need.map((area, index) => (
-                        <Badge key={index} variant="secondary">
-                          {area.area_name}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Total Goals</p>
-                    <p className="text-lg">
-                      {iepData.areas_of_need.reduce((total, area) => total + area.goals.length, 0)}
-                    </p>
-                  </div>
-                  
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Total Objectives</p>
-                    <p className="text-lg">
-                      {iepData.areas_of_need.reduce((total, area) => 
-                        total + area.goals.reduce((goalTotal, goal) => goalTotal + goal.objectives.length, 0), 0
-                      )}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </div>
-        
-        <DialogFooter className="flex justify-between">
-          <Button 
-            variant="outline" 
-            onClick={onBack}
-            disabled={isSaving}
-          >
-            <ChevronLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
-          <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              onClick={onClose}
-              disabled={isSaving}
-            >
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleSave} 
-              disabled={isSaving}
-            >
-              {isSaving ? 'Saving...' : 'Save to Database'}
-            </Button>
+      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto bg-white p-0">
+        <DialogTitle className="sr-only">IEP Preview</DialogTitle>
+        <div className="w-full max-w-3xl mx-auto bg-[#e0e0e0] rounded-[20px] p-6">
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center gap-2">
+              <div className="bg-black rounded-md p-1">
+                <Users className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-[#1a1a1a] font-medium">IEP Preview</span>
+            </div>
           </div>
-        </DialogFooter>
+
+          <div className="mb-4">
+            <button 
+              onClick={onBack} 
+              className="text-[#595959] flex items-center gap-1 hover:text-black transition-colors duration-200 hover:scale-105 transform p-1 rounded-md"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              back
+            </button>
+          </div>
+
+          <div className="bg-[#f0f0f0] rounded-[16px] p-4 mb-6">
+            <div className="mb-4">
+              <h2 className="text-xl font-medium text-[#1a1a1a]">{iepData.student_name}</h2>
+              <div className="mt-2 grid grid-cols-2 gap-4">
+                <div>
+                  <span className="text-sm text-[#595959]">Grade Level</span>
+                  <p className="text-[#1a1a1a]">Grade {iepData.grade_level || 'N/A'}</p>
+                </div>
+                <div>
+                  <span className="text-sm text-[#595959]">Disability Type</span>
+                  <p className="text-[#1a1a1a]">{iepData.disability_type || 'Not specified'}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="max-h-[400px] overflow-y-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+              <div className="mb-6">
+                <h3 className="font-medium text-[#1a1a1a] mb-2">Student Summary</h3>
+                <p className="text-sm text-[#1a1a1a]">{iepData.summary || 'No summary available'}</p>
+              </div>
+
+              <div className="mb-6">
+                <div className="mb-4">
+                  <h3 className="font-medium text-[#1a1a1a]">Areas of Need</h3>
+                  <p className="text-sm text-[#595959] mt-1">Select areas to view objectives</p>
+                </div>
+
+                <div className="mb-4">
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {iepData.areas_of_need.map((area, index) => (
+                      <button
+                        key={index}
+                        onClick={() => toggleArea(area.area_name)}
+                        className={`px-4 py-2 rounded-md ${
+                          selectedAreas[area.area_name] ? "bg-black text-white" : "bg-[#d0d0d0] text-[#1a1a1a]"
+                        }`}
+                      >
+                        {area.area_name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  {iepData.areas_of_need.map((area, areaIndex) => (
+                    selectedAreas[area.area_name] && (
+                      <div key={areaIndex} className="mb-4">
+                        <h4 className="text-[#1a1a1a] font-medium mb-2">{area.area_name}</h4>
+                        <div className="space-y-4">
+                          {area.goals.map((goal, goalIndex) => (
+                            <div key={goalIndex} className="space-y-2">
+                              <p className="font-medium text-black">Goal: {goal.goal_description}</p>
+                              
+                              <div className="space-y-2">
+                                {goal.objectives.map((objective, objIndex) => (
+                                  <div
+                                    key={objIndex}
+                                    className="bg-white rounded-md p-3 text-sm text-[#1a1a1a] mb-2 flex justify-between items-center"
+                                  >
+                                    <span>{objective.description}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  ))}
+                </div>
+
+                {(!iepData.areas_of_need || iepData.areas_of_need.length === 0) && (
+                  <div className="text-center py-8 text-[#595959]">
+                    No areas of need defined yet.
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Confirmation section */}
+          <div className="bg-[#f0f0f0] rounded-[16px] p-4 mb-6">
+            <div className="flex flex-col items-center space-y-4">
+              <h3 className="font-medium text-[#1a1a1a]">Ready to add this student?</h3>
+              <p className="text-sm text-[#595959] text-center">
+                This will add the student with all areas of need, goals, and objectives to your database.
+              </p>
+              <div className="flex gap-4 mt-4">
+                <Button 
+                  onClick={onBack}
+                  disabled={isSaving}
+                  className="bg-[#d0d0d0] text-[#1a1a1a] hover:bg-[#c0c0c0]"
+                >
+                  Go Back
+                </Button>
+                <Button 
+                  onClick={handleSave} 
+                  disabled={isSaving}
+                  className="bg-black text-white hover:bg-gray-800 font-medium"
+                >
+                  {isSaving ? 'Adding Student...' : 'Confirm & Add Student'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );

@@ -142,34 +142,58 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
 
   console.log("selectedStudentForEdit", selectedStudentForEdit);
 
-  // Fetch subject areas when modal opens
+  // Fetch subject areas when modal opens or student changes
   useEffect(() => {
-    if (open) {
+    if (open && selectedStudent) {
       fetchSubjectAreas();
     }
-  }, [open]);
+  }, [open, selectedStudent]);
 
   const fetchSubjectAreas = async () => {
-    if (!session) return;
+    if (!session || !selectedStudent) return;
     
     setIsLoadingSubjectAreas(true);
     
     try {
-      const response = await authorizedFetch('/subject-areas/subject-areas', session?.access_token, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      // First fetch all subject areas for the student
+      const response = await authorizedFetch(
+        `/subject-areas/subject-areas`, 
+        session?.access_token
+      );
       
       if (!response.ok) {
         throw new Error(`Failed to fetch subject areas: ${response.status}`);
       }
       
-      const data = await response.json();
-      setSubjectAreas(data);
+      const allSubjectAreas = await response.json();
+
+      // Then fetch student objectives to find which areas have objectives
+      const objectivesResponse = await authorizedFetch(
+        `/objectives/student/${selectedStudent.id}`,
+        session?.access_token
+      );
+
+      if (!objectivesResponse.ok) {
+        throw new Error(`Failed to fetch student objectives: ${objectivesResponse.status}`);
+      }
+
+      const studentObjectives = await objectivesResponse.json();
+      
+      // Get unique subject area IDs from student's objectives
+      const studentSubjectAreaIds = new Set();
+      studentObjectives.forEach(objective => {
+        studentSubjectAreaIds.add(objective.subject_area_id);
+      });
+      
+      // Filter subject areas to only those that have objectives for this student
+      const relevantAreas = allSubjectAreas.filter(area => 
+        studentSubjectAreaIds.has(area.id)
+      );
+      
+      setSubjectAreas(relevantAreas);
     } catch (error) {
       console.error('Error fetching subject areas:', error);
-      toast.error('Failed to load subject areas. Please try again.');
+      toast.error('Failed to load areas of need. Please try again.');
     } finally {
       setIsLoadingSubjectAreas(false);
     }
@@ -342,407 +366,355 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto bg-white">
         <DialogHeader>
-          <DialogTitle>{isEditing ? 'Edit Objective' : 'Add New Objective'}</DialogTitle>
-          <DialogDescription>
-            {isEditing ? 'Update the learning objective.' : 'Create a new learning objective for a student.'}
+          <DialogTitle className="text-gray-900">
+            {isEditing ? 'Edit Objective' : 'Add New Objective'}
+          </DialogTitle>
+          <DialogDescription className="text-gray-600">
+            {isEditing ? 'Update the objective details below.' : 'Fill in the objective details below.'}
           </DialogDescription>
         </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="space-y-4">
-              <FormField
-                control={form.control}
-                name="studentId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Student <span className="text-red-500">*</span></FormLabel>
-                    <div className="flex gap-2">
-                      <Select 
-                        onValueChange={(value) => {
-                          field.onChange(value);
-                          const student = students.find(s => s.id === value);
-                          setSelectedStudent(student);
-                          // Reset dependent fields
-                          form.setValue('subjectArea', '');
-                          form.setValue('goal', '');
-                        }}
-                        value={field.value}
-                        disabled={isLoadingStudents}
-                        className="flex-1"
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a student" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {students?.map((student) => (
-                            <SelectItem key={`student-${student.id}`} value={student.id}>
-                              {student.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Button 
-                        type="button" 
-                        variant="outline"
-                        onClick={toggleStudentForm}
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
 
-              <FormField
-                control={form.control}
-                name="subjectArea"
-                render={({ field }) => (
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="studentId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-gray-900">Student <span className="text-red-500">*</span></FormLabel>
+                  <Select
+                    disabled={isEditing || !!selectedStudentForEdit}
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      const student = students.find(s => s.id === value);
+                      setSelectedStudent(student);
+                      // Reset dependent fields
+                      form.setValue('subjectArea', '');
+                      form.setValue('goal', '');
+                    }}
+                    value={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="bg-white border-gray-300 text-gray-900">
+                        <SelectValue placeholder="Select a student" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent className="bg-white border border-gray-300 shadow-md">
+                      {students.map((student) => (
+                        <SelectItem 
+                          key={student.id} 
+                          value={student.id}
+                          className="text-gray-900 hover:bg-gray-100 focus:bg-gray-100 focus:text-gray-900"
+                        >
+                          {student.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="subjectArea"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-gray-900">Area of Need <span className="text-red-500">*</span></FormLabel>
+                  <Select
+                    disabled={!selectedStudent || isLoadingSubjectAreas}
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      form.setValue('goal', '');
+                    }}
+                    value={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="bg-white border-gray-300 text-gray-900">
+                        <SelectValue placeholder={
+                          isLoadingSubjectAreas 
+                            ? "Loading..." 
+                            : !selectedStudent 
+                            ? "Select a student first"
+                            : "Select an area of need"
+                        } />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent className="bg-white border border-gray-300 shadow-md">
+                      {subjectAreas.map((area) => (
+                        <SelectItem 
+                          key={area.id} 
+                          value={area.id}
+                          className="text-gray-900 hover:bg-gray-100 focus:bg-gray-100 focus:text-gray-900"
+                        >
+                          {area.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Goal */}
+            <FormField
+              control={form.control}
+              name="goal"
+              render={({ field }) => {
+                const selectedSubjectArea = subjectAreas.find(
+                  area => area.id === form.getValues('subjectArea')
+                );
+
+                return (
                   <FormItem>
-                    <FormLabel>
-                      Subject Area
-                      {selectedStudent && (
-                        <span className="text-muted-foreground ml-1 text-sm">
-                          for {selectedStudent.name}
+                    <FormLabel className="text-gray-900">
+                      Goal
+                      {selectedSubjectArea && selectedStudent && (
+                        <span className="text-gray-500 ml-1 text-sm">
+                          for {selectedSubjectArea.name} for {selectedStudent.name}
                         </span>
                       )}
                     </FormLabel>
-                    {isAddingSubjectArea ? (
+                    {isAddingGoal ? (
                       <div className="flex gap-2">
                         <FormControl>
                           <Input
-                            placeholder={selectedStudent 
-                              ? `Add new subject area for ${selectedStudent.name}` 
-                              : "Select a student first"}
-                            value={newSubjectArea}
-                            onChange={(e) => setNewSubjectArea(e.target.value)}
+                            placeholder={selectedSubjectArea 
+                              ? `Add new goal for ${selectedSubjectArea.name}` 
+                              : "Select a subject area first"}
+                            value={newGoalTitle}
+                            onChange={(e) => setNewGoalTitle(e.target.value)}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') {
                                 e.preventDefault();
-                                handleAddSubjectArea();
+                                handleAddGoal();
                               }
                             }}
-                            disabled={!selectedStudent}
+                            disabled={!selectedSubjectArea}
+                            className="border-gray-300 text-gray-900"
                           />
                         </FormControl>
-                        <Button 
-                          type="button" 
-                          variant="outline"
-                          onClick={handleAddSubjectArea}
-                          disabled={isCreatingSubjectArea || !selectedStudent}
+                        <Button
+                          type="button"
+                          onClick={handleAddGoal}
+                          disabled={isCreatingGoal || !selectedSubjectArea}
+                          className="bg-black text-white hover:bg-gray-800"
                         >
-                          {isCreatingSubjectArea ? 'Adding...' : 'Add'}
+                          {isCreatingGoal ? 'Adding...' : 'Add'}
                         </Button>
-                        <Button 
-                          type="button" 
-                          variant="ghost"
+                        <Button
+                          type="button"
+                          variant="outline"
                           onClick={() => {
-                            setIsAddingSubjectArea(false);
-                            setNewSubjectArea('');
+                            setIsAddingGoal(false);
+                            setNewGoalTitle('');
                           }}
+                          className="border-gray-300"
                         >
                           Cancel
                         </Button>
                       </div>
                     ) : (
                       <div className="flex gap-2">
-                        <Select 
-                          onValueChange={(value) => {
-                            field.onChange(value);
-                            form.setValue('goal', '');
-                          }}
+                        <Select
+                          onValueChange={field.onChange}
                           value={field.value}
-                          className="flex-1"
-                          disabled={isLoadingSubjectAreas || !selectedStudent}
+                          disabled={isLoadingGoals || !selectedSubjectArea}
                         >
                           <FormControl>
-                            <SelectTrigger>
+                            <SelectTrigger className="bg-white border-gray-300 text-gray-900 w-full">
                               <SelectValue 
                                 placeholder={
-                                  !selectedStudent 
-                                    ? "Select a student first" 
-                                    : `Select a subject area for ${selectedStudent.name}`
+                                  !selectedSubjectArea 
+                                    ? "Select a subject area first" 
+                                    : `Select a goal for ${selectedSubjectArea.name}`
                                 } 
                               />
                             </SelectTrigger>
                           </FormControl>
-                          <SelectContent>
-                            {subjectAreas?.map((area) => (
-                              <SelectItem key={`subject-${area.id}`} value={area.id}>
-                                {area.name}
+                          <SelectContent className="max-w-[500px] bg-white">
+                            {goals?.map((goal) => (
+                              <SelectItem 
+                                key={`goal-${goal.id}`} 
+                                value={goal.id}
+                                className="text-gray-900 break-normal whitespace-normal"
+                              >
+                                {goal.title}
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
-                        <Button 
-                          type="button" 
+                        <Button
+                          type="button"
                           variant="outline"
-                          onClick={() => setIsAddingSubjectArea(true)}
-                          disabled={!selectedStudent}
-                          className="relative group"
+                          onClick={() => setIsAddingGoal(true)}
+                          disabled={!selectedSubjectArea}
+                          className="border-gray-300"
                         >
                           <Plus className="h-4 w-4" />
-                          {!selectedStudent && (
-                            <span className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 whitespace-nowrap bg-black/80 text-white text-xs rounded px-2 py-1 hidden group-hover:block">
-                              Select a student first
-                            </span>
-                          )}
                         </Button>
                       </div>
                     )}
                     <FormMessage />
                   </FormItem>
-                )}
-              />
+                );
+              }}
+            />
 
-              {/* Goal */}
-              <FormField
-                control={form.control}
-                name="goal"
-                render={({ field }) => {
-                  const selectedSubjectArea = subjectAreas.find(
-                    area => area.id === form.getValues('subjectArea')
-                  );
-
-                  return (
-                    <FormItem>
-                      <FormLabel>
-                        Goal
-                        {selectedSubjectArea && selectedStudent && (
-                          <span className="text-muted-foreground ml-1 text-sm">
-                            for {selectedSubjectArea.name} for {selectedStudent.name}
-                          </span>
-                        )}
-                      </FormLabel>
-                      {isAddingGoal ? (
-                        <div className="flex gap-2">
-                          <FormControl>
-                            <Input
-                              placeholder={selectedSubjectArea 
-                                ? `Add new goal for ${selectedSubjectArea.name}` 
-                                : "Select a subject area first"}
-                              value={newGoalTitle}
-                              onChange={(e) => setNewGoalTitle(e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                  e.preventDefault();
-                                  handleAddGoal();
-                                }
-                              }}
-                              disabled={!selectedSubjectArea}
-                            />
-                          </FormControl>
-                          <Button
-                            type="button"
-                            onClick={handleAddGoal}
-                            disabled={isCreatingGoal || !selectedSubjectArea}
-                          >
-                            {isCreatingGoal ? 'Adding...' : 'Add'}
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            onClick={() => {
-                              setIsAddingGoal(false);
-                              setNewGoalTitle('');
-                            }}
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="flex gap-2">
-                          <Select
-                            onValueChange={field.onChange}
-                            value={field.value}
-                            disabled={isLoadingGoals || !selectedSubjectArea}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue 
-                                  placeholder={
-                                    !selectedSubjectArea 
-                                      ? "Select a subject area first" 
-                                      : `Select a goal for ${selectedSubjectArea.name}`
-                                  } 
-                                />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {goals?.map((goal) => (
-                                <SelectItem key={`goal-${goal.id}`} value={goal.id}>
-                                  {goal.title}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => setIsAddingGoal(true)}
-                            disabled={!selectedSubjectArea}
-                            className="relative group"
-                          >
-                            <Plus className="h-4 w-4" />
-                            {!selectedSubjectArea && (
-                              <span className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 whitespace-nowrap bg-black/80 text-white text-xs rounded px-2 py-1 hidden group-hover:block">
-                                Select a subject area first
-                              </span>
-                            )}
-                          </Button>
-                        </div>
-                      )}
-                      <FormMessage />
-                    </FormItem>
-                  );
-                }}
-              />
-
-              <FormField
-                control={form.control}
-                name="objectiveDescription"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Objective</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="Describe the specific objective in detail" 
-                        className="min-h-[100px]"
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="objectiveType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Objective Type <span className="text-red-500">*</span></FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select an objective type" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="binary">Binary</SelectItem>
-                        <SelectItem value="trial">Trial</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>
-                      Binary: Simple yes/no or correct/incorrect outcomes. Trial: Multiple attempts with accuracy tracking.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {form.watch('objectiveType') === 'trial' && (
-                <FormField
-                  control={form.control}
-                  name="targetAccuracy"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Target Accuracy (%)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          step="1"
-                          min="0"
-                          max="100"
-                          {...field}
-                          value={field.value ? Math.round(field.value * 100) : ''}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            if (value === '') {
-                              field.onChange('');
-                            } else {
-                              const percentage = parseFloat(value);
-                              if (!isNaN(percentage)) {
-                                field.onChange(percentage / 100);
-                              }
-                            }
-                          }}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        The minimum accuracy percentage required for success (e.g., 80 for 80%).
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+            <FormField
+              control={form.control}
+              name="objectiveDescription"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-gray-900">Objective</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      placeholder="Describe the specific objective in detail" 
+                      className="min-h-[100px] border-gray-300 text-gray-900"
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )}
+            />
 
+            <FormField
+              control={form.control}
+              name="objectiveType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-gray-900">Objective Type <span className="text-red-500">*</span></FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="bg-white border-gray-300 text-gray-900">
+                        <SelectValue placeholder="Select an objective type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent className="bg-white">
+                      <SelectItem value="binary" className="text-gray-900 hover:bg-gray-100">Binary</SelectItem>
+                      <SelectItem value="trial" className="text-gray-900 hover:bg-gray-100">Trial</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormDescription className="text-gray-600">
+                    Binary: Simple yes/no or correct/incorrect outcomes. Trial: Multiple attempts with accuracy tracking.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {form.watch('objectiveType') === 'trial' && (
               <FormField
                 control={form.control}
-                name="targetConsistencySuccesses"
+                name="targetAccuracy"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Consistency Successes</FormLabel>
+                    <FormLabel className="text-gray-900">Target Accuracy (%)</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
-                        min="1"
+                        step="1"
+                        min="0"
+                        max="100"
                         {...field}
-                        value={field.value ?? ''}
-                        onChange={(e) => field.onChange(parseInt(e.target.value))}
+                        value={field.value ? Math.round(field.value * 100) : ''}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value === '') {
+                            field.onChange('');
+                          } else {
+                            const percentage = parseFloat(value);
+                            if (!isNaN(percentage)) {
+                              field.onChange(percentage / 100);
+                            }
+                          }
+                        }}
+                        className="border-gray-300 text-gray-900"
                       />
                     </FormControl>
-                    <FormDescription>
-                      Number of successful trials required within the consistency period.
+                    <FormDescription className="text-gray-600">
+                      The minimum accuracy percentage required for success (e.g., 80 for 80%).
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+            )}
 
-              <FormField
-                control={form.control}
-                name="targetConsistencyTrials"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Consistency Trials</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min="1"
-                        {...field}
-                        value={field.value ?? ''}
-                        onChange={(e) => field.onChange(parseInt(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Number of consecutive trials required to demonstrate consistency.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
-            <DialogFooter>
-              <Button 
-                type="button" 
-                variant="outline" 
+            <FormField
+              control={form.control}
+              name="targetConsistencySuccesses"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-gray-900">Consistency Successes</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min="1"
+                      {...field}
+                      value={field.value ?? ''}
+                      onChange={(e) => field.onChange(parseInt(e.target.value))}
+                      className="border-gray-300 text-gray-900"
+                    />
+                  </FormControl>
+                  <FormDescription className="text-gray-600">
+                    Number of successful trials required within the consistency period.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="targetConsistencyTrials"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-gray-900">Consistency Trials</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min="1"
+                      {...field}
+                      value={field.value ?? ''}
+                      onChange={(e) => field.onChange(parseInt(e.target.value))}
+                      className="border-gray-300 text-gray-900"
+                    />
+                  </FormControl>
+                  <FormDescription className="text-gray-600">
+                    Number of consecutive trials required to demonstrate consistency.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <DialogFooter className="gap-4 sm:gap-2">
+              <Button
+                type="button"
+                variant="default"
                 onClick={handleCancel}
+                className="bg-black text-white hover:bg-gray-800 border-none ml-auto"
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 
-                  (isEditing ? 'Updating...' : 'Adding...') 
-                : 
-                  (isEditing ? 'Update Objective' : 'Add Objective')
-                }
+              <Button 
+                type="submit"
+                disabled={isSubmitting}
+                className="bg-black text-white hover:bg-gray-800"
+              >
+                {isSubmitting ? (
+                  'Saving...'
+                ) : isEditing ? (
+                  'Save Changes'
+                ) : (
+                  'Add Objective'
+                )}
               </Button>
             </DialogFooter>
           </form>

@@ -6,21 +6,11 @@ import { useEffect, useState } from 'react';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { authorizedFetch } from '@/services/api';
 import { StudentFormModal } from '@/components/StudentFormModal';
-import { StudentCard } from '@/components/StudentCard';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { ObjectiveFormModal } from '@/components/ObjectiveFormModal';
-import { Users, Plus, Filter, MoreHorizontal, Check, X, Activity } from 'lucide-react';
+import { Users, Plus, MoreHorizontal } from 'lucide-react';
 import { StudentView } from '@/components/StudentView';
-import ObjectiveView from '@/components/ObjectiveView';
-
-// View types for state management
-const VIEW_TYPES = {
-  LIST: 'list',
-  STUDENT: 'student',
-  OBJECTIVE: 'objective'
-};
 
 export default function StudentsPage() {
   const { session, loading } = useAuth();
@@ -28,84 +18,20 @@ export default function StudentsPage() {
   const [students, setStudents] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // View state management
-  const [currentView, setCurrentView] = useState(VIEW_TYPES.LIST);
-  const [viewStack, setViewStack] = useState([]);
   const [selectedStudent, setSelectedStudent] = useState(null);
-  const [selectedObjective, setSelectedObjective] = useState(null);
-
-  // Modal states
   const [showStudentModal, setShowStudentModal] = useState(false);
   const [showObjectiveModal, setShowObjectiveModal] = useState(false);
   const [selectedStudentForEdit, setSelectedStudentForEdit] = useState(null);
   const [selectedObjectiveForEdit, setSelectedObjectiveForEdit] = useState(null);
+  const [loadingStudentIds, setLoadingStudentIds] = useState(new Set());
 
-  // Modal handlers
-  const handleOpenStudentModal = (student = null) => {
-    setSelectedStudentForEdit(student);
-    setShowStudentModal(true);
-  };
-
-  const handleOpenObjectiveModal = (objective = null, student = null) => {
-    console.log("objective", objective);
-    console.log("student", student);
-    setSelectedObjectiveForEdit(objective);
-    if (student) {
-      setSelectedStudentForEdit(student);
-    } else {
-      setSelectedStudentForEdit(null);
-    }
-    setShowObjectiveModal(true);
-  };
-
-  const handleCloseStudentModal = () => {
-    setShowStudentModal(false);
-    setSelectedStudentForEdit(null);
-  };
-
-  const handleCloseObjectiveModal = () => {
-    setShowObjectiveModal(false);
-    setSelectedObjectiveForEdit(null);
-  };
-
-  // Navigation handlers
-  const navigateToView = (viewType, data = null) => {
-    setViewStack(prev => [...prev, { type: currentView, data: { student: selectedStudent, objective: selectedObjective } }]);
-    setCurrentView(viewType);
-    
-    if (viewType === VIEW_TYPES.STUDENT) {
-      setSelectedStudent(data);
-      setSelectedObjective(null);
-    } else if (viewType === VIEW_TYPES.OBJECTIVE) {
-      setSelectedObjective(data);
-    }
-  };
-
-  const navigateBack = () => {
-    if (viewStack.length === 0) return;
-    
-    const previousView = viewStack[viewStack.length - 1];
-    setViewStack(prev => prev.slice(0, -1));
-    setCurrentView(previousView.type);
-    
-    if (previousView.type === VIEW_TYPES.STUDENT) {
-      setSelectedStudent(previousView.data.student);
-      setSelectedObjective(null);
-    } else if (previousView.type === VIEW_TYPES.OBJECTIVE) {
-      setSelectedObjective(previousView.data.objective);
-    } else {
-      setSelectedStudent(null);
-      setSelectedObjective(null);
-    }
-  };
-
-  // Data fetching
   useEffect(() => {
     if (!loading && !session) {
       router.replace('/login');
     }
   }, [loading, session, router]);
+
+  const isLoadingDetails = (studentId) => loadingStudentIds.has(studentId);
 
   const fetchStudents = async () => {
     if (!session) return;
@@ -126,20 +52,6 @@ export default function StudentsPage() {
       
       const data = await response.json();
       setStudents(data);
-
-      // Update selected student and objective if they exist
-      if (selectedStudent) {
-        const updatedStudent = data.find(s => s.id === selectedStudent.id);
-        setSelectedStudent(updatedStudent);
-      }
-      
-      if (selectedObjective) {
-        const updatedStudent = data.find(s => s.id === selectedObjective.student_id);
-        if (updatedStudent) {
-          const updatedObjective = updatedStudent.objectives?.find(o => o.id === selectedObjective.id);
-          setSelectedObjective(updatedObjective);
-        }
-      }
     } catch (err) {
       console.error('Error fetching students:', err);
       setError('Failed to load students. Please try again later.');
@@ -148,17 +60,96 @@ export default function StudentsPage() {
     }
   };
 
+  const fetchStudentDetails = async (studentId) => {
+    if (!session || isLoadingDetails(studentId)) return;
+    
+    setLoadingStudentIds(prev => new Set([...prev, studentId]));
+    
+    try {
+      // First get the basic student details
+      const response = await authorizedFetch(`/students/student/${studentId}`, session?.access_token);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch student details: ${response.status}`);
+      }
+      
+      const studentData = await response.json();
+      console.log('Student details response:', studentData);
+      
+      // Then get the student's objectives
+      const objectivesResponse = await authorizedFetch(
+        `/objectives/student/${studentId}`,
+        session?.access_token
+      );
+      
+      if (!objectivesResponse.ok) {
+        throw new Error(`Failed to fetch student objectives: ${objectivesResponse.status}`);
+      }
+      
+      const objectivesData = await objectivesResponse.json();
+      console.log('Objectives response:', objectivesData);
+      
+      // Find the student in the current students list to get all fields
+      const currentStudent = students.find(s => s.id === studentId);
+      
+      // Combine the data, preserving all student fields
+      const combinedData = {
+        ...currentStudent, // Base data from the students list
+        ...studentData,    // Detailed data from the student endpoint
+        objectives: objectivesData || [] // Add objectives
+      };
+      
+      console.log('Combined student data:', combinedData);
+      setSelectedStudent(combinedData);
+    } catch (err) {
+      console.error('Error fetching student details:', err);
+      toast.error('Failed to load student details. Please try again later.');
+      setSelectedStudent(null);
+    } finally {
+      setLoadingStudentIds(prev => {
+        const next = new Set(prev);
+        next.delete(studentId);
+        return next;
+      });
+    }
+  };
+
   useEffect(() => {
     fetchStudents();
   }, [session]);
 
-  // Action handlers
-  const handleStudentAdded = () => {
-    fetchStudents();
+  const handleOpenStudentModal = (student = null) => {
+    setSelectedStudentForEdit(student);
+    setShowStudentModal(true);
   };
 
-  const handleObjectiveAdded = () => {
+  const handleCloseStudentModal = () => {
+    setShowStudentModal(false);
+    setSelectedStudentForEdit(null);
+  };
+
+  const handleOpenObjectiveModal = (objective = null, student = null) => {
+    setSelectedObjectiveForEdit(objective);
+    setSelectedStudentForEdit(student);
+    setShowObjectiveModal(true);
+  };
+
+  const handleCloseObjectiveModal = () => {
+    setShowObjectiveModal(false);
+    setSelectedObjectiveForEdit(null);
+  };
+
+  const handleStudentAdded = () => {
     fetchStudents();
+    handleCloseStudentModal();
+  };
+
+  const handleObjectiveAdded = async () => {
+    await fetchStudents();
+    if (selectedStudent) {
+      await fetchStudentDetails(selectedStudent.id);
+    }
+    handleCloseObjectiveModal();
   };
 
   const handleDeleteStudent = async (student) => {
@@ -170,12 +161,9 @@ export default function StudentsPage() {
       });
 
       if (!response.ok) throw new Error('Failed to delete student');
-
-      if (selectedStudent?.id === student.id) {
-        navigateBack();
-      }
       
       await fetchStudents();
+      setSelectedStudent(null);
       toast.success('Student deleted successfully');
     } catch (err) {
       console.error('Error deleting student:', err);
@@ -193,11 +181,9 @@ export default function StudentsPage() {
 
       if (!response.ok) throw new Error('Failed to delete objective');
 
-      if (selectedObjective?.id === objective.id) {
-        navigateBack();
+      if (selectedStudent) {
+        await fetchStudentDetails(selectedStudent.id);
       }
-
-      await fetchStudents();
       toast.success('Objective deleted successfully');
     } catch (err) {
       console.error('Error deleting objective:', err);
@@ -205,137 +191,105 @@ export default function StudentsPage() {
     }
   };
 
-  if (loading) return <LoadingSpinner />;
+  if (loading || isLoading) {
+    return <LoadingSpinner />;
+  }
 
-  // Render the appropriate view based on currentView
-  const renderView = () => {
-    switch (currentView) {
-      case VIEW_TYPES.STUDENT:
-        return (
-          <StudentView
-            student={selectedStudent}
-            onBack={navigateBack}
-            onAddObjective={() => handleOpenObjectiveModal(null, selectedStudent)}
-            onEditStudent={(student) => handleOpenStudentModal(student)}
-            onDeleteStudent={handleDeleteStudent}
-            onEditObjective={(objective) => handleOpenObjectiveModal(objective, selectedStudent)}
-            onDeleteObjective={handleDeleteObjective}
-            onObjectiveClick={(objective) => navigateToView(VIEW_TYPES.OBJECTIVE, objective)}
-          />
-        );
-      case VIEW_TYPES.OBJECTIVE:
-        return (
-          <ObjectiveView
-            objective={selectedObjective}
-            onBack={navigateBack}
-          />
-        );
-      default:
-        return (
-          <div className="rounded-3xl overflow-hidden bg-gradient-to-br from-green-950/50 via-yellow-950/50 to-black backdrop-blur-xl">
-            <div className="p-6 space-y-6">
-              {/* Header */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
-                    <Users className="w-5 h-5 text-white/80" />
-                  </div>
-                  <h1 className="text-2xl font-semibold text-white/80">Students</h1>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => handleOpenStudentModal()}
-                    className="bg-white/10 text-white/80 hover:bg-white/20"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Student
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => handleOpenObjectiveModal()}
-                    className="bg-white/10 text-white/80 hover:bg-white/20"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Objective
-                  </Button>
-                  <Button variant="ghost" size="icon" className="rounded-full bg-white/10 text-white/80">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-
-              {/* Error Message */}
-              {error && (
-                <div className="p-4 rounded-md bg-destructive/10 text-destructive text-sm">
-                  {error}
-                </div>
-              )}
-
-              {/* Loading State */}
-              {isLoading ? (
-                <div className="flex justify-center items-center h-64">
-                  <LoadingSpinner />
-                </div>
-              ) : students.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {students.map((student) => (
-                    <StudentCard
-                      key={student.id}
-                      student={student}
-                      onAddObjective={() => handleOpenObjectiveModal(null, student)}
-                      onClick={() => navigateToView(VIEW_TYPES.STUDENT, student)}
-                      onEdit={(student) => handleOpenStudentModal(student)}
-                      onDelete={handleDeleteStudent}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-12 text-white/60">
-                  <h3 className="text-lg font-medium mb-2">No students found</h3>
-                  <p className="mb-4">
-                    You don&apos;t have any students assigned to you yet.
-                  </p>
-                  <Button
-                    onClick={() => handleOpenStudentModal()}
-                    className="bg-white/10 text-white/80 hover:bg-white/20"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Student
-                  </Button>
-                </div>
-              )}
-            </div>
-          </div>
-        );
-    }
-  };
+  if (error) {
+    return <div className="text-red-500">{error}</div>;
+  }
 
   return (
     <div className="min-h-screen bg-background relative">
-      {renderView()}
-      {/* Modals */}
+      {selectedStudent ? (
+        <StudentView
+          student={selectedStudent}
+          onBack={() => setSelectedStudent(null)}
+          onAddObjective={(student) => handleOpenObjectiveModal(null, student)}
+          onEditStudent={handleOpenStudentModal}
+          onDeleteStudent={handleDeleteStudent}
+          onEditObjective={(objective) => handleOpenObjectiveModal(objective, selectedStudent)}
+          onDeleteObjective={handleDeleteObjective}
+          onObjectiveClick={() => {}}
+        />
+      ) : (
+        <div className="w-full max-w-5xl mx-auto bg-[#e0e0e0] rounded-[20px] p-6">
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center gap-2">
+              <div className="bg-black rounded-md p-1">
+                <Users className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-[#1a1a1a] font-medium">Students</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={() => handleOpenStudentModal()}
+                className="bg-black text-white hover:bg-gray-900 flex items-center gap-2 transition-transform hover:scale-105"
+              >
+                <Plus className="w-4 h-4" />
+                Add Student
+              </Button>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-[16px] overflow-hidden">
+            <div className="grid grid-cols-4 gap-4 p-4 border-b border-[#e0e0e0] font-medium text-[#1a1a1a]">
+              <div>Student Name</div>
+              <div>Disability Type</div>
+              <div>Date of Review</div>
+              <div>Supervisor Name</div>
+            </div>
+            
+            {students.map((student) => (
+              <div
+                key={student.id}
+                className="grid grid-cols-4 gap-4 p-4 border-b border-[#e0e0e0] hover:bg-[#f0f0f0] transition-colors"
+              >
+                <div className="text-[#1a1a1a]">{student.name}</div>
+                <div className="text-[#1a1a1a]">{student.disability_type || 'N/A'}</div>
+                <div className="text-[#1a1a1a]">{new Date(student.review_date).toLocaleDateString() || 'N/A'}</div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[#1a1a1a]">{student.supervisor_name || 'N/A'}</span>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      className="text-[#1a1a1a] hover:bg-[#e0e0e0] flex items-center gap-2 transition-all hover:scale-105"
+                      onClick={() => fetchStudentDetails(student.id)}
+                      disabled={isLoadingDetails(student.id)}
+                    >
+                      {isLoadingDetails(student.id) ? (
+                        <>
+                          <LoadingSpinner className="w-4 h-4" />
+                          Loading...
+                        </>
+                      ) : (
+                        'View Details'
+                      )}
+                    </Button>
+                    <button className="text-[#1a1a1a] p-1 hover:bg-[#e0e0e0] rounded-md">
+                      <MoreHorizontal className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <StudentFormModal
-        student={selectedStudentForEdit}
-        onSuccess={() => {
-          handleStudentAdded();
-          handleCloseStudentModal();
-        }}
         open={showStudentModal}
         onOpenChange={handleCloseStudentModal}
+        onSuccess={handleStudentAdded}
+        student={selectedStudentForEdit}
       />
       <ObjectiveFormModal
         objective={selectedObjectiveForEdit}
         selectedStudentForEdit={selectedStudentForEdit}
-        onSuccess={() => {
-          handleObjectiveAdded();
-          handleCloseObjectiveModal();
-        }}
+        onSuccess={handleObjectiveAdded}
         students={students}
         open={showObjectiveModal}
         onOpenChange={handleCloseObjectiveModal}
-        onStudentOpenChange={setShowStudentModal}
       />
     </div>
   );

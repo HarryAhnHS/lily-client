@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, Check, Plus, Activity, MoreHorizontal, X, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Check, Plus, Activity, MoreHorizontal, X, ChevronLeft, Users } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,10 +9,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Pencil, Trash2 } from 'lucide-react';
 import { SortFilterSessionsTable } from '@/components/SortFilterSessionsTable';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { authorizedFetch } from '@/services/api';
 import { useAuth } from '@/app/context/auth-context';
 import { toast } from 'sonner';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 export function StudentView({ 
   student, 
@@ -26,7 +27,64 @@ export function StudentView({
 }) {
   const { session } = useAuth();
   const [sessions, setSessions] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [selectedAreas, setSelectedAreas] = useState({});
+  const [subjectAreas, setSubjectAreas] = useState([]);
+  const [isLoadingAreas, setIsLoadingAreas] = useState(false);
+
+  // Early return if no student data
+  if (!student) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full p-8">
+        <div className="text-red-500 mb-4">No student data available</div>
+        <Button onClick={onBack} variant="outline">
+          Go Back
+        </Button>
+      </div>
+    );
+  }
+
+  // Fetch subject areas and their goals
+  const fetchSubjectAreas = async () => {
+    if (!session) return;
+    
+    setIsLoadingAreas(true);
+    try {
+      const response = await authorizedFetch(
+        `/subject-areas/student/${student.id}`,
+        session?.access_token
+      );
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch subject areas');
+      }
+      
+      const data = await response.json();
+      // Filter to only include subject areas that have objectives
+      const areasWithObjectives = data.filter(area => 
+        area.objectives && area.objectives.length > 0
+      );
+      
+      setSubjectAreas(areasWithObjectives);
+      
+      // Initialize all areas as deselected
+      const initialSelectedAreas = {};
+      areasWithObjectives.forEach(area => {
+        initialSelectedAreas[area.id] = false;
+      });
+      setSelectedAreas(initialSelectedAreas);
+    } catch (error) {
+      console.error('Error fetching subject areas:', error);
+      toast.error('Failed to load areas of need');
+    } finally {
+      setIsLoadingAreas(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSubjectAreas();
+  }, [student.id, session]);
 
   const fetchSessions = async () => {
     if (!session) return;
@@ -34,12 +92,16 @@ export function StudentView({
     setIsLoading(true);
     try {
       const response = await authorizedFetch(`/sessions/student/${student.id}`, session?.access_token);
-      if (!response.ok) throw new Error('Failed to fetch sessions');
+      if (!response.ok) {
+        console.warn('Sessions not available:', response.status);
+        setSessions([]);
+        return;
+      }
       const data = await response.json();
-      setSessions(data);
+      setSessions(data || []);
     } catch (error) {
       console.error('Error fetching sessions:', error);
-      toast.error('Failed to load sessions');
+      setSessions([]);
     } finally {
       setIsLoading(false);
     }
@@ -60,197 +122,182 @@ export function StudentView({
     });
   };
 
-  // Group objectives by subject area and goals
-  const groupedObjectives = student.objectives?.reduce((acc, objective) => {
-    const subjectArea = objective.subject_area;
-    const goal = objective.goal;
-    
-    if (!acc[subjectArea.id]) {
-      acc[subjectArea.id] = {
-        name: subjectArea.name,
-        goals: {}
-      };
-    }
-    
-    if (!acc[subjectArea.id].goals[goal.id]) {
-      acc[subjectArea.id].goals[goal.id] = {
-        title: goal.title,
-        objectives: []
-      };
-    }
-    
-    acc[subjectArea.id].goals[goal.id].objectives.push(objective);
-    return acc;
-  }, {});
+  // Toggle area selection
+  const toggleArea = (areaId) => {
+    setSelectedAreas(prev => ({
+      ...prev,
+      [areaId]: !prev[areaId]
+    }));
+  };
+
+  // Safe access to student properties with defaults
+  const studentName = student.name;
+  const gradeLevel = student.grade_level;
+  const disabilityType = student.disability_type;
+  const reviewDate = student.review_date;
+  const supervisorName = student.supervisor_name;
+  const createdAt = student.created_at;
+  const summary = student.summary;
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="relative w-full max-w-6xl bg-gradient-to-br from-green-950/50 via-yellow-950/50 to-black backdrop-blur-xl rounded-3xl overflow-hidden">
-        {/* Close button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onBack}
-          className="absolute right-4 top-4 rounded-full bg-white/10 text-white/80 hover:bg-white/20 z-10"
+    <div className="w-full max-w-3xl mx-auto bg-[#e0e0e0] rounded-[20px] p-6">
+      <div className="flex justify-between items-center mb-6">
+        <div className="flex items-center gap-2">
+          <div className="bg-black rounded-md p-1">
+            <Users className="w-5 h-5 text-white" />
+          </div>
+          <span className="text-[#1a1a1a] font-medium">Students</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => onAddObjective(student)}
+            className="bg-black text-white hover:bg-gray-900 flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Add Objective
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="text-[#1a1a1a] p-1 hover:bg-[#d0d0d0] rounded-md">
+                <MoreHorizontal className="w-6 h-6" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuItem onClick={() => onEditStudent(student)}>
+                <Pencil className="h-4 w-4 mr-2" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem className="text-red-600" onClick={() => onDeleteStudent(student)}>
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+
+      <div className="mb-4">
+        <button 
+          onClick={onBack} 
+          className="text-[#595959] flex items-center gap-1 hover:text-black transition-colors duration-200 hover:scale-105 transform p-1 rounded-md"
         >
-          <X className="h-4 w-4" />
-        </Button>
+          <ChevronLeft className="w-4 h-4" />
+          back
+        </button>
+      </div>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="absolute right-14 top-4 rounded-full bg-white/10 text-white/80 hover:bg-white/20">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-40 bg-black/90 border-white/10">
-            <DropdownMenuItem 
-              className="text-white/80 focus:text-white focus:bg-white/10 cursor-pointer"
-              onClick={() => onEditStudent(student)}
-            >
-              <Pencil className="h-4 w-4 mr-2" />
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem 
-              className="text-red-400 focus:text-red-400 focus:bg-white/10 cursor-pointer"
-              onClick={() => onDeleteStudent(student)}
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+      <div className="bg-[#f0f0f0] rounded-[16px] p-4 mb-6">
+        <div className="mb-4">
+          <h2 className="text-xl font-medium text-[#1a1a1a]">{studentName}</h2>
+          <div className="mt-2 grid grid-cols-2 gap-4">
+            <div>
+              <span className="text-sm text-[#595959]">Grade Level</span>
+              <p className="text-[#1a1a1a]">Grade {gradeLevel || 'N/A'}</p>
+            </div>
+            <div>
+              <span className="text-sm text-[#595959]">Disability Type</span>
+              <p className="text-[#1a1a1a]">{disabilityType || 'Not specified'}</p>
+            </div>
+          </div>
+        </div>
 
-        <div className="max-h-[90vh] overflow-auto">
-          <div className="p-6 space-y-6">
-            {/* Header with Student Details */}
-            <div className="bg-black/40 rounded-xl p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center">
-                  <span className="text-xl font-semibold text-white/80">
-                    {student.name.charAt(0)}
-                  </span>
-                </div>
-                <div>
-                  <h1 className="text-2xl font-semibold text-white/80">{student.name}</h1>
-                  <p className="text-sm text-white/60">Created on {formatDate(student.created_at)}</p>
-                </div>
-              </div>
+        <div className="max-h-[400px] overflow-y-auto hide-scrollbar">
+          <div className="mb-6">
+            <h3 className="font-medium text-[#1a1a1a] mb-2">Student Summary</h3>
+            <p className="text-sm text-[#1a1a1a]">{summary || 'No summary available'}</p>
+          </div>
 
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <p className="text-sm text-white/60">Grade Level</p>
-                  <p className="text-white/90">Grade {student.grade_level}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-white/60">Disability Type</p>
-                  <p className="text-white/90">{student.disability_type || 'None specified'}</p>
-                </div>
-              </div>
+          <div className="mb-6">
+            <div className="mb-4">
+              <h3 className="font-medium text-[#1a1a1a]">Areas of Need</h3>
+              <p className="text-sm text-[#595959] mt-1">Select areas to view objectives</p>
+            </div>
 
-              <div>
-                <p className="text-sm text-white/60 mb-2">Summary</p>
-                <p className="text-white/90 bg-white/5 rounded-lg p-4">
-                  {student.summary || 'No summary available'}
-                </p>
+            <div className="mb-4">
+              <div className="flex flex-wrap gap-2 mb-4">
+                {subjectAreas.map((area) => (
+                  <button
+                    key={area.id}
+                    onClick={() => toggleArea(area.id)}
+                    className={`px-4 py-2 rounded-md ${
+                      selectedAreas[area.id] ? "bg-black text-white" : "bg-[#d0d0d0] text-[#1a1a1a]"
+                    }`}
+                  >
+                    {area.name}
+                  </button>
+                ))}
               </div>
             </div>
 
-            {/* Goals and Objectives Hierarchy */}
-            <div className="bg-black/40 rounded-xl p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-medium text-white/80">Goals & Objectives</h2>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onAddObjective(student)}
-                  className="bg-white/5 text-white/80 hover:bg-white/10"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Objective
-                </Button>
-              </div>
-
-              <div className="space-y-6">
-                {Object.entries(groupedObjectives || {}).map(([subjectAreaId, subjectArea]) => (
-                  <div key={subjectAreaId} className="space-y-2">
-                    <h3 className="text-md font-medium text-white/80 mb-2">{subjectArea.name}</h3>
-                    <div className="space-y-4 pl-4">
-                      {Object.entries(subjectArea.goals).map(([goalId, goal]) => (
-                        <div key={goalId} className="space-y-2">
-                          <h4 className="text-sm font-medium text-white/70 flex items-center">
-                            <ChevronRight className="h-4 w-4 mr-1" />
-                            {goal.title}
-                          </h4>
-                          <div className="space-y-2 pl-6">
-                            {goal.objectives.map((objective) => (
-                              <div
-                                key={objective.id}
-                                className="bg-white/5 rounded-lg p-3 flex items-center justify-between group cursor-pointer hover:bg-white/10"
-                                onClick={() => onObjectiveClick(objective)}
+            <div className="space-y-4">
+              {subjectAreas.map((area) => (
+                selectedAreas[area.id] && (
+                  <div key={area.id} className="mb-4">
+                    <h4 className="text-[#1a1a1a] font-medium mb-2">{area.name}</h4>
+                    <div className="space-y-2">
+                      {area.objectives?.map((objective) => (
+                        <div
+                          key={objective.id}
+                          className="bg-white rounded-md p-3 text-sm text-[#1a1a1a] mb-2 flex justify-between items-center group"
+                          onClick={() => onObjectiveClick(objective)}
+                        >
+                          <span>{objective.description}</span>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                className="opacity-0 group-hover:opacity-100"
+                                onClick={(e) => e.stopPropagation()}
                               >
-                                <span className="text-sm text-white/80">{objective.description}</span>
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button 
-                                      variant="ghost" 
-                                      size="icon" 
-                                      className="h-6 w-6 rounded-full bg-white/10 text-white/80 hover:bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"
-                                      onClick={(e) => e.stopPropagation()}
-                                    >
-                                      <MoreHorizontal className="h-3 w-3" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end" className="w-40 bg-black/90 border-white/10">
-                                    <DropdownMenuItem 
-                                      className="text-white/80 focus:text-white focus:bg-white/10 cursor-pointer"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        onEditObjective(objective);
-                                      }}
-                                    >
-                                      <Pencil className="h-4 w-4 mr-2" />
-                                      Edit
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem 
-                                      className="text-red-400 focus:text-red-400 focus:bg-white/10 cursor-pointer"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        onDeleteObjective(objective);
-                                      }}
-                                    >
-                                      <Trash2 className="h-4 w-4 mr-2" />
-                                      Delete
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              </div>
-                            ))}
-                          </div>
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={(e) => {
+                                e.stopPropagation();
+                                onEditObjective(objective);
+                              }}>
+                                <Pencil className="h-4 w-4 mr-2" />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                className="text-red-600"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onDeleteObjective(objective);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       ))}
                     </div>
                   </div>
-                ))}
-                
-                {(!student.objectives || student.objectives.length === 0) && (
-                  <div className="text-center py-8 text-white/60">
-                    No objectives yet. Click "Add Objective" to get started.
-                  </div>
-                )}
-              </div>
+                )
+              ))}
             </div>
 
-            {/* Sessions Table */}
-            <div className="bg-black/40 rounded-xl p-6 space-y-4">
-              <h2 className="text-lg font-medium text-white/80">Sessions</h2>
-              <SortFilterSessionsTable 
-                sessions={sessions}
-                showActions={true}
-                onSuccess={fetchSessions}
-              />
-            </div>
+            {(!subjectAreas || subjectAreas.length === 0) && (
+              <div className="text-center py-8 text-[#595959]">
+                No areas of need defined yet.
+              </div>
+            )}
           </div>
         </div>
+      </div>
+
+      {/* Sessions Table */}
+      <div className="bg-[#f0f0f0] rounded-[16px] p-4">
+        <h3 className="font-medium text-[#1a1a1a] mb-4">Sessions</h3>
+        <SortFilterSessionsTable 
+          sessions={sessions}
+          showActions={true}
+          onSuccess={fetchSessions}
+        />
       </div>
     </div>
   );
