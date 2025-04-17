@@ -271,6 +271,7 @@ function FileUploadArea() {
     setIsUploading(true);
     setUploadProgress(0);
     setIsDialogOpen(true);
+    setShowPreview(false); // Ensure preview is closed
 
     // Simulate progress
     const progressInterval = setInterval(() => {
@@ -307,13 +308,14 @@ function FileUploadArea() {
       // Store the parsed data
       setParsedIEPData(data);
       
-      // First close the dialog, then show the preview after a short delay
+      // Proper way to handle the transition
+      // First fully close the dialog
       setIsDialogOpen(false);
       
-      // Wait for dialog to close before showing preview
+      // Use a timer to ensure the dialog is fully closed before showing the preview
       setTimeout(() => {
         setShowPreview(true);
-      }, 300);
+      }, 500); // Longer delay to ensure proper transition
       
     } catch (error) {
       clearInterval(progressInterval);
@@ -341,9 +343,7 @@ function FileUploadArea() {
   const handleBack = () => {
     // Make sure preview is fully closed before reopening the dialog
     setShowPreview(false);
-    setTimeout(() => {
-      setIsDialogOpen(true);
-    }, 300);
+    // No need to reopen the upload dialog, just go back to the upload form
   };
 
   return (
@@ -374,75 +374,80 @@ function FileUploadArea() {
         
         <Button 
           onClick={uploadFile}
-          disabled={isUploading}
+          disabled={isUploading || showPreview} // Prevent upload while preview is showing
           className="bg-black text-white hover:bg-gray-800 border border-black w-full"
         >
           {isUploading ? 'Processing...' : 'Upload IEP'}
         </Button>
       </div>
 
-      {/* Only show one dialog at a time */}
-      {isDialogOpen && (
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="sm:max-w-md bg-white">
-            <DialogHeader>
-              <div className="flex justify-between items-center">
-                <DialogTitle className="text-black font-semibold">Uploading IEP</DialogTitle>
-                <Button 
-                  variant="ghost" 
-                  className="h-8 w-8 p-0 rounded-full border border-gray-300 hover:bg-gray-100" 
-                  onClick={() => setIsDialogOpen(false)}
-                  disabled={isUploading}
-                >
-                  <X className="h-4 w-4 text-black" />
-                  <span className="sr-only">Close</span>
-                </Button>
-              </div>
-              <DialogDescription className="text-black">
-                Please wait while we process your IEP document.
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="flex flex-col items-center justify-center py-6 space-y-4">
-              {isUploading ? (
-                <>
-                  <Loader2 className="h-12 w-12 animate-spin text-black" />
-                  <div className="w-full max-w-xs bg-gray-200 rounded-full h-2.5">
-                    <div 
-                      className="bg-black h-2.5 rounded-full transition-all duration-300" 
-                      style={{ width: `${uploadProgress}%` }}
-                    ></div>
-                  </div>
-                  <p className="text-sm text-black">
-                    {uploadProgress < 30 ? 'Uploading file...' : 
-                     uploadProgress < 70 ? 'Processing document...' : 
-                     'Finalizing...'}
-                  </p>
-                </>
-              ) : (
-                <div className="flex flex-col items-center gap-2">
-                  <FileText className="h-12 w-12 text-black" />
-                  <p className="text-base font-semibold text-black">Upload Complete</p>
-                </div>
-              )}
-            </div>
-            
-            <DialogFooter>
+      {/* Upload progress dialog */}
+      <Dialog 
+        open={isDialogOpen} 
+        onOpenChange={(open) => {
+          if (!isUploading) {
+            setIsDialogOpen(open);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md bg-white">
+          <DialogHeader>
+            <div className="flex justify-between items-center">
+              <DialogTitle className="text-black font-semibold">Uploading IEP</DialogTitle>
               <Button 
-                variant="outline" 
-                onClick={() => setIsDialogOpen(false)}
+                variant="ghost" 
+                className="h-8 w-8 p-0 rounded-full border border-gray-300 hover:bg-gray-100" 
+                onClick={() => !isUploading && setIsDialogOpen(false)}
                 disabled={isUploading}
-                className="text-black bg-white hover:bg-gray-100 border border-gray-300"
               >
-                Close
+                <X className="h-4 w-4 text-black" />
+                <span className="sr-only">Close</span>
               </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
+            </div>
+            <DialogDescription className="text-black">
+              Please wait while we process your IEP document.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex flex-col items-center justify-center py-6 space-y-4">
+            {isUploading ? (
+              <>
+                <Loader2 className="h-12 w-12 animate-spin text-black" />
+                <div className="w-full max-w-xs bg-gray-200 rounded-full h-2.5">
+                  <div 
+                    className="bg-black h-2.5 rounded-full transition-all duration-300" 
+                    style={{ width: `${uploadProgress}%` }}
+                  ></div>
+                </div>
+                <p className="text-sm text-black">
+                  {uploadProgress < 30 ? 'Uploading file...' : 
+                   uploadProgress < 70 ? 'Processing document...' : 
+                   'Finalizing...'}
+                </p>
+              </>
+            ) : (
+              <div className="flex flex-col items-center gap-2">
+                <FileText className="h-12 w-12 text-black" />
+                <p className="text-base font-semibold text-black">Upload Complete</p>
+              </div>
+            )}
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setIsDialogOpen(false)}
+              disabled={isUploading}
+              className="text-black bg-white hover:bg-gray-100 border border-gray-300"
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-      {/* Preview Modal - Only show when showPreview is true and isDialogOpen is false */}
-      {showPreview && !isDialogOpen && (
+      {/* Preview Modal - Only render when needed */}
+      {showPreview && parsedIEPData && (
         <IEPPreviewModal
           isOpen={showPreview}
           onClose={() => setShowPreview(false)}

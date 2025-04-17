@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { ObjectiveFormModal } from '@/components/ObjectiveFormModal';
 import { Users, Plus, MoreHorizontal } from 'lucide-react';
 import { StudentView } from '@/components/StudentView';
+import ObjectiveView from '@/components/ObjectiveView';
 
 export default function StudentsPage() {
   const { session, loading } = useAuth();
@@ -19,6 +20,7 @@ export default function StudentsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedStudent, setSelectedStudent] = useState(null);
+  const [selectedObjective, setSelectedObjective] = useState(null);
   const [showStudentModal, setShowStudentModal] = useState(false);
   const [showObjectiveModal, setShowObjectiveModal] = useState(false);
   const [selectedStudentForEdit, setSelectedStudentForEdit] = useState(null);
@@ -76,9 +78,9 @@ export default function StudentsPage() {
       const studentData = await response.json();
       console.log('Student details response:', studentData);
       
-      // Then get the student's objectives
+      // Then get the student's objectives with subject areas and goals included
       const objectivesResponse = await authorizedFetch(
-        `/objectives/student/${studentId}`,
+        `/objectives/student/${studentId}?include_details=true`,
         session?.access_token
       );
       
@@ -92,11 +94,32 @@ export default function StudentsPage() {
       // Find the student in the current students list to get all fields
       const currentStudent = students.find(s => s.id === studentId);
       
+      // Ensure each objective has the required data for ObjectiveView
+      const enhancedObjectives = objectivesData.map(objective => {
+        // If subject_area and goal are already included, return as is
+        if (objective.subject_area && objective.goal) {
+          return objective;
+        }
+        
+        // Otherwise, ensure we have placeholders to prevent errors in ObjectiveView
+        return {
+          ...objective,
+          subject_area: objective.subject_area || { 
+            id: objective.subject_area_id, 
+            name: "Loading..." 
+          },
+          goal: objective.goal || { 
+            id: objective.goal_id, 
+            title: "Loading..." 
+          }
+        };
+      });
+      
       // Combine the data, preserving all student fields
       const combinedData = {
         ...currentStudent, // Base data from the students list
         ...studentData,    // Detailed data from the student endpoint
-        objectives: objectivesData || [] // Add objectives
+        objectives: enhancedObjectives || [] // Add enhanced objectives
       };
       
       console.log('Combined student data:', combinedData);
@@ -191,6 +214,19 @@ export default function StudentsPage() {
     }
   };
 
+  const handleObjectiveClick = (objective) => {
+    console.log("Objective clicked:", objective.id);
+    setSelectedObjective(objective);
+  };
+
+  const handleBackFromObjective = () => {
+    setSelectedObjective(null);
+  };
+
+  useEffect(() => {
+    console.log("selectedObjective state changed:", selectedObjective);
+  }, [selectedObjective]);
+
   if (loading || isLoading) {
     return <LoadingSpinner />;
   }
@@ -210,11 +246,11 @@ export default function StudentsPage() {
           onDeleteStudent={handleDeleteStudent}
           onEditObjective={(objective) => handleOpenObjectiveModal(objective, selectedStudent)}
           onDeleteObjective={handleDeleteObjective}
-          onObjectiveClick={() => {}}
+          onObjectiveClick={handleObjectiveClick}
         />
       ) : (
-        <div className="w-full max-w-5xl mx-auto bg-[#e0e0e0] rounded-[20px] p-6">
-          <div className="flex justify-between items-center mb-6">
+        <div className="w-full max-w-7xl mx-auto bg-[#e0e0e0] rounded-[20px] p-5">
+          <div className="flex justify-between items-center mb-5">
             <div className="flex items-center gap-2">
               <div className="bg-black rounded-md p-1">
                 <Users className="w-5 h-5 text-white" />
@@ -290,6 +326,11 @@ export default function StudentsPage() {
         students={students}
         open={showObjectiveModal}
         onOpenChange={handleCloseObjectiveModal}
+      />
+      <ObjectiveView
+        objective={selectedObjective}
+        isOpen={!!selectedObjective}
+        onClose={handleBackFromObjective}
       />
     </div>
   );

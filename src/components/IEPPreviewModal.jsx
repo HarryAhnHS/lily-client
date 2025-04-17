@@ -84,9 +84,9 @@ export function IEPPreviewModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto bg-white p-0">
+      <DialogContent className="sm:max-w-7xl max-w-[100vw] h-[90vh] p-0 border-0 bg-[#e0e0e0] overflow-hidden">
         <DialogTitle className="sr-only">IEP Preview</DialogTitle>
-        <div className="w-full max-w-3xl mx-auto bg-[#e0e0e0] rounded-[20px] p-6">
+        <div className="w-full h-full overflow-y-auto bg-[#e0e0e0] p-6">
           <div className="flex justify-between items-center mb-6">
             <div className="flex items-center gap-2">
               <div className="bg-black rounded-md p-1">

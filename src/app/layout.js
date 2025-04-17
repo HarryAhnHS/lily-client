@@ -16,15 +16,13 @@ export default function RootLayout({ children }) {
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <AuthProvider>
             <SidebarProvider>
-              <div className="min-h-screen flex">
+              <div className="min-h-screen flex flex-col">
+                <Header />
+                <main className="flex-1 pt-16 pl-24 pr-4">
+                  {children}
+                </main>
+                <Footer />
                 <Sidebar />
-                <div className="flex-1 flex flex-col">
-                  <Header />
-                  <main className="flex-1 pt-16 pl-16 transition-all duration-300">
-                    {children}
-                  </main>
-                  <Footer />
-                </div>
               </div>
             </SidebarProvider>
           </AuthProvider>

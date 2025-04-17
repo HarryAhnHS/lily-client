@@ -140,8 +140,8 @@ export function StudentView({
   const summary = student.summary;
 
   return (
-    <div className="w-full max-w-3xl mx-auto bg-[#e0e0e0] rounded-[20px] p-6">
-      <div className="flex justify-between items-center mb-6">
+    <div className="w-full max-w-5xl mx-auto bg-[#e0e0e0] rounded-[20px] p-5">
+      <div className="flex justify-between items-center mb-5">
         <div className="flex items-center gap-2">
           <div className="bg-black rounded-md p-1">
             <Users className="w-5 h-5 text-white" />
@@ -238,41 +238,49 @@ export function StudentView({
                       {area.objectives?.map((objective) => (
                         <div
                           key={objective.id}
-                          className="bg-white rounded-md p-3 text-sm text-[#1a1a1a] mb-2 flex justify-between items-center group"
-                          onClick={() => onObjectiveClick(objective)}
+                          className="bg-white rounded-md p-3 text-sm text-[#1a1a1a] mb-2 flex justify-between items-center group cursor-pointer hover:bg-gray-100 hover:shadow-md transition-all relative"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            console.log("Objective clicked:", objective.id);
+                            onObjectiveClick(objective);
+                          }}
                         >
-                          <span>{objective.description}</span>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button 
-                                variant="ghost" 
-                                size="icon"
-                                className="opacity-0 group-hover:opacity-100"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={(e) => {
-                                e.stopPropagation();
-                                onEditObjective(objective);
-                              }}>
-                                <Pencil className="h-4 w-4 mr-2" />
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem 
-                                className="text-red-600"
-                                onClick={(e) => {
+                          <div className="flex-1 flex items-center">
+                            <span>{objective.description}</span>
+                          </div>
+                          <div onClick={(e) => e.stopPropagation()}>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon"
+                                  className="opacity-0 group-hover:opacity-100"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={(e) => {
                                   e.stopPropagation();
-                                  onDeleteObjective(objective);
-                                }}
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                                  onEditObjective(objective);
+                                }}>
+                                  <Pencil className="h-4 w-4 mr-2" />
+                                  Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  className="text-red-600"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onDeleteObjective(objective);
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
                         </div>
                       ))}
                     </div>
