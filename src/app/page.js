@@ -17,6 +17,7 @@ import { authorizedFetch } from "@/services/api";
 import { Progress } from "@/components/ui/progress";
 import { SessionFormController } from "@/components/SessionForms";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import RecentLogs from "@/components/RecentLogs";
 
 // Import from @google/genai
 import { GoogleGenAI } from "@google/genai";
@@ -125,33 +126,7 @@ export default function Home() {
 
           {/* Right column - Recent Logs */}
           <div className="lg:col-span-1">
-            <Card className="shadow-md border border-border/40 backdrop-blur-sm bg-card/95 h-full">
-              <CardHeader className="bg-muted/30 pb-3">
-                <CardTitle className="text-lg font-medium flex items-center gap-2">
-                  <div className="w-5 h-5 flex items-center justify-center rounded-full bg-primary/20">
-                    <Bell className="w-3 h-3 text-primary" />
-                  </div>
-                  <span>View Recent Logs</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-4">
-                <div className="space-y-3">
-                  {['Alex Johnson', 'Max Limelion', 'Jonathan Hunt', 'Truce Daily', 'Eliza Chen'].map((name, index) => (
-                    <div key={index} className="flex items-center justify-between py-2 border-b last:border-0">
-                      <span className="font-medium">{name}</span>
-                      <div className="flex items-center gap-4">
-                        <span className="text-sm text-muted-foreground">
-                          {`02/${(6 + Math.floor(index / 2)).toString().padStart(2, '0')}/2025`}
-                        </span>
-                        <Button variant="ghost" size="icon" className="h-6 w-6">
-                          <ArrowUpRight className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            <RecentLogs session={session} />
           </div>
           
           {/* Weekly Overview - Full Width */}
