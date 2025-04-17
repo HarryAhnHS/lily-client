@@ -33,7 +33,7 @@ export function Sidebar() {
           <User className="w-5 h-5" />
         </Link>
         <Link
-          href="/settings"
+          href="#"
           className={`text-white p-2 rounded-full hover:bg-neutral-700 transition-colors ${pathname === '/settings' ? 'bg-neutral-700' : ''}`}
           aria-label="Settings"
         >
