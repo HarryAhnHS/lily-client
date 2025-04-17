@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/app/context/auth-context';
 import { authorizedFetch } from '@/services/api';
@@ -14,8 +14,14 @@ import {
   RadioGroupItem,
 } from "@/components/ui/radio-group";
 import { Label } from '@/components/ui/label';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 
-export function ObjectiveProgressForm({ objectives, onBack, onSuccess }) {
+export function SessionManualProgressForm({ objectives, onBack, onSuccess }) {
   const { session } = useAuth();
   const [formData, setFormData] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -67,13 +73,11 @@ export function ObjectiveProgressForm({ objectives, onBack, onSuccess }) {
             ...basePayload,
             objective_progress: {
               trials_completed: trialsCompleted,
-              trials_total: trialsTotal
+              trials_total: trialsTotal > 0 ? trialsTotal : 1
             }
           };
         }
       });
-
-      console.log("sessionsPayload", sessionsPayload);
 
       const response = await authorizedFetch('/sessions/session/log', session?.access_token, {
         method: 'POST',
@@ -103,21 +107,20 @@ export function ObjectiveProgressForm({ objectives, onBack, onSuccess }) {
   };
 
   const BinaryInput = ({ objective }) => (
-    <div className="space-y-4">
-      <RadioGroup
-        value={formData[objective.id]?.success || ''}
-        onValueChange={(value) => handleInputChange(objective.id, 'success', value)}
-      >
-        <div className="flex items-center space-x-2">
-          <RadioGroupItem value="yes" id={`yes-${objective.id}`} />
-          <Label htmlFor={`yes-${objective.id}`}>Yes</Label>
-        </div>
-        <div className="flex items-center space-x-2">
-          <RadioGroupItem value="no" id={`no-${objective.id}`} />
-          <Label htmlFor={`no-${objective.id}`}>No</Label>
-        </div>
-      </RadioGroup>
-    </div>
+    <RadioGroup
+      value={formData[objective.id]?.success || ''}
+      onValueChange={(value) => handleInputChange(objective.id, 'success', value)}
+      className="flex gap-4"
+    >
+      <div className="flex items-center space-x-2">
+        <RadioGroupItem value="yes" id={`yes-${objective.id}`} />
+        <Label htmlFor={`yes-${objective.id}`}>Yes</Label>
+      </div>
+      <div className="flex items-center space-x-2">
+        <RadioGroupItem value="no" id={`no-${objective.id}`} />
+        <Label htmlFor={`no-${objective.id}`}>No</Label>
+      </div>
+    </RadioGroup>
   );
 
   const TrialInput = ({ objective }) => {
@@ -130,27 +133,27 @@ export function ObjectiveProgressForm({ objectives, onBack, onSuccess }) {
     };
 
     return (
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Input
-            type="number"
-            min="0"
-            value={localSuccesses}
-            onChange={(e) => setLocalSuccesses(e.target.value)}
-            onBlur={handleBlur}
-            className="w-20"
-          />
-          <span>out of</span>
-          <Input
-            type="number"
-            min="1"
-            value={localTrials}
-            onChange={(e) => setLocalTrials(e.target.value)}
-            onBlur={handleBlur}
-            className="w-20"
-          />
-          <span>trials</span>
-        </div>
+      <div className="flex items-center gap-2">
+        <Input
+          type="number"
+          min="0"
+          value={localSuccesses}
+          onChange={(e) => setLocalSuccesses(e.target.value)}
+          onBlur={handleBlur}
+          className="w-20"
+          placeholder="0"
+        />
+        <span>out of</span>
+        <Input
+          type="number"
+          min="1"
+          value={localTrials}
+          onChange={(e) => setLocalTrials(e.target.value)}
+          onBlur={handleBlur}
+          className="w-20"
+          placeholder="1"
+        />
+        <span>trials</span>
       </div>
     );
   };
@@ -178,82 +181,103 @@ export function ObjectiveProgressForm({ objectives, onBack, onSuccess }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" onClick={onBack}>
-          <ChevronLeft className="h-4 w-4 mr-2" />
-          Back
+      <div className="flex items-center gap-4 mb-6">
+        <Button variant="ghost" onClick={onBack} className="flex items-center gap-2 p-2">
+          <ChevronLeft className="h-4 w-4" />
+          <span>Back</span>
         </Button>
-        <h2 className="text-lg font-semibold">Log Progress</h2>
+        <div>
+          <h2 className="text-xl font-semibold">Log Progress</h2>
+          <p className="text-sm text-muted-foreground">Record progress for each selected objective</p>
+        </div>
       </div>
 
-      <div className="space-y-8">
+      <form onSubmit={handleSubmit} className="space-y-8">
         {Object.entries(groupedObjectives).map(([studentId, { student, goals }]) => (
-          <div key={studentId} className="space-y-6">
-            <div className="border rounded-lg p-4">
-              <div className="space-y-4">
-                <div className="flex flex-col gap-1">
-                  <span className="text-sm text-muted-foreground">Student</span>
-                  <div>
-                    <h3 className="font-medium">{student.name}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Grade {student.grade_level} • {student.disability_type}
-                    </p>
+          <Card key={studentId} className="shadow-sm">
+            <CardHeader className="bg-muted/30 pb-2">
+              <CardTitle className="text-lg font-medium flex items-center">
+                <span className="h-6 w-6 rounded-full bg-primary/20 text-xs flex items-center justify-center mr-2 text-primary font-bold">
+                  {student.name.charAt(0)}
+                </span>
+                <span>{student.name}</span>
+                <span className="text-xs ml-2 text-muted-foreground font-normal">
+                  Grade {student.grade_level} • {student.disability_type}
+                </span>
+              </CardTitle>
+            </CardHeader>
+
+            <CardContent className="pt-4 space-y-6">
+              {Object.entries(goals).map(([goalId, { goal, objectives }]) => (
+                <div key={goalId} className="space-y-4">
+                  <div className="bg-secondary/10 p-3 rounded-md">
+                    <h4 className="text-sm font-medium">Goal: {goal.title}</h4>
                   </div>
-                </div>
 
-                {Object.entries(goals).map(([goalId, { goal, objectives }]) => (
-                  <div key={goalId} className="border-t pt-4">
-                    <div className="flex flex-col gap-1">
-                      <span className="text-sm text-muted-foreground">Goal</span>
-                      <p className="text-sm">{goal.title}</p>
-                    </div>
-
-                    <div className="space-y-4 mt-4">
-                      {objectives.map((objective) => (
-                        <div key={objective.id} className="border-t pt-4">
-                          <div className="flex flex-col gap-1">
-                            <span className="text-sm text-muted-foreground">Objective</span>
-                            <p className="text-sm">{objective.description}</p>
+                  {objectives.map((objective) => (
+                    <Card key={objective.id} className="border-primary/10 overflow-hidden mb-4">
+                      <CardHeader className="bg-primary/5 p-3">
+                        <CardTitle className="text-sm font-medium flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center">
+                              <CheckCircle className="h-3 w-3 text-primary" />
+                            </div>
+                            <span>Progress for Objective</span>
                           </div>
-
-                          <div className="pt-4">
+                          <div className="text-xs bg-primary/10 px-2 py-0.5 rounded">
+                            {objective.objective_type === 'binary' ? 'Yes/No' : 'Trial Based'} 
+                          </div>
+                        </CardTitle>
+                      </CardHeader>
+                      
+                      <CardContent className="p-4 space-y-4">
+                        <div className="space-y-2">
+                          <Label className="text-sm text-muted-foreground">Objective</Label>
+                          <p className="text-sm border-l-2 border-primary/30 pl-3 py-1">{objective.description}</p>
+                        </div>
+                        
+                        <div className="pt-2 space-y-2">
+                          <Label className="text-sm">Record Progress</Label>
+                          <div className="pl-3 border-l-2 border-primary/30 py-2">
                             {objective.objective_type === 'binary' ? (
                               <BinaryInput objective={objective} />
                             ) : (
                               <TrialInput objective={objective} />
                             )}
                           </div>
-
-                          <div className="space-y-2 pt-4">
-                            <Label>Notes (optional)</Label>
-                            <Textarea
-                              placeholder="Add any memo..."
-                              value={formData[objective.id]?.memo || ''}
-                              onChange={(e) => handleInputChange(objective.id, 'memo', e.target.value)}
-                            />
-                          </div>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
 
-      <div className="flex justify-end gap-4">
-        <Button variant="outline" onClick={onBack}>
-          Back
-        </Button>
-        <Button 
-          onClick={handleSubmit}
-          disabled={isSubmitting || Object.keys(formData).length === 0}
-        >
-          {isSubmitting ? 'Submitting...' : 'Submit Logs'}
-        </Button>
-      </div>
+                        <div className="pt-2 space-y-2">
+                          <Label className="text-sm">Notes (optional)</Label>
+                          <Textarea
+                            placeholder="Add any notes about this objective..."
+                            value={formData[objective.id]?.memo || ''}
+                            onChange={(e) => handleInputChange(objective.id, 'memo', e.target.value)}
+                            className="resize-none min-h-[80px]"
+                          />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        ))}
+
+        <div className="flex justify-end gap-4 pt-4">
+          <Button variant="outline" onClick={onBack}>
+            Back
+          </Button>
+          <Button 
+            type="submit"
+            disabled={isSubmitting || Object.keys(formData).length === 0}
+            className="bg-primary hover:bg-primary/90"
+          >
+            {isSubmitting ? 'Submitting...' : 'Submit All Logs'}
+          </Button>
+        </div>
+      </form>
     </div>
   );
 } 

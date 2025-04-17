@@ -20,10 +20,9 @@ import { Badge } from '@/components/ui/badge';
 import { X, ChevronsUpDown, Check, ChevronLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { ObjectivesMultiSelect } from '@/components/ObjectivesMultiSelect';
-import { ObjectiveProgressForm } from './ObjectiveProgressForm';
+import { SessionManualObjectiveSelect, SessionManualProgressForm } from '@/components/SessionForms';
 
-export function ManualLogForm({ students }) {
+export function SessionManualStudentSelect({ students, onComplete }) {
   const { session } = useAuth();
   
   // Track selected state per student
@@ -103,30 +102,41 @@ export function ManualLogForm({ students }) {
     const isLoading = loadingSubjectAreasMap[student.id];
     const isOpen = subjectAreasOpenMap[student.id] || false;
 
-    console.log("studentSubjectAreas", selectedSubjectAreasMap);
-
     return (
-      <div className="border rounded-lg p-4">
+      <div className="border rounded-lg p-4 bg-card shadow-sm hover:shadow-md transition-all">
         {/* Student header - always visible */}
         <div 
           onClick={() => toggleStudent(student)}
           className={cn(
-            "flex items-center justify-between cursor-pointer p-2 rounded",
-            isSelected ? "bg-primary/5" : "hover:bg-muted"
+            "flex items-center justify-between cursor-pointer p-3 rounded-md transition-colors",
+            isSelected ? "bg-primary/10" : "hover:bg-muted"
           )}
         >
-          <h3 className="font-medium">{student.name}</h3>
+          <div className="flex flex-col">
+            <h3 className="font-medium">{student.name}</h3>
+            <p className="text-xs text-muted-foreground">
+              {student.grade_level && `Grade ${student.grade_level}`}
+              {student.disability_type && ` • ${student.disability_type}`}
+            </p>
+          </div>
           <div className="flex items-center gap-2">
-            {isSelected && <Check className="h-4 w-4 text-primary" />}
+            {isSelected ? (
+              <div className="h-5 w-5 rounded-full bg-primary/20 flex items-center justify-center">
+                <Check className="h-3 w-3 text-primary" />
+              </div>
+            ) : (
+              <div className="h-5 w-5 rounded-full border border-muted-foreground/30"></div>
+            )}
           </div>
         </div>
 
         {/* Subject area selector - only visible when student is selected */}
         {isSelected && (
-          <div className="mt-4 border-t pt-4">
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium">
-                Subject Areas for {student.name}
+          <div className="mt-4 pt-4 border-t">
+            <div className="flex flex-col gap-3">
+              <label className="text-sm font-medium flex items-center gap-1">
+                <span>Subject Areas</span>
+                <span className="text-xs text-muted-foreground font-normal">(Select for {student.name})</span>
               </label>
               <Popover 
                 open={isOpen}
@@ -195,16 +205,16 @@ export function ManualLogForm({ students }) {
 
               {/* Selected subject areas badges */}
               {selectedSubjectAreas.length > 0 && (
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 mt-1">
                   {selectedSubjectAreas.map((area) => (
                     <Badge
                       key={area.id}
                       variant="secondary"
-                      className="flex items-center gap-1"
+                      className="flex items-center gap-1 bg-secondary/20"
                     >
                       {area.name}
                       <X
-                        className="h-3 w-3 cursor-pointer"
+                        className="h-3 w-3 cursor-pointer ml-1"
                         onClick={(e) => {
                           e.stopPropagation();
                           setSelectedSubjectAreasMap(prev => ({
@@ -237,7 +247,7 @@ export function ManualLogForm({ students }) {
 
   if (showProgressForm) {
     return (
-      <ObjectiveProgressForm
+      <SessionManualProgressForm
         objectives={Object.values(selectedObjectives).flat()}
         onBack={() => {
           setShowProgressForm(false);
@@ -253,6 +263,10 @@ export function ManualLogForm({ students }) {
           setShowObjectives(false);
           setShowProgressForm(false);
           setSelectedObjectives({});
+          
+          if (onComplete) {
+            onComplete();
+          }
         }}
       />
     );
@@ -260,7 +274,7 @@ export function ManualLogForm({ students }) {
 
   if (showObjectives) {
     return (
-      <ObjectivesMultiSelect
+      <SessionManualObjectiveSelect
         students={students}
         selectedSubjectAreasMap={selectedSubjectAreasMap}
         onBack={() => setShowObjectives(false)}
@@ -271,6 +285,9 @@ export function ManualLogForm({ students }) {
 
   return (
     <div className="space-y-6">
+      <h2 className="text-xl font-semibold">Select Students & Subject Areas</h2>
+      <p className="text-muted-foreground">Select students and their relevant subject areas to log progress.</p>
+      
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {students.map((student) => (
           <StudentCard key={student.id} student={student} />
@@ -281,8 +298,9 @@ export function ManualLogForm({ students }) {
         <Button
           onClick={handleNext}
           disabled={Object.keys(selectedSubjectAreasMap).length === 0}
+          className="bg-primary hover:bg-primary/90"
         >
-          Next
+          Continue
         </Button>
       </div>
     </div>

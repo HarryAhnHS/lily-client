@@ -108,8 +108,8 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
           objectiveDescription: objective.description,
           objectiveType: objective.objective_type,
           targetAccuracy: objective.target_accuracy,
+          targetConsistencySuccesses: objective.target_consistency_successes,
           targetConsistencyTrials: objective.target_consistency_trials,
-          targetConsistencySuccesses: objective.target_consistency_successes
         });
       } else if (selectedStudentForEdit) {
         // If no objective but student is provided, preselect the student
@@ -121,8 +121,8 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
           objectiveDescription: '',
           objectiveType: 'binary',
           targetAccuracy: 0.8,
-          targetConsistencyTrials: 4,
-          targetConsistencySuccesses: 5
+          targetConsistencySuccesses: 4,
+          targetConsistencyTrials: 5
         });
       } else {
         setSelectedStudent(null);
@@ -133,8 +133,8 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
           objectiveDescription: '',
           objectiveType: 'binary',
           targetAccuracy: 0.8,
-          targetConsistencyTrials: 4,
-          targetConsistencySuccesses: 5
+          targetConsistencySuccesses: 5,
+          targetConsistencyTrials: 4
         });
       }
     }
@@ -253,8 +253,8 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
         description: data.objectiveDescription,
         objective_type: data.objectiveType,
         target_accuracy: data.objectiveType === 'trial' && data.targetAccuracy ? data.targetAccuracy : 1,
-        target_consistency_trials: data.targetConsistencyTrials,
-        target_consistency_successes: data.targetConsistencySuccesses
+        target_consistency_successes: data.targetConsistencySuccesses,
+        target_consistency_trials: data.targetConsistencyTrials
       };
 
       const response = await authorizedFetch(url, session?.access_token, {
@@ -637,67 +637,41 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
                         className="border-gray-300 text-gray-900"
                       />
                     </FormControl>
-                    <FormDescription className="text-gray-600">
-                      The minimum accuracy percentage required for success (e.g., 80 for 80%).
+                    <FormDescription>
+                      How many successful trials?
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             )}
-
-            <FormField
-              control={form.control}
-              name="targetConsistencySuccesses"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-gray-900">Consistency Successes</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min="1"
-                      {...field}
-                      value={field.value ?? ''}
-                      onChange={(e) => field.onChange(parseInt(e.target.value))}
-                      className="border-gray-300 text-gray-900"
-                    />
-                  </FormControl>
-                  <FormDescription className="text-gray-600">
-                    Number of successful trials required within the consistency period.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="targetConsistencyTrials"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-gray-900">Consistency Trials</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min="1"
-                      {...field}
-                      value={field.value ?? ''}
-                      onChange={(e) => field.onChange(parseInt(e.target.value))}
-                      className="border-gray-300 text-gray-900"
-                    />
-                  </FormControl>
-                  <FormDescription className="text-gray-600">
-                    Number of consecutive trials required to demonstrate consistency.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <DialogFooter className="gap-4 sm:gap-2">
-              <Button
-                type="button"
-                variant="default"
+              <FormField
+                control={form.control}
+                name="targetConsistencyTrials"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Consistency Trials</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="1"
+                        {...field}
+                        value={field.value ?? ''}
+                        onChange={(e) => field.onChange(parseInt(e.target.value))}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Out of how many trials?
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            
+            <DialogFooter>
+              <Button 
+                type="button" 
+                variant="outline" 
                 onClick={handleCancel}
                 className="bg-black text-white hover:bg-gray-800 border-none ml-auto"
               >
