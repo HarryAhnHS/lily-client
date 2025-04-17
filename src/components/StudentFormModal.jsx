@@ -288,6 +288,7 @@ function FileUploadArea() {
       const formData = new FormData();
       formData.append('file', selectedFile);
 
+      // Update to the correct endpoint path
       const response = await authorizedFetch('/iep-upload/parse', session.access_token, {
         method: 'POST',
         body: formData,

@@ -140,8 +140,8 @@ export function StudentView({
   const summary = student.summary;
 
   return (
-    <div className="w-full max-w-5xl mx-auto bg-[#e0e0e0] rounded-[20px] p-5">
-      <div className="flex justify-between items-center mb-5">
+    <div className="w-full max-w-4xl mx-auto bg-[#e0e0e0] rounded-[20px] p-6">
+      <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-2">
           <div className="bg-black rounded-md p-1">
             <Users className="w-5 h-5 text-white" />

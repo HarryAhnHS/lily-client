@@ -63,6 +63,7 @@ export function IEPUploadButton() {
       const formData = new FormData();
       formData.append('file', file);
 
+      // Update to the correct endpoint path
       const response = await authorizedFetch('/iep-upload/parse', session.access_token, {
         method: 'POST',
         body: formData,

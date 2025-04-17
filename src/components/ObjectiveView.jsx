@@ -13,7 +13,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
-export default function ObjectiveView({ objective, isOpen, onClose }) {
+export default function ObjectiveView({ objective, isOpen, onClose, previewMode = false }) {
   const { session } = useAuth();
   const [sessions, setSessions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -40,10 +40,13 @@ export default function ObjectiveView({ objective, isOpen, onClose }) {
 
   // Fetch complete objective data and sessions when modal opens
   useEffect(() => {
-    if (isOpen && objective?.id && session) {
+    if (isOpen && objective?.id && session && !previewMode) {
       fetchCompleteData();
+    } else if (isOpen && previewMode) {
+      // For preview mode, just use the data we already have
+      setIsLoading(false);
     }
-  }, [isOpen, objective?.id, session]);
+  }, [isOpen, objective?.id, session, previewMode]);
 
   const fetchCompleteData = async () => {
     setIsLoading(true);
@@ -295,55 +298,67 @@ export default function ObjectiveView({ objective, isOpen, onClose }) {
                 </div>
               </div>
               
-              {/* Progress Section */}
-              <div>
-                <div className="flex justify-between items-center mb-1">
-                  <div className="text-base font-medium text-gray-800">Total Progress:</div>
-                  <div className="text-base font-medium text-gray-800">{progressPercentage}%</div>
+              {/* Progress Section - Only shown when not in preview mode */}
+              {!previewMode && (
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <div className="text-base font-medium text-gray-800">Total Progress:</div>
+                    <div className="text-base font-medium text-gray-800">{progressPercentage}%</div>
+                  </div>
+                  <div className="flex space-x-2">
+                    {renderProgressDots()}
+                  </div>
                 </div>
-                <div className="flex space-x-2">
-                  {renderProgressDots()}
-                </div>
-              </div>
+              )}
               
-              {/* Moments of Progress */}
+              {/* Moments of Progress - Shown differently in preview mode */}
               <div>
-                <h2 className="text-lg font-medium text-gray-900 mb-2">Moments of Progress</h2>
+                <h2 className="text-lg font-medium text-gray-900 mb-2">
+                  {previewMode ? 'Progress Tracking' : 'Moments of Progress'}
+                </h2>
                 
                 <div className="bg-white rounded-lg overflow-hidden border border-gray-200">
-                  {/* Table Header */}
-                  <div className="grid grid-cols-12 gap-3 border-b p-3 bg-gray-50 text-gray-800 font-medium">
-                    <div className="col-span-3">Date</div>
-                    <div className="col-span-2">Score</div>
-                    <div className="col-span-7">Notes</div>
-                  </div>
-                  
-                  {/* Table Content */}
-                  <div className="divide-y divide-gray-100">
-                    {recentSessions.length > 0 ? (
-                      recentSessions.map((session) => (
-                        <div key={session.id} className="grid grid-cols-12 gap-3 p-3 hover:bg-gray-50">
-                          <div className="col-span-3">{formatDate(session.created_at)}</div>
-                          <div className="col-span-2 flex items-center">
-                            {getStatusIcon(session)}
-                            <span className="ml-1">
-                              {session.objective_progress?.trials_completed || 0}/
-                              {session.objective_progress?.trials_total || 10}
-                            </span>
-                          </div>
-                          <div className="col-span-7 text-gray-600">
-                            {session.memo || "No notes recorded"}
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="p-3 text-center text-gray-500">No progress moments recorded yet</div>
-                    )}
-                  </div>
+                  {previewMode ? (
+                    <div className="p-4 text-center text-gray-500">
+                      <p>No sessions yet. Progress will be tracked here after adding the student.</p>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Table Header */}
+                      <div className="grid grid-cols-12 gap-3 border-b p-3 bg-gray-50 text-gray-800 font-medium">
+                        <div className="col-span-3">Date</div>
+                        <div className="col-span-2">Score</div>
+                        <div className="col-span-7">Notes</div>
+                      </div>
+                      
+                      {/* Table Content */}
+                      <div className="divide-y divide-gray-100">
+                        {recentSessions.length > 0 ? (
+                          recentSessions.map((session) => (
+                            <div key={session.id} className="grid grid-cols-12 gap-3 p-3 hover:bg-gray-50">
+                              <div className="col-span-3">{formatDate(session.created_at)}</div>
+                              <div className="col-span-2 flex items-center">
+                                {getStatusIcon(session)}
+                                <span className="ml-1">
+                                  {session.objective_progress?.trials_completed || 0}/
+                                  {session.objective_progress?.trials_total || 10}
+                                </span>
+                              </div>
+                              <div className="col-span-7 text-gray-600">
+                                {session.memo || "No notes recorded"}
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="p-3 text-center text-gray-500">No progress moments recorded yet</div>
+                        )}
+                      </div>
+                    </>
+                  )}
                 </div>
                 
-                {/* Additional Sessions Table - if there are more than shown in the summary */}
-                {sessions.length > 5 && (
+                {/* Additional Sessions Table - not shown in preview mode */}
+                {!previewMode && sessions.length > 5 && (
                   <div className="bg-white rounded-lg overflow-hidden border border-gray-200 mt-3 p-4">
                     <h3 className="text-base font-medium text-gray-900 mb-2">All Progress History</h3>
                     <SortFilterSessionsTable 
@@ -363,7 +378,9 @@ export default function ObjectiveView({ objective, isOpen, onClose }) {
                   </summary>
                   <div className="mt-2 space-y-2 text-sm text-gray-600">
                     <p>Type: <span className="font-medium">{safeObjectiveType}</span></p>
-                    <p>Created: <span className="font-medium">{formatDate(safeCreatedAt)}</span></p>
+                    {!previewMode && (
+                      <p>Created: <span className="font-medium">{formatDate(safeCreatedAt)}</span></p>
+                    )}
                     <div className="pt-2 border-t border-gray-100">
                       <p className="font-medium mb-1">Success Criteria:</p>
                       <p>{safeTargetSuccesses} out of {safeTargetTrials} trials successful</p>
