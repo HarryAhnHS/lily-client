@@ -18,6 +18,7 @@ import { Progress } from "@/components/ui/progress";
 import { SessionFormController } from "@/components/SessionForms";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import RecentLogs from "@/components/RecentLogs";
+import WeeklyObjectivesOverview from "@/components/WeeklyObjectivesOverview";
 
 // Import from @google/genai
 import { GoogleGenAI } from "@google/genai";
@@ -85,13 +86,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
-      {/* Accent background pattern */}
-      <div className="absolute inset-0 z-0">
-        <div className="absolute right-0 top-0 h-[500px] w-[500px] rounded-full bg-primary/5 blur-3xl"></div>
-        <div className="absolute left-0 bottom-0 h-[300px] w-[300px] rounded-full bg-primary/10 blur-3xl"></div>
-        <div className="absolute left-1/4 top-1/3 h-[250px] w-[350px] rounded-full bg-secondary/10 blur-3xl"></div>
-      </div>
-      
       <main className="max-w-6xl mx-auto px-4 py-8 space-y-6 relative z-10">
         {/* Header with greeting */}
         <div className="flex justify-between items-center">
@@ -131,87 +125,7 @@ export default function Home() {
           
           {/* Weekly Overview - Full Width */}
           <div className="lg:col-span-2">
-            <Card className="shadow-md border border-border/40 backdrop-blur-sm bg-card/95">
-              <CardHeader className="bg-muted/30 pb-3">
-                <div className="flex justify-between items-center">
-                  <CardTitle className="text-lg font-medium flex items-center gap-2">
-                    <svg
-                      className="w-5 h-5 text-primary"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                      />
-                    </svg>
-                    <span>Weekly Objectives Overview</span>
-                  </CardTitle>
-                  <Select defaultValue="this-week">
-                    <SelectTrigger className="w-[120px] h-8 text-sm">
-                      <SelectValue placeholder="Select period" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="this-week">This Week</SelectItem>
-                      <SelectItem value="last-week">Last Week</SelectItem>
-                      <SelectItem value="this-month">This Month</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-4 space-y-6">
-                <div>
-                  <div className="text-5xl font-bold mb-2">60%</div>
-                  <div className="text-sm text-muted-foreground mb-2">
-                    12/20 objectives logged this week
-                  </div>
-                  <Progress value={60} className="h-2" />
-                  <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
-                    <Bell className="w-4 h-4" />
-                    <span>8 objectives left</span>
-                  </div>
-                </div>
-
-                {/* Student Progress Card */}
-                <Card className="overflow-hidden shadow-sm border border-border/60">
-                  <CardHeader className="bg-secondary/10 py-3 px-4">
-                    <CardTitle className="text-md font-medium flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="h-6 w-6 rounded-full bg-primary/20 text-xs flex items-center justify-center text-primary font-bold">
-                          M
-                        </span>
-                        <div>
-                          <span>Minusha Keys</span>
-                          <span className="text-xs ml-2 text-muted-foreground">(Speech)</span>
-                        </div>
-                      </div>
-                      <Button variant="ghost" size="icon" className="h-7 w-7">
-                        <ArrowUpRight className="h-4 w-4" />
-                      </Button>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-4">
-                    <p className="text-sm mb-3">
-                      Let Minusha speak clearly for three minutes
-                    </p>
-                    <div className="flex justify-between items-center text-sm text-muted-foreground">
-                      <span>3/8 Sessions Completed</span>
-                      <div className="flex gap-1">
-                        <Button size="sm" variant="ghost" className="h-6 px-1">
-                          <ChevronLeft className="h-4 w-4" />
-                        </Button>
-                        <Button size="sm" variant="ghost" className="h-6 px-1">
-                          <ChevronRight className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </CardContent>
-            </Card>
+            <WeeklyObjectivesOverview session={session} />
           </div>
         </div>
       </main>

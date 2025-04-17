@@ -472,7 +472,7 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
                 return (
                   <FormItem>
                     <FormLabel className="text-gray-900">
-                      Goal
+                      Goal <span className="text-red-500">*</span>
                       {selectedSubjectArea && selectedStudent && (
                         <span className="text-gray-500 ml-1 text-sm">
                           for {selectedSubjectArea.name} for {selectedStudent.name}
@@ -570,7 +570,7 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
               name="objectiveDescription"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-900">Objective</FormLabel>
+                  <FormLabel className="text-gray-900">Objective<span className="text-red-500">*</span></FormLabel>
                   <FormControl>
                     <Textarea 
                       placeholder="Describe the specific objective in detail" 
@@ -601,7 +601,7 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
                     </SelectContent>
                   </Select>
                   <FormDescription className="text-gray-600">
-                    Binary: Simple yes/no or correct/incorrect outcomes. Trial: Multiple attempts with accuracy tracking.
+                    {form.watch('objectiveType') === 'binary' ? 'Simple yes/no or correct/incorrect outcomes.' : 'Multiple attempts with accuracy tracking.'}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -637,6 +637,26 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
                         className="border-gray-300 text-gray-900"
                       />
                     </FormControl>
+                  </FormItem>
+                )}
+              />
+            )}
+            
+              <FormField
+                control={form.control}
+                name="targetConsistencySuccesses"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Consistency Successes<span className="text-red-500">*</span></FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="1"
+                        {...field}
+                        value={field.value ?? ''}
+                        onChange={(e) => field.onChange(parseInt(e.target.value))}
+                      />
+                    </FormControl>
                     <FormDescription>
                       How many successful trials?
                     </FormDescription>
@@ -644,13 +664,13 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
                   </FormItem>
                 )}
               />
-            )}
+
               <FormField
                 control={form.control}
                 name="targetConsistencyTrials"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Consistency Trials</FormLabel>
+                    <FormLabel>Consistency Trials<span className="text-red-500">*</span></FormLabel>
                     <FormControl>
                       <Input
                         type="number"

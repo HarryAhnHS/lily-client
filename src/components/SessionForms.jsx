@@ -177,22 +177,22 @@ export function SessionFormController({ students, open, onOpenChange }) {
   return (
     <>
       {/* Input Selection Buttons */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
+      <div className="flex items-center gap-4">
         <Button 
           onClick={() => openForm(FORM_TYPES.VOICE)}
-          className="h-32 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-primary/20 to-primary/5 hover:from-primary/30 hover:to-primary/10 border border-primary/20"
+          className="h-48 flex-1 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-secondary/20 to-secondary/5 hover:from-secondary/30 hover:to-secondary/10 border border-secondary/20"
           variant="outline"
         >
-          <Mic className="h-8 w-8 mb-2 text-primary/80" />
+          <Mic className="h-8 w-8 mb-2" />
           <span className="text-lg font-medium">Voice</span>
         </Button>
         
         <Button 
           onClick={() => openForm(FORM_TYPES.MANUAL_STUDENT)}
-          className="h-32 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-secondary/20 to-secondary/5 hover:from-secondary/30 hover:to-secondary/10 border border-secondary/20"
+          className="h-48 flex-1 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-secondary/20 to-secondary/5 hover:from-secondary/30 hover:to-secondary/10 border border-secondary/20"
           variant="outline"
         >
-          <ClipboardEdit className="h-8 w-8 mb-2 text-secondary/80" />
+          <ClipboardEdit className="h-8 w-8 mb-2" />
           <span className="text-lg font-medium">Manual</span>
         </Button>
       </div>
