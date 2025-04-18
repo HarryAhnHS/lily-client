@@ -258,7 +258,7 @@ export default function ObjectiveView({ objective, isOpen, onClose, previewMode 
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] w-[1100px] max-h-[90vh] p-0 overflow-hidden bg-gray-100">
+      <DialogContent className="w-full h-[calc(100vh-200px)] flex flex-col max-w-7xl mx-auto bg-[#e0e0e0] rounded-[20px] p-5 m-12">
         <div className="h-8 border-b border-gray-200 flex items-center pl-2">
           <DialogTitle className="sr-only">Objective Details</DialogTitle>
           <Button 
@@ -267,7 +267,7 @@ export default function ObjectiveView({ objective, isOpen, onClose, previewMode 
             onClick={onClose}
           >
             <ArrowLeft className="h-4 w-4 text-black mr-1" />
-            <span className="font-medium">back</span>
+            <span className="font-medium">Back</span>
           </Button>
         </div>
         
@@ -335,7 +335,7 @@ export default function ObjectiveView({ objective, isOpen, onClose, previewMode 
                       <div className="divide-y divide-gray-100">
                         {recentSessions.length > 0 ? (
                           recentSessions.map((session) => (
-                            <div key={session.id} className="grid grid-cols-12 gap-3 p-3 hover:bg-gray-50">
+                            <div key={session.id} className="grid grid-cols-12 gap-3 p-3 text-gray-800 hover:bg-gray-50">
                               <div className="col-span-3">{formatDate(session.created_at)}</div>
                               <div className="col-span-2 flex items-center">
                                 {getStatusIcon(session)}

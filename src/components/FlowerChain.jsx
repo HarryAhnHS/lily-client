@@ -2,6 +2,12 @@
 
 import { useTheme } from 'next-themes';
 
+// Simple seedable random function
+function seededRandom(seed) {
+  let x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+}
+
 export default function FlowerChain() {
   const { theme } = useTheme();
 
@@ -37,6 +43,12 @@ export default function FlowerChain() {
 
   // Generate the flowers array with better distribution
   const flowers = Array.from({ length: flowerCount }).map((_, i) => {
+    // Use deterministic random values based on index
+    const seedX = i * 0.1;
+    const seedY = i * 0.2;
+    const seedSize = i * 0.3;
+    const seedDuration = i * 0.4;
+    
     // Improved distribution to appear throughout the page
     // For some flowers, position them in the content area
     const isInContentArea = i % 3 === 0;
@@ -45,25 +57,22 @@ export default function FlowerChain() {
     
     if (isInContentArea) {
       // Position these flowers in the middle areas of the page
-      // Main content area typically starts around 25% from left (after sidebar) 
-      // and extends to about 85% of page width
-      x = 25 + (Math.random() * 60);
-      // Distribute throughout the page height
-      y = 20 + (Math.random() * 70);
+      x = 25 + (seededRandom(seedX) * 60);
+      y = 20 + (seededRandom(seedY) * 70);
     } else {
       // Position remaining flowers more evenly across the entire page
-      x = Math.random() * 100;
-      y = Math.random() * 100;
+      x = seededRandom(seedX) * 100;
+      y = seededRandom(seedY) * 100;
     }
 
-    // Calculate animation delay based on position
-    const animationDelay = i * 0.1 // 0.1 second delay between each flower
+    // Calculate animation delay based on position (deterministic)
+    const animationDelay = i * 0.1
     
-    // Random size between 16 and 24 (smaller than before)
-    const size = Math.floor(Math.random() * 8) + 16
+    // Random size between 16 and 24 (using seeded random)
+    const size = Math.floor(seededRandom(seedSize) * 8) + 16
     
-    // Random animation duration between 6 and 10 seconds
-    const animationDuration = Math.floor(Math.random() * 4) + 6
+    // Random animation duration between 6 and 10 seconds (using seeded random)
+    const animationDuration = Math.floor(seededRandom(seedDuration) * 4) + 6
 
     return { x, y, animationDelay, size, animationDuration }
   })
@@ -78,13 +87,13 @@ export default function FlowerChain() {
             key={i}
             className="absolute"
             style={{
-              left: `${flower.x}%`,
-              top: `${flower.y}%`,
+              left: `${flower.x.toFixed(4)}%`,
+              top: `${flower.y.toFixed(4)}%`,
               opacity: 0.12,
-              animationName: `flowerMove, floatUpDown`,
+              animationName: "flowerMove, floatUpDown",
               animationDuration: `${flower.animationDuration}s, ${flower.animationDuration + 2}s`,
-              animationTimingFunction: 'ease-in-out, ease-in-out',
-              animationIterationCount: 'infinite, infinite',
+              animationTimingFunction: "ease-in-out, ease-in-out",
+              animationIterationCount: "infinite, infinite",
               animationDelay: `${flower.animationDelay}s, ${flower.animationDelay}s`
             }}
           >

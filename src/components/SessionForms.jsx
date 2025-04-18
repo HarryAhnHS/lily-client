@@ -193,22 +193,20 @@ export function SessionFormController({ students, open, onOpenChange }) {
       <div className="flex items-center gap-4">
         <Button 
           onClick={() => openForm(FORM_TYPES.VOICE)}
-          className="h-48 flex-1 flex flex-col items-center justify-center gap-2 bg-white hover:bg-gray-50 border-4 border-black text-black hover:text-black shadow-md"
-          style={{boxShadow: '0 0 0 1.5px black'}}
+          className="h-48 flex-1 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-secondary/20 to-secondary/5 hover:from-secondary/30 hover:to-secondary/10 border border-secondary/20"
           variant="outline"
         >
-          <Mic className="h-8 w-8 mb-2 text-black" />
-          <span className="text-xl font-medium hover:text-2xl transition-all">Voice</span>
+          <Mic className="h-8 w-8 mb-2" />
+          <span className="text-lg font-medium">Voice</span>
         </Button>
         
         <Button 
           onClick={() => openForm(FORM_TYPES.MANUAL_STUDENT)}
-          className="h-48 flex-1 flex flex-col items-center justify-center gap-2 bg-white hover:bg-gray-50 border-4 border-black text-black hover:text-black shadow-md"
-          style={{boxShadow: '0 0 0 1.5px black'}}
+          className="h-48 flex-1 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-secondary/20 to-secondary/5 hover:from-secondary/30 hover:to-secondary/10 border border-secondary/20"
           variant="outline"
         >
-          <ClipboardEdit className="h-8 w-8 mb-2 text-black" />
-          <span className="text-xl font-medium hover:text-2xl transition-all">Manual</span>
+          <ClipboardEdit className="h-8 w-8 mb-2" />
+          <span className="text-lg font-medium">Manual</span>
         </Button>
       </div>
 

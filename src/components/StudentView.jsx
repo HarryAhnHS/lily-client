@@ -256,7 +256,7 @@ export function StudentView({
         </button>
       </div>
 
-      <div className="bg-[#f0f0f0] rounded-[16px] p-4 mb-6">
+      <div className="bg-[#f0f0f0] rounded-[16px] p-4 mb-6 h-94 overflow-y-auto">
         <div className="mb-4">
           <h2 className="text-xl font-medium text-[#1a1a1a]">{studentName}</h2>
           <div className="mt-2 grid grid-cols-2 gap-4">
@@ -397,7 +397,6 @@ export function StudentView({
 
       {/* Sessions Table */}
       <div className="bg-[#f0f0f0] rounded-[16px] p-4 overflow-y-auto hide-scrollbar">
-        <h3 className="font-medium text-[#1a1a1a] mb-4">Sessions</h3>
         <SortFilterSessionsTable 
           sessions={sessions}
           showActions={true}
