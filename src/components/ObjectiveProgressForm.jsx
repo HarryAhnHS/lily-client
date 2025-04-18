@@ -94,9 +94,12 @@ export function SessionManualProgressForm({ objectives, onBack, onSuccess }) {
         position: 'top-right',
       });
       
-      if (onSuccess) {
-        onSuccess();
-      }
+      // Use setTimeout to allow the toast to be visible before closing
+      setTimeout(() => {
+        if (onSuccess) {
+          onSuccess();
+        }
+      }, 300);
       
     } catch (error) {
       console.error('Error logging progress:', error);

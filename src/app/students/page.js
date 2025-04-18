@@ -249,7 +249,7 @@ export default function StudentsPage() {
           onObjectiveClick={handleObjectiveClick}
         />
       ) : (
-        <div className="w-full max-w-7xl mx-auto bg-[#e0e0e0] rounded-[20px] p-5">
+        <div className="w-full h-[calc(100vh-100px)] flex flex-col max-w-7xl mx-auto bg-[#e0e0e0] rounded-[20px] p-5">
           <div className="flex justify-between items-center mb-5">
             <div className="flex items-center gap-2">
               <div className="bg-black rounded-md p-1">
@@ -268,17 +268,17 @@ export default function StudentsPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-[16px] overflow-hidden">
+          <div className="flex-1 bg-white rounded-[16px] flex flex-col overflow-hidden">
             <div className="grid grid-cols-4 gap-4 p-4 border-b border-[#e0e0e0] font-medium text-[#1a1a1a]">
               <div>Student Name</div>
               <div>Disability Type</div>
               <div>Date of Review</div>
               <div>Supervisor Name</div>
             </div>
-            
-            {students.map((student) => (
-              <div
-                key={student.id}
+            <div className="h-full overflow-y-auto hide-scrollbar flex-1">
+              {students.map((student) => (
+                <div
+                  key={student.id}
                 className="grid grid-cols-4 gap-4 p-4 border-b border-[#e0e0e0] hover:bg-[#f0f0f0] transition-colors"
               >
                 <div className="text-[#1a1a1a]">{student.name}</div>
@@ -307,8 +307,9 @@ export default function StudentsPage() {
                     </button>
                   </div>
                 </div>
-              </div>
-            ))}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
