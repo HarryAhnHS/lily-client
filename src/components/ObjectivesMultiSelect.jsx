@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 
 export function SessionManualObjectiveSelect({ 
   students, 
-  selectedSubjectAreasMap, 
+  selectedSubjectAreasMap = {}, // Provide default empty object
   onBack,
   onContinue 
 }) {
@@ -31,6 +31,9 @@ export function SessionManualObjectiveSelect({
     return selectedForStudent.some(obj => obj.id === objectiveId);
   };
 
+  // Ensure selectedSubjectAreasMap is always an object
+  const safeSubjectAreasMap = selectedSubjectAreasMap || {};
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4 mb-6">
@@ -45,7 +48,7 @@ export function SessionManualObjectiveSelect({
       </div>
 
       <div className="space-y-8">
-        {Object.entries(selectedSubjectAreasMap).map(([studentId, subjectAreas]) => {
+        {Object.entries(safeSubjectAreasMap).map(([studentId, subjectAreas]) => {
           const student = students.find(s => s.id === studentId);
           if (!student) return null;
           
@@ -63,21 +66,21 @@ export function SessionManualObjectiveSelect({
               </h3>
               
               <div className="space-y-6">
-                {subjectAreas.map((subjectArea) => (
+                {Array.isArray(subjectAreas) ? subjectAreas.map((subjectArea) => (
                   <div key={subjectArea.id} className="border-l-2 border-primary/30 pl-4">
                     <h4 className="text-md font-medium mb-3 flex items-center">
                       <span className="bg-secondary/20 px-2 py-1 rounded text-sm">{subjectArea.name}</span>
                     </h4>
                     
-                    {subjectArea.objective.length > 0 ? (
+                    {subjectArea.objective && subjectArea.objective.length > 0 ? (
                       <div className="space-y-4">
                         {/* Group objectives by goal */}
                         {Object.entries(
                           subjectArea.objective.reduce((acc, obj) => {
-                            const goalId = obj.goal.id;
+                            const goalId = obj.goal ? obj.goal.id : 'unknown';
                             if (!acc[goalId]) {
                               acc[goalId] = {
-                                goal: obj.goal,
+                                goal: obj.goal || { id: goalId, title: 'Unknown Goal' },
                                 objectives: []
                               };
                             }
@@ -148,12 +151,29 @@ export function SessionManualObjectiveSelect({
                       </p>
                     )}
                   </div>
-                ))}
+                )) : (
+                  <p className="text-sm text-muted-foreground italic p-3 bg-muted/20 rounded-md">
+                    No subject areas available
+                  </p>
+                )}
               </div>
             </div>
           );
         })}
       </div>
+
+      {Object.keys(safeSubjectAreasMap).length === 0 && (
+        <div className="text-center p-8 bg-muted/10 rounded-lg border border-muted">
+          <p className="text-muted-foreground">No students or subject areas selected</p>
+          <Button 
+            variant="outline" 
+            onClick={onBack} 
+            className="mt-4"
+          >
+            Go back to select students
+          </Button>
+        </div>
+      )}
 
       <div className="flex justify-end gap-4 pt-4">
         <Button variant="outline" onClick={onBack}>
@@ -169,4 +189,4 @@ export function SessionManualObjectiveSelect({
       </div>
     </div>
   );
-} 
+}

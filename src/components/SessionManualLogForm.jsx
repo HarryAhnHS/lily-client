@@ -245,6 +245,23 @@ export function SessionManualStudentSelect({ students, onComplete }) {
     setShowProgressForm(true);
   };
 
+  // Handler for when the ObjectiveProgressForm completes successfully
+  const handleFormSuccess = () => {
+    // Reset all form states
+    setSelectedStudentMap({});
+    setStudentSubjectAreas({});
+    setSelectedSubjectAreasMap({});
+    setLoadingSubjectAreasMap({});
+    setSubjectAreasOpenMap({});
+    setShowObjectives(false);
+    setShowProgressForm(false);
+    setSelectedObjectives({});
+    
+    if (onComplete) {
+      onComplete();
+    }
+  };
+
   if (showProgressForm) {
     return (
       <SessionManualProgressForm
@@ -253,21 +270,7 @@ export function SessionManualStudentSelect({ students, onComplete }) {
           setShowProgressForm(false);
           setShowObjectives(true);
         }}
-        onSuccess={() => {
-          // Reset all form states
-          setSelectedStudentMap({});
-          setStudentSubjectAreas({});
-          setSelectedSubjectAreasMap({});
-          setLoadingSubjectAreasMap({});
-          setSubjectAreasOpenMap({});
-          setShowObjectives(false);
-          setShowProgressForm(false);
-          setSelectedObjectives({});
-          
-          if (onComplete) {
-            onComplete();
-          }
-        }}
+        onSuccess={handleFormSuccess}
       />
     );
   }

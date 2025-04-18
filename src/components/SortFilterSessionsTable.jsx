@@ -232,14 +232,14 @@ export function SortFilterSessionsTable({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full">
       <div className="flex justify-between items-center">
         <div className="flex gap-4">
           <div className="relative flex-1">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
             <Input
               placeholder="Search sessions..."
-              className="pl-8"
+              className="pl-8 bg-white text-gray-900 border-gray-200"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -247,11 +247,11 @@ export function SortFilterSessionsTable({
           <Collapsible
             open={isFiltersOpen}
             onOpenChange={setIsFiltersOpen}
-            className="space-y-2"
+            className="space-y-2 text-gray-900"
           >
             <div className="flex items-center justify-between">
               <CollapsibleTrigger asChild>
-                <Button variant="outline" className="flex items-center gap-2 text-black">
+                <Button variant="outline" className="flex items-center gap-2 bg-white text-gray-900 border-gray-200 hover:bg-gray-100 hover:text-gray-900">
                   <Filter className="h-4 w-4" />
                   Filters
                   <ChevronRight className={cn(
@@ -262,16 +262,16 @@ export function SortFilterSessionsTable({
               </CollapsibleTrigger>
             </div>
             <CollapsibleContent className="space-y-4">
-              <div className="flex flex-wrap gap-4 p-4 border rounded-lg bg-card">
+              <div className="flex flex-wrap gap-4 p-4 border rounded-lg bg-white border-gray-200">
                 <div className="flex flex-col gap-2">
-                  <label className="text-sm font-medium">Date Range</label>
+                  <label className="text-sm font-medium text-gray-900">Date Range</label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
                         className={cn(
-                          "w-[300px] justify-start text-left font-normal",
-                          !dateRange?.from && "text-muted-foreground"
+                          "w-[300px] justify-start text-left font-normal bg-white border-gray-200",
+                          !dateRange?.from && "text-gray-500"
                         )}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
@@ -289,7 +289,7 @@ export function SortFilterSessionsTable({
                         )}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
+                    <PopoverContent className="w-auto p-0 bg-white" align="start">
                       <Calendar
                         initialFocus
                         mode="range"
@@ -297,18 +297,19 @@ export function SortFilterSessionsTable({
                         selected={dateRange}
                         onSelect={handleDateSelect}
                         numberOfMonths={2}
+                        className="bg-white text-gray-900"
                       />
                     </PopoverContent>
                   </Popover>
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <label className="text-sm font-medium">Student</label>
+                  <label className="text-sm font-medium text-gray-900">Student</label>
                   <Select value={filterStudent} onValueChange={setFilterStudent}>
-                    <SelectTrigger className="w-[180px]">
+                    <SelectTrigger className="w-[180px] bg-white text-gray-900 border-gray-200">
                       <SelectValue placeholder="Filter by student" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white text-gray-900">
                       <SelectItem value="all">All Students</SelectItem>
                       {getUniqueStudents().map((student) => (
                         <SelectItem key={student.id} value={student.id}>
@@ -320,12 +321,12 @@ export function SortFilterSessionsTable({
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <label className="text-sm font-medium">Subject Area</label>
+                  <label className="text-sm font-medium text-gray-900">Subject Area</label>
                   <Select value={filterSubject} onValueChange={setFilterSubject}>
-                    <SelectTrigger className="w-[180px]">
+                    <SelectTrigger className="w-[180px] bg-white text-gray-900 border-gray-200">
                       <SelectValue placeholder="Filter by subject" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white text-gray-900">
                       <SelectItem value="all">All Subjects</SelectItem>
                       {getUniqueSubjects().map((subject) => (
                         <SelectItem key={subject.id} value={subject.id}>
@@ -337,12 +338,12 @@ export function SortFilterSessionsTable({
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <label className="text-sm font-medium">Objective Type</label>
+                  <label className="text-sm font-medium text-gray-900">Objective Type</label>
                   <Select value={filterType} onValueChange={setFilterType}>
-                    <SelectTrigger className="w-[180px]">
+                    <SelectTrigger className="w-[180px] bg-white text-gray-900 border-gray-200">
                       <SelectValue placeholder="Filter by type" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white text-gray-900">
                       <SelectItem value="all">All Types</SelectItem>
                       {getUniqueObjectiveTypes().map((type) => (
                         <SelectItem key={type} value={type}>
@@ -354,12 +355,12 @@ export function SortFilterSessionsTable({
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <label className="text-sm font-medium">Goal</label>
+                  <label className="text-sm font-medium text-gray-900">Goal</label>
                   <Select value={filterGoal} onValueChange={setFilterGoal}>
-                    <SelectTrigger className="w-[180px]">
+                    <SelectTrigger className="w-[180px] bg-white text-gray-900 border-gray-200">
                       <SelectValue placeholder="Filter by goal" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white text-gray-900">
                       <SelectItem value="all">All Goals</SelectItem>
                       {getUniqueGoals().map((goal) => (
                         <SelectItem key={goal.id} value={goal.id}>
@@ -373,141 +374,143 @@ export function SortFilterSessionsTable({
             </CollapsibleContent>
           </Collapsible>
         </div>
-        <Button variant="outline" className="flex items-center gap-2 text-black" onClick={handleExport}>
+        <Button variant="outline" className="flex items-center gap-2 bg-white text-gray-900 border-gray-200 hover:bg-gray-100 hover:text-gray-900" onClick={handleExport}>
           <Download className="h-4 w-4" />
           Export to CSV
         </Button>
       </div>
 
-      <div className="rounded-md border bg-card overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow className="hover:bg-muted/50">
-              <TableHead className="w-[100px] min-w-[100px]">
-                <Button
-                  variant="ghost"
-                  onClick={() => handleSort('date')}
-                  className="flex items-center gap-1 text-muted-foreground hover:text-foreground"
-                >
-                  Date
-                  <ArrowUpDown className="h-4 w-4" />
-                </Button>
-              </TableHead>
-              <TableHead className="w-[120px] min-w-[120px]">
-                <Button
-                  variant="ghost"
-                  onClick={() => handleSort('name')}
-                  className="flex items-center gap-1 text-muted-foreground hover:text-foreground"
-                >
-                  Student
-                  <ArrowUpDown className="h-4 w-4" />
-                </Button>
-              </TableHead>
-              <TableHead className="w-[120px] min-w-[120px] text-muted-foreground">
-                Subject Area
-              </TableHead>
-              <TableHead className="w-[150px] min-w-[150px] text-muted-foreground">
-                Goal
-              </TableHead>
-              <TableHead className="w-[250px] min-w-[250px] text-muted-foreground">
-                Objective
-              </TableHead>
-              <TableHead className="w-[80px] min-w-[80px] text-muted-foreground">
-                Type
-              </TableHead>
-              <TableHead className="w-[80px] min-w-[80px] text-muted-foreground">
-                Outcome
-              </TableHead>
-              <TableHead className="w-[80px] min-w-[80px] text-muted-foreground">
-                Success
-              </TableHead>
-              <TableHead className="w-[200px] min-w-[200px] text-muted-foreground">
-                Memo
-              </TableHead>
-              {showActions && (
-                <TableHead className="w-[50px] min-w-[50px]"></TableHead>
-              )}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {getFilteredAndSortedSessions().length === 0 ? (
-              <TableRow>
-                <TableCell 
-                  colSpan={showActions ? 10 : 9} 
-                  className="h-24 text-center text-muted-foreground"
-                >
-                  No sessions available
-                </TableCell>
+      <div className="rounded-md border border-gray-200 bg-white w-full overflow-hidden">
+        <div className="w-full overflow-x-auto">
+          <Table className="w-full">
+            <TableHeader className="bg-gray-50">
+              <TableRow className="hover:bg-gray-100 border-b border-gray-200">
+                <TableHead className="w-[100px] min-w-[100px]">
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleSort('date')}
+                    className="flex items-center gap-1 text-gray-700 hover:text-gray-900"
+                  >
+                    Date
+                    <ArrowUpDown className="h-4 w-4" />
+                  </Button>
+                </TableHead>
+                <TableHead className="w-[120px] min-w-[120px]">
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleSort('name')}
+                    className="flex items-center gap-1 text-gray-700 hover:text-gray-900"
+                  >
+                    Student
+                    <ArrowUpDown className="h-4 w-4" />
+                  </Button>
+                </TableHead>
+                <TableHead className="w-[120px] min-w-[120px] text-gray-700">
+                  Subject Area
+                </TableHead>
+                <TableHead className="w-[150px] min-w-[150px] text-gray-700">
+                  Goal
+                </TableHead>
+                <TableHead className="w-[250px] min-w-[250px] text-gray-700">
+                  Objective
+                </TableHead>
+                <TableHead className="w-[80px] min-w-[80px] text-gray-700">
+                  Type
+                </TableHead>
+                <TableHead className="w-[80px] min-w-[80px] text-gray-700">
+                  Outcome
+                </TableHead>
+                <TableHead className="w-[80px] min-w-[80px] text-gray-700">
+                  Success
+                </TableHead>
+                <TableHead className="w-[200px] min-w-[200px] text-gray-700">
+                  Memo
+                </TableHead>
+                {showActions && (
+                  <TableHead className="w-[50px] min-w-[50px]"></TableHead>
+                )}
               </TableRow>
-            ) : (
-              getFilteredAndSortedSessions().map((session) => (
-                <TableRow 
-                  key={`${session.id}-${session.objective_progress.id}`} 
-                  className="hover:bg-muted/50"
-                >
-                  <TableCell className="font-medium w-[100px] min-w-[100px]">
-                    {formatDate(session.created_at)}
+            </TableHeader>
+            <TableBody>
+              {getFilteredAndSortedSessions().length === 0 ? (
+                <TableRow>
+                  <TableCell 
+                    colSpan={showActions ? 10 : 9} 
+                    className="h-24 text-center text-gray-500 bg-white"
+                  >
+                    No sessions available
                   </TableCell>
-                  <TableCell className="w-[120px] min-w-[120px]">
-                    {session.student.name}
-                  </TableCell>
-                  <TableCell className="w-[120px] min-w-[120px] whitespace-normal">
-                    {session.objective.subject_area.name}
-                  </TableCell>
-                  <TableCell className="w-[150px] min-w-[150px] whitespace-normal">
-                    {session.objective.goal?.title || 'N/A'}
-                  </TableCell>
-                  <TableCell className="w-[250px] min-w-[250px] whitespace-normal">
-                    <div className="line-clamp-3">
-                      {session.objective.description}
-                    </div>
-                  </TableCell>
-                  <TableCell className="w-[80px] min-w-[80px]">
-                    {session.objective.objective_type}
-                  </TableCell>
-                  <TableCell className="w-[80px] min-w-[80px]">
-                    {formatOutcome(session)}
-                  </TableCell>
-                  <TableCell className="w-[80px] min-w-[80px]">
-                    <Badge variant={session.objective_progress.is_success ? "success" : "destructive"}>
-                      {session.objective_progress.is_success ? "Yes" : "No"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="w-[200px] min-w-[200px]">
-                    <div className="line-clamp-2">
-                      {session.memo || '-'}
-                    </div>
-                  </TableCell>
-                  {showActions && (
-                    <TableCell className="w-[50px] min-w-[50px]">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Open menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => handleEditSession(session)}>
-                            Edit Session
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem 
-                            className="text-destructive"
-                            onClick={() => handleDeleteSession(session.id)}
-                          >
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  )}
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+              ) : (
+                getFilteredAndSortedSessions().map((session) => (
+                  <TableRow 
+                    key={`${session.id}-${session.objective_progress.id}`} 
+                    className="hover:bg-gray-50 border-b border-gray-200 text-gray-900 bg-white"
+                  >
+                    <TableCell className="font-medium w-[100px] min-w-[100px] text-gray-900">
+                      {formatDate(session.created_at)}
+                    </TableCell>
+                    <TableCell className="w-[120px] min-w-[120px] text-gray-900">
+                      {session.student.name}
+                    </TableCell>
+                    <TableCell className="w-[120px] min-w-[120px] whitespace-normal text-gray-900">
+                      {session.objective.subject_area.name}
+                    </TableCell>
+                    <TableCell className="w-[150px] min-w-[150px] whitespace-normal text-gray-900">
+                      {session.objective.goal?.title || 'N/A'}
+                    </TableCell>
+                    <TableCell className="w-[250px] min-w-[250px] whitespace-normal text-gray-900">
+                      <div className="line-clamp-3">
+                        {session.objective.description}
+                      </div>
+                    </TableCell>
+                    <TableCell className="w-[80px] min-w-[80px] text-gray-900">
+                      {session.objective.objective_type}
+                    </TableCell>
+                    <TableCell className="w-[80px] min-w-[80px] text-gray-900">
+                      {formatOutcome(session)}
+                    </TableCell>
+                    <TableCell className="w-[80px] min-w-[80px]">
+                      <Badge variant={session.objective_progress.is_success ? "success" : "destructive"} className={session.objective_progress.is_success ? "bg-green-100 text-green-800 border-green-200" : "bg-red-100 text-red-800 border-red-200"}>
+                        {session.objective_progress.is_success ? "Yes" : "No"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="w-[200px] min-w-[200px] text-gray-900">
+                      <div className="line-clamp-2">
+                        {session.memo || '-'}
+                      </div>
+                    </TableCell>
+                    {showActions && (
+                      <TableCell className="w-[50px] min-w-[50px]">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0 text-gray-700 hover:text-gray-900 hover:bg-gray-100">
+                              <span className="sr-only">Open menu</span>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="bg-white text-gray-900 border-gray-200">
+                            <DropdownMenuLabel className="text-gray-900">Actions</DropdownMenuLabel>
+                            <DropdownMenuItem onClick={() => handleEditSession(session)} className="text-gray-900 hover:bg-gray-100">
+                              Edit Session
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator className="bg-gray-200" />
+                            <DropdownMenuItem 
+                              className="text-red-600 hover:bg-red-50"
+                              onClick={() => handleDeleteSession(session.id)}
+                            >
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
       <SessionFormModal

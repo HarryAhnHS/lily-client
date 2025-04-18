@@ -210,7 +210,7 @@ export function StudentView({
   const summary = student.summary;
 
   return (
-    <div className="w-full max-w-4xl mx-auto bg-[#e0e0e0] rounded-[20px] p-6">
+    <div className="w-full h-[calc(100vh-200px)] flex flex-col max-w-7xl mx-auto bg-[#e0e0e0] rounded-[20px] p-5 m-12">
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-2">
           <div className="bg-black rounded-md p-1">
@@ -252,7 +252,7 @@ export function StudentView({
           className="text-[#595959] flex items-center gap-1 hover:text-black transition-colors duration-200 hover:scale-105 transform p-1 rounded-md"
         >
           <ChevronLeft className="w-4 h-4" />
-          back
+          Back
         </button>
       </div>
 
@@ -299,7 +299,7 @@ export function StudentView({
               </div>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-4 overflow-y-auto hide-scrollbar">
               {subjectAreas.map((area) => (
                 selectedAreas[area.id] && (
                   <div key={area.id} className="mb-4">
@@ -396,7 +396,7 @@ export function StudentView({
       </div>
 
       {/* Sessions Table */}
-      <div className="bg-[#f0f0f0] rounded-[16px] p-4">
+      <div className="bg-[#f0f0f0] rounded-[16px] p-4 overflow-y-auto hide-scrollbar">
         <h3 className="font-medium text-[#1a1a1a] mb-4">Sessions</h3>
         <SortFilterSessionsTable 
           sessions={sessions}
