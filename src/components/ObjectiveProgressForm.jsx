@@ -89,18 +89,19 @@ export function SessionManualProgressForm({ objectives, onBack, onSuccess }) {
 
       if (!response.ok) throw new Error('Failed to log progress');
       
+      // Success notification
       toast.success('Progress logged successfully', {
         duration: 3000,
         position: 'top-right',
       });
       
-      // Use setTimeout to allow the toast to be visible before closing
-      setTimeout(() => {
-        if (onSuccess) {
-          onSuccess();
-        }
-      }, 300);
+      // Reset form data 
+      setFormData({});
       
+      // Call onSuccess callback immediately to close all parent forms
+      if (typeof onSuccess === 'function') {
+        onSuccess();
+      }
     } catch (error) {
       console.error('Error logging progress:', error);
       toast.error('Failed to log progress');

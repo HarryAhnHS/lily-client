@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { Mic, ClipboardEdit } from 'lucide-react';
-import { SessionManualStudentSelect } from './ManualLogForm';
+import { SessionManualStudentSelect } from './SessionManualLogForm';
 import { SessionManualObjectiveSelect } from './ObjectivesMultiSelect';
 import { SessionManualProgressForm } from './ObjectiveProgressForm';
 import { TranscriptObjectiveProgressForm } from './TranscriptObjectiveProgressForm';
@@ -35,15 +35,20 @@ export function SessionFormController({ students, open, onOpenChange }) {
   const [selectedObjectives, setSelectedObjectives] = useState({});
   const [analyzedSessions, setAnalyzedSessions] = useState(null);
 
+  // Reset all form states
+  const resetAllFormStates = () => {
+    setCurrentForm(FORM_TYPES.NONE);
+    setSelectedSubjectAreasMap({});
+    setSelectedObjectives({});
+    setAnalyzedSessions(null);
+  };
+
   // Handle dialog state
   const handleOpenChange = (isOpen) => {
     setDialogOpen(isOpen);
     if (!isOpen) {
       // Reset state when dialog is closed
-      setCurrentForm(FORM_TYPES.NONE);
-      setSelectedSubjectAreasMap({});
-      setSelectedObjectives({});
-      setAnalyzedSessions(null);
+      resetAllFormStates();
       
       // Notify parent
       if (onOpenChange) {
@@ -76,7 +81,15 @@ export function SessionFormController({ students, open, onOpenChange }) {
 
   // Handler for form submission success
   const handleFormSuccess = () => {
-    handleOpenChange(false);
+    // First reset all form states to prevent any rendering with stale data
+    resetAllFormStates();
+    // Then close the dialog
+    setDialogOpen(false);
+    
+    // Notify parent
+    if (onOpenChange) {
+      onOpenChange(false);
+    }
   };
 
   // Get the title and description based on the current form
