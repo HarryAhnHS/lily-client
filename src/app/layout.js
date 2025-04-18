@@ -8,6 +8,7 @@ import { Footer } from '@/components/Footer';
 import './globals.css';
 import { ThemeProvider } from 'next-themes';
 import { Sidebar } from '@/components/Sidebar';
+import FlowerChain from '@/components/FlowerChain';
 
 export default function RootLayout({ children }) {
   return (
@@ -16,9 +17,11 @@ export default function RootLayout({ children }) {
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <AuthProvider>
             <SidebarProvider>
+              
               <div className="min-h-screen flex flex-col">
                 <Header />
                 <main className="flex-1 pt-16 pl-24 pr-4">
+                <FlowerChain />
                   {children}
                 </main>
                 <Footer />

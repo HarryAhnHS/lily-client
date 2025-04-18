@@ -91,11 +91,11 @@ export default function RecentLogs({ session }) {
   };
 
   return (
-    <Card className="shadow-md border border-border/40 backdrop-blur-sm bg-card/95 h-[350px] flex flex-col">
-      <CardHeader className="bg-muted/30 pb-3 flex-shrink-0">
-        <CardTitle className="text-lg font-medium flex items-center gap-2">
-          <div className="w-5 h-5 flex items-center justify-center rounded-full bg-primary/20">
-            <Bell className="w-3 h-3 text-primary" />
+    <Card className="shadow-md border border-gray-200 bg-white h-[350px] flex flex-col">
+      <CardHeader className="bg-[#f0f0f0] pb-3 flex-shrink-0">
+        <CardTitle className="text-lg font-medium flex items-center gap-2 text-black">
+          <div className="w-5 h-5 flex items-center justify-center rounded-full bg-black/10">
+            <Bell className="w-3 h-3 text-black" />
           </div>
           <span>View Recent Logs</span>
         </CardTitle>
@@ -103,28 +103,28 @@ export default function RecentLogs({ session }) {
       <CardContent className="pt-4 flex-grow overflow-hidden">
         {isLoading ? (
           <div className="flex justify-center py-4">
-            <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+            <div className="w-6 h-6 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
           </div>
         ) : error ? (
           <div className="text-center py-4 text-red-500">{error}</div>
         ) : recentLogs.length === 0 ? (
-          <div className="text-center py-4 text-muted-foreground">No recent logs found</div>
+          <div className="text-center py-4 text-gray-500">No recent logs found</div>
         ) : (
-          <div className="space-y-3 h-full overflow-y-auto pr-1 pb-2 scrollbar-thin hover:scrollbar-thumb-primary/20">
+          <div className="space-y-3 h-full overflow-y-auto pr-1 pb-2 scrollbar-thin hover:scrollbar-thumb-gray-300">
             {recentLogs.map((log) => (
               <div key={log.id} className="flex items-center justify-between py-2 border-b last:border-0">
                 <div className="flex flex-col">
-                  <span className="font-medium">{getStudentName(log.student_id)}</span>
-                  <span className="text-xs text-muted-foreground">{formatMemo(log.memo)}</span>
+                  <span className="font-medium text-black">{getStudentName(log.student_id)}</span>
+                  <span className="text-xs text-gray-600">{formatMemo(log.memo)}</span>
                 </div>
                 <div className="flex items-center gap-4">
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-sm text-gray-600">
                     {formatDate(log.created_at)}
                   </span>
                   <Button 
                     variant="ghost" 
                     size="icon" 
-                    className="h-6 w-6 flex-shrink-0"
+                    className="h-6 w-6 flex-shrink-0 text-black hover:bg-gray-100"
                   >
                     <ArrowUpRight className="h-4 w-4" />
                   </Button>

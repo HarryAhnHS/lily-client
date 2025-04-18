@@ -251,7 +251,7 @@ export function SortFilterSessionsTable({
           >
             <div className="flex items-center justify-between">
               <CollapsibleTrigger asChild>
-                <Button variant="outline" className="flex items-center gap-2">
+                <Button variant="outline" className="flex items-center gap-2 text-black">
                   <Filter className="h-4 w-4" />
                   Filters
                   <ChevronRight className={cn(
@@ -373,7 +373,7 @@ export function SortFilterSessionsTable({
             </CollapsibleContent>
           </Collapsible>
         </div>
-        <Button variant="outline" className="flex items-center gap-2" onClick={handleExport}>
+        <Button variant="outline" className="flex items-center gap-2 text-black" onClick={handleExport}>
           <Download className="h-4 w-4" />
           Export to CSV
         </Button>

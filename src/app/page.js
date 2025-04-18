@@ -19,6 +19,7 @@ import { SessionFormController } from "@/components/SessionForms";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import RecentLogs from "@/components/RecentLogs";
 import WeeklyObjectivesOverview from "@/components/WeeklyObjectivesOverview";
+import FlowerChain from "@/components/FlowerChain";
 
 // Import from @google/genai
 import { GoogleGenAI } from "@google/genai";
@@ -85,17 +86,18 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
-      <main className="max-w-6xl mx-auto px-4 py-8 space-y-6 relative z-10">
+    <div className="min-h-screen relative overflow-hidden">
+      <FlowerChain />
+      <main className="max-w-6xl mx-auto px-4 py-8 space-y-6 relative">
         {/* Header with greeting */}
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
               <UserRoundCheck className="w-4 h-4 text-primary" />
             </div>
-            <h2 className="text-2xl font-semibold">Good morning, {session?.user?.email}</h2>
+            <h2 className="text-2xl font-semibold text-white">Good morning, {session?.user?.email}</h2>
           </div>
-          <Button size="sm" variant="outline" className="flex items-center gap-2">
+          <Button size="sm" variant="outline" className="flex items-center gap-2 text-white border-white">
             <Bell className="w-4 h-4" />
             <span>Reminders</span>
           </Button>
@@ -105,10 +107,10 @@ export default function Home() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left column - Session Input Options */}
           <div className="lg:col-span-1">
-            <Card className="shadow-md border border-border/40 backdrop-blur-sm bg-card/95 h-full">
-              <CardHeader className="bg-muted/30 pb-3">
-                <CardTitle className="text-lg font-medium flex items-center gap-2">
-                  <ClipboardList className="w-5 h-5 text-primary" />
+            <Card className="shadow-md border border-gray-200 bg-white h-full">
+              <CardHeader className="bg-[#f0f0f0] pb-3">
+                <CardTitle className="text-lg font-medium flex items-center gap-2 text-black">
+                  <ClipboardList className="w-5 h-5 text-black" />
                   <span>Log Progress</span>
                 </CardTitle>
               </CardHeader>

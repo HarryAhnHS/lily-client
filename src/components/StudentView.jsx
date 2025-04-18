@@ -47,10 +47,12 @@ export function StudentView({
 
   // Fetch subject areas and their goals
   const fetchSubjectAreas = async () => {
-    if (!session) return;
+    if (!session || !student?.id) return;
     
     setIsLoadingAreas(true);
     try {
+      console.log("Fetching subject areas for student ID:", student.id);
+      
       const response = await authorizedFetch(
         `/subject-areas/student/${student.id}`,
         session?.access_token
@@ -61,18 +63,83 @@ export function StudentView({
       }
       
       const data = await response.json();
-      // Filter to only include subject areas that have objectives
-      const areasWithObjectives = data.filter(area => 
-        area.objectives && area.objectives.length > 0
-      );
+      console.log("Subject areas response:", JSON.stringify(data, null, 2));
       
-      setSubjectAreas(areasWithObjectives);
+      // Process the data structure from the API
+      let processedAreas = [];
+      
+      // Handle the possible structure that comes from the API
+      if (Array.isArray(data)) {
+        processedAreas = data.map(area => {
+          // Check if objectives is an array on the area
+          if (area.objective && Array.isArray(area.objective)) {
+            // Map the objectives structure to match what we need
+            return {
+              ...area,
+              objectives: area.objective.map(obj => ({
+                ...obj,
+                // Ensure required fields for display exist
+                id: obj.id,
+                description: obj.description || 'No description available',
+                subject_area_id: area.id,
+                goal_id: obj.goal_id
+              }))
+            };
+          } else if (area.objectives && Array.isArray(area.objectives)) {
+            // Use the existing objectives array
+            return area;
+          } else {
+            // No objectives found, return the area with empty objectives
+            return {
+              ...area,
+              objectives: []
+            };
+          }
+        });
+      } else if (data && typeof data === 'object') {
+        // Handle case where it might not be an array
+        console.log("Data is not an array, converting to array");
+        processedAreas = [data].map(area => {
+          if (area.objective && Array.isArray(area.objective)) {
+            return {
+              ...area,
+              objectives: area.objective
+            };
+          }
+          return area;
+        });
+      }
+      
+      // Log all areas before any filtering
+      console.log("All processed areas (before filtering):", processedAreas.map(a => a.name));
+      
+      // Instead of filtering out areas, keep all of them but check if they have objectives
+      processedAreas.forEach(area => {
+        const hasObjectives = 
+          (area.objectives && area.objectives.length > 0) || 
+          (area.objective && area.objective.length > 0);
+        
+        if (!hasObjectives) {
+          console.log(`Area ${area.name} (${area.id}) has no objectives, but we'll still display it`);
+        }
+      });
+      
+      console.log("Total areas count:", processedAreas.length);
+      setSubjectAreas(processedAreas);
       
       // Initialize all areas as deselected
       const initialSelectedAreas = {};
-      areasWithObjectives.forEach(area => {
+      processedAreas.forEach(area => {
         initialSelectedAreas[area.id] = false;
       });
+      
+      // Remove the auto-selection of areas
+      // if (processedAreas.length <= 3) {
+      //   processedAreas.forEach(area => {
+      //     initialSelectedAreas[area.id] = true;
+      //   });
+      // }
+      
       setSelectedAreas(initialSelectedAreas);
     } catch (error) {
       console.error('Error fetching subject areas:', error);
@@ -83,8 +150,11 @@ export function StudentView({
   };
 
   useEffect(() => {
-    fetchSubjectAreas();
-  }, [student.id, session]);
+    if (student && student.id && session) {
+      console.log("Calling fetchSubjectAreas for student:", student.id);
+      fetchSubjectAreas();
+    }
+  }, [student?.id, session]);
 
   const fetchSessions = async () => {
     if (!session) return;
@@ -201,7 +271,7 @@ export function StudentView({
           </div>
         </div>
 
-        <div className="max-h-[400px] overflow-y-auto hide-scrollbar">
+        <div className="overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
           <div className="mb-6">
             <h3 className="font-medium text-[#1a1a1a] mb-2">Student Summary</h3>
             <p className="text-sm text-[#1a1a1a]">{summary || 'No summary available'}</p>
@@ -235,54 +305,81 @@ export function StudentView({
                   <div key={area.id} className="mb-4">
                     <h4 className="text-[#1a1a1a] font-medium mb-2">{area.name}</h4>
                     <div className="space-y-2">
-                      {area.objectives?.map((objective) => (
-                        <div
-                          key={objective.id}
-                          className="bg-white rounded-md p-3 text-sm text-[#1a1a1a] mb-2 flex justify-between items-center group cursor-pointer hover:bg-gray-100 hover:shadow-md transition-all relative"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            console.log("Objective clicked:", objective.id);
-                            onObjectiveClick(objective);
-                          }}
-                        >
-                          <div className="flex-1 flex items-center">
-                            <span>{objective.description}</span>
-                          </div>
-                          <div onClick={(e) => e.stopPropagation()}>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon"
-                                  className="opacity-0 group-hover:opacity-100"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={(e) => {
-                                  e.stopPropagation();
-                                  onEditObjective(objective);
-                                }}>
-                                  <Pencil className="h-4 w-4 mr-2" />
-                                  Edit
-                                </DropdownMenuItem>
-                                <DropdownMenuItem 
-                                  className="text-red-600"
-                                  onClick={(e) => {
+                      {(area.objectives || area.objective || []).length > 0 ? (
+                        (area.objectives || area.objective || []).map((objective) => (
+                          <div
+                            key={objective.id}
+                            className="bg-white rounded-md p-3 text-sm text-[#1a1a1a] mb-2 flex justify-between items-center group cursor-pointer hover:bg-gray-100 hover:shadow-md transition-all relative"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              console.log("Objective clicked:", objective.id, objective);
+                              
+                              // Enhance objective with area and goal info if needed
+                              const enhancedObjective = {
+                                ...objective,
+                                subject_area_id: objective.subject_area_id || area.id,
+                                subject_area: objective.subject_area || { 
+                                  id: area.id, 
+                                  name: area.name 
+                                }
+                              };
+                              
+                              if (objective.goal) {
+                                enhancedObjective.goal = objective.goal;
+                              } else if (area.goals && area.goals.length > 0) {
+                                // Try to find the goal from the area's goals array
+                                const matchingGoal = area.goals.find(g => g.id === objective.goal_id);
+                                if (matchingGoal) {
+                                  enhancedObjective.goal = matchingGoal;
+                                }
+                              }
+                              
+                              onObjectiveClick(enhancedObjective);
+                            }}
+                          >
+                            <div className="flex-1 flex items-center">
+                              <span>{objective.description}</span>
+                            </div>
+                            <div onClick={(e) => e.stopPropagation()}>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon"
+                                    className="opacity-0 group-hover:opacity-100"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={(e) => {
                                     e.stopPropagation();
-                                    onDeleteObjective(objective);
-                                  }}
-                                >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                                    onEditObjective(objective);
+                                  }}>
+                                    <Pencil className="h-4 w-4 mr-2" />
+                                    Edit
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem 
+                                    className="text-red-600"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onDeleteObjective(objective);
+                                    }}
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
                           </div>
+                        ))
+                      ) : (
+                        <div className="bg-white rounded-md p-3 text-sm text-gray-500 mb-2">
+                          No objectives found for this area of need. Click "Add Objective" to create one.
                         </div>
-                      ))}
+                      )}
                     </div>
                   </div>
                 )
@@ -291,7 +388,7 @@ export function StudentView({
 
             {(!subjectAreas || subjectAreas.length === 0) && (
               <div className="text-center py-8 text-[#595959]">
-                No areas of need defined yet.
+                No areas of need found for this student. Use "Add Objective" to create objectives which will be organized by area of need.
               </div>
             )}
           </div>

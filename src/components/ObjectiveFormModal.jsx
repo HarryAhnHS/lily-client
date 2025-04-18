@@ -647,7 +647,7 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
                 name="targetConsistencySuccesses"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Consistency Successes<span className="text-red-500">*</span></FormLabel>
+                    <FormLabel className="text-black">Consistency Successes<span className="text-red-500">*</span></FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -655,9 +655,10 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
                         {...field}
                         value={field.value ?? ''}
                         onChange={(e) => field.onChange(parseInt(e.target.value))}
+                        className="text-black border-gray-300"
                       />
                     </FormControl>
-                    <FormDescription>
+                    <FormDescription className="text-black">
                       How many successful trials?
                     </FormDescription>
                     <FormMessage />
@@ -670,7 +671,7 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
                 name="targetConsistencyTrials"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Consistency Trials<span className="text-red-500">*</span></FormLabel>
+                    <FormLabel className="text-black">Consistency Trials<span className="text-red-500">*</span></FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -678,9 +679,10 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
                         {...field}
                         value={field.value ?? ''}
                         onChange={(e) => field.onChange(parseInt(e.target.value))}
+                        className="text-black border-gray-300"
                       />
                     </FormControl>
-                    <FormDescription>
+                    <FormDescription className="text-black">
                       Out of how many trials?
                     </FormDescription>
                     <FormMessage />
@@ -693,7 +695,7 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
                 type="button" 
                 variant="outline" 
                 onClick={handleCancel}
-                className="bg-black text-white hover:bg-gray-800 border-none ml-auto"
+                className="text-black hover:bg-gray-800 border-none ml-auto"
               >
                 Cancel
               </Button>

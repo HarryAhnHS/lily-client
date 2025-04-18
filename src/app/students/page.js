@@ -9,9 +9,11 @@ import { StudentFormModal } from '@/components/StudentFormModal';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { ObjectiveFormModal } from '@/components/ObjectiveFormModal';
-import { Users, Plus, MoreHorizontal } from 'lucide-react';
+import { Users, Plus, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { StudentView } from '@/components/StudentView';
 import ObjectiveView from '@/components/ObjectiveView';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import FlowerChain from "@/components/FlowerChain";
 
 export default function StudentsPage() {
   const { session, loading } = useAuth();
@@ -66,6 +68,7 @@ export default function StudentsPage() {
     if (!session || isLoadingDetails(studentId)) return;
     
     setLoadingStudentIds(prev => new Set([...prev, studentId]));
+    console.log("Fetching details for student ID:", studentId);
     
     try {
       // First get the basic student details
@@ -76,7 +79,35 @@ export default function StudentsPage() {
       }
       
       const studentData = await response.json();
-      console.log('Student details response:', studentData);
+      console.log('Student details response:', JSON.stringify(studentData, null, 2));
+      
+      // Get subject areas with objectives for this student
+      const subjectAreasResponse = await authorizedFetch(
+        `/subject-areas/student/${studentId}`,
+        session?.access_token
+      );
+      
+      // Store subject area data if available for use in enhancing objectives
+      let subjectAreasData = [];
+      if (subjectAreasResponse.ok) {
+        subjectAreasData = await subjectAreasResponse.json();
+        console.log('Subject areas count:', Array.isArray(subjectAreasData) ? subjectAreasData.length : 'Not an array');
+        console.log('Subject areas response (first few):', 
+          JSON.stringify(
+            Array.isArray(subjectAreasData) ? 
+              subjectAreasData.slice(0, 3) : 
+              subjectAreasData, 
+            null, 2
+          )
+        );
+      } else {
+        console.error('Failed to fetch subject areas:', subjectAreasResponse.status);
+      }
+      
+      // Make sure subject areas are in array format
+      if (!Array.isArray(subjectAreasData) && subjectAreasData) {
+        subjectAreasData = [subjectAreasData];
+      }
       
       // Then get the student's objectives with subject areas and goals included
       const objectivesResponse = await authorizedFetch(
@@ -89,30 +120,78 @@ export default function StudentsPage() {
       }
       
       const objectivesData = await objectivesResponse.json();
-      console.log('Objectives response:', objectivesData);
+      console.log('Objectives count:', Array.isArray(objectivesData) ? objectivesData.length : 'Not an array');
       
       // Find the student in the current students list to get all fields
       const currentStudent = students.find(s => s.id === studentId);
       
+      // Ensure we have an array of objectives
+      const objectivesArray = Array.isArray(objectivesData) ? objectivesData : [objectivesData].filter(Boolean);
+      
+      // Map subject areas for easy lookup by ID
+      const subjectAreasMap = {};
+      subjectAreasData.forEach(area => {
+        if (area && area.id) {
+          subjectAreasMap[area.id] = area;
+        }
+      });
+      
+      // Log area IDs to help with debugging
+      console.log('Available subject area IDs:', Object.keys(subjectAreasMap));
+      
       // Ensure each objective has the required data for ObjectiveView
-      const enhancedObjectives = objectivesData.map(objective => {
-        // If subject_area and goal are already included, return as is
-        if (objective.subject_area && objective.goal) {
-          return objective;
+      const enhancedObjectives = objectivesArray.map(objective => {
+        // Start with the objective data
+        const enhancedObj = { ...objective };
+        
+        // If subject_area and goal are already included, use them
+        if (!enhancedObj.subject_area && enhancedObj.subject_area_id) {
+          // Try to get subject area from our map
+          const areaFromMap = subjectAreasMap[enhancedObj.subject_area_id];
+          if (areaFromMap) {
+            enhancedObj.subject_area = {
+              id: areaFromMap.id,
+              name: areaFromMap.name
+            };
+          } else {
+            // Fallback to placeholder
+            console.log(`Subject area ID ${enhancedObj.subject_area_id} not found for objective ${enhancedObj.id}`);
+            enhancedObj.subject_area = { 
+              id: enhancedObj.subject_area_id, 
+              name: enhancedObj.subject_area_name || "Unknown Area" 
+            };
+          }
         }
         
-        // Otherwise, ensure we have placeholders to prevent errors in ObjectiveView
-        return {
-          ...objective,
-          subject_area: objective.subject_area || { 
-            id: objective.subject_area_id, 
-            name: "Loading..." 
-          },
-          goal: objective.goal || { 
-            id: objective.goal_id, 
-            title: "Loading..." 
+        // Ensure goal info is available
+        if (!enhancedObj.goal && enhancedObj.goal_id) {
+          // Try to find goal in the subject area data
+          let goalFound = false;
+          for (const area of subjectAreasData) {
+            if (area.goals && Array.isArray(area.goals)) {
+              const matchingGoal = area.goals.find(g => g.id === enhancedObj.goal_id);
+              if (matchingGoal) {
+                enhancedObj.goal = {
+                  id: matchingGoal.id,
+                  title: matchingGoal.title || matchingGoal.description || "Unknown Goal"
+                };
+                goalFound = true;
+                break;
+              }
+            }
           }
-        };
+          
+          // Fallback if not found
+          if (!goalFound) {
+            console.log(`Goal ID ${enhancedObj.goal_id} not found for objective ${enhancedObj.id}`);
+            enhancedObj.goal = { 
+              id: enhancedObj.goal_id, 
+              title: enhancedObj.goal_title || "Unknown Goal" 
+            };
+          }
+        }
+        
+        return enhancedObj;
       });
       
       // Combine the data, preserving all student fields
@@ -122,7 +201,7 @@ export default function StudentsPage() {
         objectives: enhancedObjectives || [] // Add enhanced objectives
       };
       
-      console.log('Combined student data:', combinedData);
+      console.log('Combined objectives count:', enhancedObjectives.length);
       setSelectedStudent(combinedData);
     } catch (err) {
       console.error('Error fetching student details:', err);
@@ -142,6 +221,7 @@ export default function StudentsPage() {
   }, [session]);
 
   const handleOpenStudentModal = (student = null) => {
+    console.log("Opening student modal for editing:", student?.name || "New Student");
     setSelectedStudentForEdit(student);
     setShowStudentModal(true);
   };
@@ -176,21 +256,41 @@ export default function StudentsPage() {
   };
 
   const handleDeleteStudent = async (student) => {
-    if (!confirm(`Are you sure you want to delete ${student.name}?`)) return;
+    if (!student || !student.id) {
+      toast.error('Invalid student data');
+      return;
+    }
+
+    if (!confirm(`Are you sure you want to delete ${student.name}? This action cannot be undone.`)) {
+      return;
+    }
 
     try {
+      toast.loading('Deleting student...');
+      
       const response = await authorizedFetch(`/students/student/${student.id}`, session?.access_token, {
         method: 'DELETE',
       });
 
-      if (!response.ok) throw new Error('Failed to delete student');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.detail || `Failed to delete student: ${response.status}`);
+      }
       
+      // If we had the student selected, clear the selection
+      if (selectedStudent?.id === student.id) {
+        setSelectedStudent(null);
+      }
+      
+      // Refresh the student list
       await fetchStudents();
-      setSelectedStudent(null);
-      toast.success('Student deleted successfully');
+      
+      toast.dismiss();
+      toast.success(`Student ${student.name} deleted successfully`);
     } catch (err) {
       console.error('Error deleting student:', err);
-      toast.error('Failed to delete student. Please try again later.');
+      toast.dismiss();
+      toast.error(`Failed to delete student: ${err.message}`);
     }
   };
 
@@ -215,8 +315,32 @@ export default function StudentsPage() {
   };
 
   const handleObjectiveClick = (objective) => {
-    console.log("Objective clicked:", objective.id);
-    setSelectedObjective(objective);
+    console.log("Objective clicked:", JSON.stringify(objective, null, 2));
+    
+    // Ensure objective has necessary data for ObjectiveView
+    const enhancedObjective = {
+      ...objective
+    };
+    
+    if (!objective.subject_area && objective.subject_area_id) {
+      // Try to find subject area name from existing data
+      const subjectAreaName = objective.subject_area_name || "Unknown Area";
+      enhancedObjective.subject_area = {
+        id: objective.subject_area_id,
+        name: subjectAreaName
+      };
+    }
+    
+    if (!objective.goal && objective.goal_id) {
+      // Try to find goal title from existing data
+      const goalTitle = objective.goal_title || "Unknown Goal";
+      enhancedObjective.goal = {
+        id: objective.goal_id,
+        title: goalTitle
+      };
+    }
+    
+    setSelectedObjective(enhancedObjective);
   };
 
   const handleBackFromObjective = () => {
@@ -236,7 +360,8 @@ export default function StudentsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background relative">
+    <div className="min-h-screen relative">
+      <FlowerChain />
       {selectedStudent ? (
         <StudentView
           student={selectedStudent}
@@ -279,7 +404,8 @@ export default function StudentsPage() {
             {students.map((student) => (
               <div
                 key={student.id}
-                className="grid grid-cols-4 gap-4 p-4 border-b border-[#e0e0e0] hover:bg-[#f0f0f0] transition-colors"
+                className="grid grid-cols-4 gap-4 p-4 border-b border-[#e0e0e0] hover:bg-[#f0f0f0] transition-colors cursor-pointer"
+                onClick={() => fetchStudentDetails(student.id)}
               >
                 <div className="text-[#1a1a1a]">{student.name}</div>
                 <div className="text-[#1a1a1a]">{student.disability_type || 'N/A'}</div>
@@ -290,7 +416,10 @@ export default function StudentsPage() {
                     <Button
                       variant="ghost"
                       className="text-[#1a1a1a] hover:bg-[#e0e0e0] flex items-center gap-2 transition-all hover:scale-105"
-                      onClick={() => fetchStudentDetails(student.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        fetchStudentDetails(student.id);
+                      }}
                       disabled={isLoadingDetails(student.id)}
                     >
                       {isLoadingDetails(student.id) ? (
@@ -302,9 +431,39 @@ export default function StudentsPage() {
                         'View Details'
                       )}
                     </Button>
-                    <button className="text-[#1a1a1a] p-1 hover:bg-[#e0e0e0] rounded-md">
-                      <MoreHorizontal className="w-5 h-5" />
-                    </button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button 
+                          className="text-[#1a1a1a] p-1 hover:bg-[#e0e0e0] rounded-md transition-colors duration-200"
+                          onClick={(e) => e.stopPropagation()}
+                          aria-label="Options"
+                        >
+                          <MoreHorizontal className="w-5 h-5" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-40">
+                        <DropdownMenuItem 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenStudentModal(student);
+                          }}
+                          className="cursor-pointer"
+                        >
+                          <Pencil className="h-4 w-4 mr-2" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          className="text-red-600 cursor-pointer" 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteStudent(student);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
               </div>
