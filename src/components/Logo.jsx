@@ -23,7 +23,7 @@ export function Logo() {
           />
           <circle cx="14" cy="14" r="3.5" className="fill-black dark:fill-white" />
         </svg>
-        <span className="text-black dark:text-white text-4xl font-medium">Lily</span>
+        <span className="text-black dark:text-white text-3xl font-xs">Lily</span>
       </div>
     </Link>
   );

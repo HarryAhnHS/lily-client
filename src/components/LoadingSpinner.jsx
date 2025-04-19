@@ -9,7 +9,7 @@ const LoadingSpinner = ({ size = 'medium', className = '' }) => {
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm z-50">
+    <div className="h-screen w-screen fixed inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm z-50">
       <div
         className={`${sizeClasses[size]} relative flex items-center justify-center ${className} animate-spin-slow`}
       >
