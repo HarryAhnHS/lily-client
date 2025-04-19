@@ -18,9 +18,9 @@ export default function RootLayout({ children }) {
           <AuthProvider>
             <SidebarProvider>
               
-              <div className="min-h-screen flex flex-col">
+              <div className="min-h-screen flex flex-col overflow-hidden">
                 <Header />
-                <main className="flex-1 pt-16 pl-24 pr-4">
+                <main className="flex-1 pt-16 pl-24 pr-4 overflow-hidden">
                 <FlowerChain />
                   {children}
                 </main>

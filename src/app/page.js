@@ -86,7 +86,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      <main className="max-w-6xl mx-auto px-4 py-8 space-y-6 relative z-10">
+      <main className="max-w-6xl mx-auto px-4 py-8 space-y-6 relative z-10 overflow-hidden">
         {/* Header with greeting */}
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
@@ -102,10 +102,10 @@ export default function Home() {
         </div>
 
         {/* Session Forms Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 overflow-hidden">
           {/* Left column - Session Input Options */}
-          <div className="lg:col-span-1">
-            <Card className="shadow-md border border-border/40 backdrop-blur-sm bg-card/95 h-full">
+          <div className="lg:col-span-1 overflow-hidden">
+            <Card className="shadow-md border border-border/40 backdrop-blur-sm bg-card/95 h-full overflow-hidden">
               <CardHeader className="bg-muted/30 pb-3">
                 <CardTitle className="text-lg font-medium flex items-center gap-2">
                   <ClipboardList className="w-5 h-5 text-primary" />
@@ -119,12 +119,12 @@ export default function Home() {
           </div>
 
           {/* Right column - Recent Logs */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 overflow-hidden">
             <RecentLogs session={session} />
           </div>
           
           {/* Weekly Overview - Full Width */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 overflow-hidden">
             <WeeklyObjectivesOverview session={session} />
           </div>
         </div>
