@@ -117,7 +117,7 @@ export function IEPPreviewModal({
                 className="text-[#595959] flex items-center gap-1 hover:text-black transition-colors duration-200 hover:scale-105 transform p-1 rounded-md"
               >
                 <ChevronLeft className="w-4 h-4" />
-                back
+                Back
               </button>
             </div>
 
