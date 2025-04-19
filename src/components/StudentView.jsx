@@ -133,13 +133,6 @@ export function StudentView({
         initialSelectedAreas[area.id] = false;
       });
       
-      // Remove the auto-selection of areas
-      // if (processedAreas.length <= 3) {
-      //   processedAreas.forEach(area => {
-      //     initialSelectedAreas[area.id] = true;
-      //   });
-      // }
-      
       setSelectedAreas(initialSelectedAreas);
     } catch (error) {
       console.error('Error fetching subject areas:', error);
@@ -256,7 +249,7 @@ export function StudentView({
         </button>
       </div>
 
-      <div className="bg-[#f0f0f0] rounded-[16px] p-4 mb-6 h-94 overflow-y-auto">
+      <div className="bg-[#f0f0f0] rounded-[16px] p-4 mb-6 flex-1 overflow-y-auto">
         <div className="mb-4">
           <h2 className="text-xl font-medium text-[#1a1a1a]">{studentName}</h2>
           <div className="mt-2 grid grid-cols-2 gap-4">
@@ -396,7 +389,7 @@ export function StudentView({
       </div>
 
       {/* Sessions Table */}
-      <div className="bg-[#f0f0f0] rounded-[16px] p-4 overflow-y-auto hide-scrollbar">
+      <div className="bg-[#f0f0f0] rounded-[16px] p-4 h-68 overflow-y-auto hide-scrollbar">
         <SortFilterSessionsTable 
           sessions={sessions}
           showActions={true}

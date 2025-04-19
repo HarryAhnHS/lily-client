@@ -380,136 +380,138 @@ export function SortFilterSessionsTable({
         </Button>
       </div>
 
-      <div className="rounded-md border border-gray-200 bg-white w-full overflow-hidden">
-        <div className="w-full overflow-x-auto">
-          <Table className="w-full">
-            <TableHeader className="bg-gray-50">
-              <TableRow className="hover:bg-gray-100 border-b border-gray-200">
-                <TableHead className="w-[100px] min-w-[100px]">
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleSort('date')}
-                    className="flex items-center gap-1 text-gray-700 hover:text-gray-900"
-                  >
-                    Date
-                    <ArrowUpDown className="h-4 w-4" />
-                  </Button>
-                </TableHead>
-                <TableHead className="w-[120px] min-w-[120px]">
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleSort('name')}
-                    className="flex items-center gap-1 text-gray-700 hover:text-gray-900"
-                  >
-                    Student
-                    <ArrowUpDown className="h-4 w-4" />
-                  </Button>
-                </TableHead>
-                <TableHead className="w-[120px] min-w-[120px] text-gray-700">
-                  Subject Area
-                </TableHead>
-                <TableHead className="w-[150px] min-w-[150px] text-gray-700">
-                  Goal
-                </TableHead>
-                <TableHead className="w-[250px] min-w-[250px] text-gray-700">
-                  Objective
-                </TableHead>
-                <TableHead className="w-[80px] min-w-[80px] text-gray-700">
-                  Type
-                </TableHead>
-                <TableHead className="w-[80px] min-w-[80px] text-gray-700">
-                  Outcome
-                </TableHead>
-                <TableHead className="w-[80px] min-w-[80px] text-gray-700">
-                  Success
-                </TableHead>
-                <TableHead className="w-[200px] min-w-[200px] text-gray-700">
-                  Memo
-                </TableHead>
-                {showActions && (
-                  <TableHead className="w-[50px] min-w-[50px]"></TableHead>
-                )}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {getFilteredAndSortedSessions().length === 0 ? (
-                <TableRow>
-                  <TableCell 
-                    colSpan={showActions ? 10 : 9} 
-                    className="h-24 text-center text-gray-500 bg-white"
-                  >
-                    No sessions available
-                  </TableCell>
+      <div className="rounded-md border border-gray-200 bg-white w-full">
+        <div className="overflow-x-auto">
+          <div className="inline-block min-w-full align-middle">
+            <Table className="min-w-full divide-y divide-gray-200">
+              <TableHeader className="bg-gray-50">
+                <TableRow className="hover:bg-gray-100 border-b border-gray-200">
+                  <TableHead className="w-[90px]">
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort('date')}
+                      className="flex items-center gap-1 text-gray-700 hover:text-gray-900"
+                    >
+                      Date
+                      <ArrowUpDown className="h-4 w-4" />
+                    </Button>
+                  </TableHead>
+                  <TableHead className="w-[100px]">
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort('name')}
+                      className="flex items-center gap-1 text-gray-700 hover:text-gray-900"
+                    >
+                      Student
+                      <ArrowUpDown className="h-4 w-4" />
+                    </Button>
+                  </TableHead>
+                  <TableHead className="w-[100px] text-gray-700">
+                    Area of Need
+                  </TableHead>
+                  <TableHead className="w-[120px] text-gray-700">
+                    Goal
+                  </TableHead>
+                  <TableHead className="w-[200px] text-gray-700">
+                    Objective
+                  </TableHead>
+                  <TableHead className="w-[70px] text-gray-700">
+                    Type
+                  </TableHead>
+                  <TableHead className="w-[70px] text-gray-700">
+                    Outcome
+                  </TableHead>
+                  <TableHead className="w-[70px] text-gray-700">
+                    Success
+                  </TableHead>
+                  <TableHead className="w-[130px] text-gray-700">
+                    Memo
+                  </TableHead>
+                  {showActions && (
+                    <TableHead className="w-[50px]"></TableHead>
+                  )}
                 </TableRow>
-              ) : (
-                getFilteredAndSortedSessions().map((session) => (
-                  <TableRow 
-                    key={`${session.id}-${session.objective_progress.id}`} 
-                    className="hover:bg-gray-50 border-b border-gray-200 text-gray-900 bg-white"
-                  >
-                    <TableCell className="font-medium w-[100px] min-w-[100px] text-gray-900">
-                      {formatDate(session.created_at)}
+              </TableHeader>
+              <TableBody>
+                {getFilteredAndSortedSessions().length === 0 ? (
+                  <TableRow>
+                    <TableCell 
+                      colSpan={showActions ? 10 : 9} 
+                      className="h-24 text-center text-gray-500 bg-white"
+                    >
+                      No sessions available
                     </TableCell>
-                    <TableCell className="w-[120px] min-w-[120px] text-gray-900">
-                      {session.student.name}
-                    </TableCell>
-                    <TableCell className="w-[120px] min-w-[120px] whitespace-normal text-gray-900">
-                      {session.objective.subject_area.name}
-                    </TableCell>
-                    <TableCell className="w-[150px] min-w-[150px] whitespace-normal text-gray-900">
-                      {session.objective.goal?.title || 'N/A'}
-                    </TableCell>
-                    <TableCell className="w-[250px] min-w-[250px] whitespace-normal text-gray-900">
-                      <div className="line-clamp-3">
-                        {session.objective.description}
-                      </div>
-                    </TableCell>
-                    <TableCell className="w-[80px] min-w-[80px] text-gray-900">
-                      {session.objective.objective_type}
-                    </TableCell>
-                    <TableCell className="w-[80px] min-w-[80px] text-gray-900">
-                      {formatOutcome(session)}
-                    </TableCell>
-                    <TableCell className="w-[80px] min-w-[80px]">
-                      <Badge variant={session.objective_progress.is_success ? "success" : "destructive"} className={session.objective_progress.is_success ? "bg-green-100 text-green-800 border-green-200" : "bg-red-100 text-red-800 border-red-200"}>
-                        {session.objective_progress.is_success ? "Yes" : "No"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="w-[200px] min-w-[200px] text-gray-900">
-                      <div className="line-clamp-2">
-                        {session.memo || '-'}
-                      </div>
-                    </TableCell>
-                    {showActions && (
-                      <TableCell className="w-[50px] min-w-[50px]">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0 text-gray-700 hover:text-gray-900 hover:bg-gray-100">
-                              <span className="sr-only">Open menu</span>
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="bg-white text-gray-900 border-gray-200">
-                            <DropdownMenuLabel className="text-gray-900">Actions</DropdownMenuLabel>
-                            <DropdownMenuItem onClick={() => handleEditSession(session)} className="text-gray-900 hover:bg-gray-100">
-                              Edit Session
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator className="bg-gray-200" />
-                            <DropdownMenuItem 
-                              className="text-red-600 hover:bg-red-50"
-                              onClick={() => handleDeleteSession(session.id)}
-                            >
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    )}
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ) : (
+                  getFilteredAndSortedSessions().map((session) => (
+                    <TableRow 
+                      key={`${session.id}-${session.objective_progress.id}`} 
+                      className="hover:bg-gray-50 border-b border-gray-200 text-gray-900 bg-white"
+                    >
+                      <TableCell className="font-medium w-[90px] text-gray-900">
+                        {formatDate(session.created_at)}
+                      </TableCell>
+                      <TableCell className="w-[100px] text-gray-900">
+                        {session.student.name}
+                      </TableCell>
+                      <TableCell className="w-[100px] whitespace-normal text-gray-900">
+                        {session.objective.subject_area.name}
+                      </TableCell>
+                      <TableCell className="w-[120px] whitespace-normal text-gray-900">
+                        {session.objective.goal?.title || 'N/A'}
+                      </TableCell>
+                      <TableCell className="w-[200px] whitespace-normal text-gray-900">
+                        <div className="line-clamp-3">
+                          {session.objective.description}
+                        </div>
+                      </TableCell>
+                      <TableCell className="w-[70px] text-gray-900">
+                        {session.objective.objective_type}
+                      </TableCell>
+                      <TableCell className="w-[70px] text-gray-900">
+                        {formatOutcome(session)}
+                      </TableCell>
+                      <TableCell className="w-[70px]">
+                        <Badge variant={session.objective_progress.is_success ? "success" : "destructive"} className={session.objective_progress.is_success ? "bg-green-100 text-green-800 border-green-200" : "bg-red-100 text-red-800 border-red-200"}>
+                          {session.objective_progress.is_success ? "Yes" : "No"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="w-[130px] text-gray-900">
+                        <div className="line-clamp-2">
+                          {session.memo || '-'}
+                        </div>
+                      </TableCell>
+                      {showActions && (
+                        <TableCell className="w-[50px]">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" className="h-8 w-8 p-0 text-gray-700 hover:text-gray-900 hover:bg-gray-100">
+                                <span className="sr-only">Open menu</span>
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="bg-white text-gray-900 border-gray-200">
+                              <DropdownMenuLabel className="text-gray-900">Actions</DropdownMenuLabel>
+                              <DropdownMenuItem onClick={() => handleEditSession(session)} className="text-gray-900 hover:bg-gray-100">
+                                Edit Session
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator className="bg-gray-200" />
+                              <DropdownMenuItem 
+                                className="text-red-600 hover:bg-red-50"
+                                onClick={() => handleDeleteSession(session.id)}
+                              >
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       </div>
 
