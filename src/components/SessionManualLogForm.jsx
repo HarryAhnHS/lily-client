@@ -103,7 +103,7 @@ export function SessionManualStudentSelect({ students, onComplete }) {
     const isOpen = subjectAreasOpenMap[student.id] || false;
 
     return (
-      <div className="border rounded-lg p-4 bg-card shadow-sm hover:shadow-md transition-all">
+      <div className="border rounded-lg p-4 bg-card shadow-sm hover:shadow-md transition-all h-full flex flex-col">
         {/* Student header - always visible */}
         <div 
           onClick={() => toggleStudent(student)}
@@ -132,7 +132,7 @@ export function SessionManualStudentSelect({ students, onComplete }) {
 
         {/* Subject area selector - only visible when student is selected */}
         {isSelected && (
-          <div className="mt-4 pt-4 border-t">
+          <div className="mt-4 pt-4 border-t flex-grow">
             <div className="flex flex-col gap-3">
               <label className="text-sm font-medium flex items-center gap-1">
                 <span>Subject Areas</span>
@@ -163,15 +163,19 @@ export function SessionManualStudentSelect({ students, onComplete }) {
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                  <Command>
-                    <CommandInput placeholder={`Search ${student.name}'s subject areas...`} />
-                    <CommandEmpty>No subject areas found.</CommandEmpty>
-                    <CommandGroup className="max-h-64 overflow-auto">
+                <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                  <Command className="w-full">
+                    <CommandInput 
+                      placeholder={`Search ${student.name}'s subject areas...`}
+                      className="border-0 focus:ring-0"
+                    />
+                    <CommandEmpty className="py-3 text-sm text-center text-muted-foreground">No subject areas found.</CommandEmpty>
+                    <CommandGroup className="max-h-[200px] overflow-auto">
                       {subjectAreas.map((area) => (
                         <CommandItem
                           key={area.id}
                           value={area.id}
+                          className="cursor-pointer"
                           onSelect={() => {
                             setSelectedSubjectAreasMap(prev => {
                               const currentSelected = prev[student.id] || [];
@@ -195,7 +199,7 @@ export function SessionManualStudentSelect({ students, onComplete }) {
                               <Check className="h-3 w-3" />
                             )}
                           </div>
-                          {area.name}
+                          <span className="text-sm">{area.name}</span>
                         </CommandItem>
                       ))}
                     </CommandGroup>
@@ -205,16 +209,16 @@ export function SessionManualStudentSelect({ students, onComplete }) {
 
               {/* Selected subject areas badges */}
               {selectedSubjectAreas.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-1">
+                <div className="flex flex-wrap gap-1.5 mt-2">
                   {selectedSubjectAreas.map((area) => (
                     <Badge
                       key={area.id}
                       variant="secondary"
-                      className="flex items-center gap-1 bg-secondary/20"
+                      className="flex items-center gap-1 bg-secondary/20 text-xs py-1 px-2"
                     >
                       {area.name}
                       <X
-                        className="h-3 w-3 cursor-pointer ml-1"
+                        className="h-3 w-3 cursor-pointer hover:text-destructive transition-colors"
                         onClick={(e) => {
                           e.stopPropagation();
                           setSelectedSubjectAreasMap(prev => ({
@@ -291,7 +295,7 @@ export function SessionManualStudentSelect({ students, onComplete }) {
       <h2 className="text-xl font-semibold">Select Students & Subject Areas</h2>
       <p className="text-muted-foreground">Select students and their relevant subject areas to log progress.</p>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {students.map((student) => (
           <StudentCard key={student.id} student={student} />
         ))}
@@ -300,7 +304,10 @@ export function SessionManualStudentSelect({ students, onComplete }) {
       <div className="flex justify-end mt-6">
         <Button
           onClick={handleNext}
-          disabled={Object.keys(selectedSubjectAreasMap).length === 0}
+          disabled={Object.keys(selectedStudentMap).length === 0 || 
+            Object.entries(selectedSubjectAreasMap).some(([studentId, areas]) => 
+              selectedStudentMap[studentId] && areas.length === 0
+            )}
           className="bg-primary hover:bg-primary/90"
         >
           Continue

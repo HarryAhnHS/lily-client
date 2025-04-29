@@ -267,7 +267,7 @@ export function StudentView({
         <div className="overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
           <div className="mb-6">
             <h3 className="font-medium text-[#1a1a1a] mb-2">Student Summary</h3>
-            <p className="text-sm text-[#1a1a1a]">{summary || 'No summary available'}</p>
+            <p className="text-sm text-[#1a1a1a]">{summary && summary !== "" ? summary : 'Add sessions to dynamically generate an updating summary of the student.'}</p>
           </div>
 
           <div className="mb-6">
