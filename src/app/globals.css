@@ -83,6 +83,10 @@
   --soft-foreground-primary: #3E3E3E;
   --soft-foreground-secondary: #898989;
 
+  --lily-primary: #F66060;
+  --lily-secondary: #fc9393;
+  --lily-tertiary: #fec0c0;
+
   /* New semantic color variables */
   --surface-subtle: #F7F5F0;
   --surface-raised: #FFFFFF;
@@ -146,6 +150,10 @@
   --soft-border: #8c8c8c;
   --soft-foreground-primary: #f6f6f6;
   --soft-foreground-secondary: #d7d7d7;
+  
+  --lily-primary: #F66060;
+  --lily-secondary: #fc9393;
+  --lily-tertiary: #fec0c0;
   
   /* New semantic color variables - dark mode */
   --surface-subtle: #292929;

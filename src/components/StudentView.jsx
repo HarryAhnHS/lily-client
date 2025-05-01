@@ -323,312 +323,278 @@ export function StudentView({
       {/* Main Content */}
       <div className="h-[calc(100%-50px)] relative overflow-hidden">
         <div className="absolute inset-0 overflow-y-auto">
-          <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-4 p-4">
-            {/* Left Column: Student Info & Areas of Need */}
-            <div className="lg:col-span-3 flex flex-col overflow-hidden">
-              {/* Student Summary */}
-              {summary && summary !== "" && (
-                <div className="mb-6 p-4 bg-accent/20 rounded-xl border border-border/30">
-                  <h3 className="font-medium text-emphasis-high mb-2 text-sm flex items-center gap-2">
-                    <User className="h-4 w-4 text-primary" />
-                    Summary
-                  </h3>
-                  <p className="text-sm text-emphasis-medium leading-relaxed">{summary}</p>
-                </div>
-              )}
-              
-              {/* Areas of Need */}
-              <div className="border border-border/20 rounded-xl bg-accent/5 p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <div>
-                    <h3 className="font-medium text-emphasis-high mb-1 text-lg flex items-center gap-2">
-                      <Activity className="w-4 h-4 text-primary" />
-                      Areas of Need
-                    </h3>
-                    <p className="text-sm text-emphasis-medium">Select areas to view objectives</p>
-                  </div>
-                  <Button
-                    onClick={() => onAddObjective(student)}
-                    variant="outline"
-                    size="sm"
-                    className="px-3 h-8"
-                  >
-                    <Plus className="h-3.5 w-3.5 mr-1.5" />
-                    Add Objective
-                  </Button>
-                </div>
-
-                <div className="mb-5">
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {subjectAreas.map((area) => {
-                      const hasObjectives = 
-                        (area.objectives && area.objectives.length > 0) || 
-                        (area.objective && area.objective.length > 0);
-                      
-                      return (
-                        <button
-                          key={area.id}
-                          onClick={() => toggleArea(area.id)}
-                          className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
-                            selectedAreas[area.id] 
-                              ? "bg-primary text-primary-foreground shadow-sm transform scale-105" 
-                              : "bg-accent/60 text-emphasis-high hover:bg-primary/20"
-                          }`}
-                        >
-                          {area.name}
-                          {hasObjectives && <span className="ml-1 opacity-70">({(area.objectives || area.objective || []).length})</span>}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div className="space-y-5">
-                  <AnimatePresence>
-                    {subjectAreas.map((area) => (
-                      selectedAreas[area.id] && (
-                        <motion.div 
-                          key={area.id} 
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: "auto" }}
-                          exit={{ opacity: 0, height: 0 }}
-                          transition={{ duration: 0.3 }}
-                          className="overflow-hidden"
-                        >
-                          <div className="mb-6">
-                            <div className="flex justify-between items-center mb-3">
-                              <h4 className="text-emphasis-high font-medium flex items-center">
-                                <span className="h-2 w-2 rounded-full bg-primary mr-2"></span>
-                                {area.name}
-                              </h4>
-                              <Button
-                                onClick={() => onAddObjective({...student, subject_area_id: area.id})}
-                                size="sm"
-                                variant="ghost"
-                                className="h-7 px-2 rounded-full text-xs bg-primary/5 hover:bg-primary/10 text-primary"
-                              >
-                                <Plus className="h-3 w-3 mr-1" />
-                                Add to {area.name}
-                              </Button>
-                            </div>
-                            
-                            {/* Goals and Objectives */}
-                            <div className="space-y-4">
-                              {groupedObjectivesByArea[area.id]?.goalGroups.map((goalGroup) => (
-                                <div key={goalGroup.id} className="space-y-2">
-                                  <div className="flex items-center mb-1 gap-1.5 justify-between">
-                                    <div className="flex items-center">
-                                      <Layers className="w-3.5 h-3.5 text-primary/70 mr-1.5" />
-                                      <h5 className="text-sm font-medium text-emphasis-high">{goalGroup.title}</h5>
-                                    </div>
-                                    <Button
-                                      onClick={() => onAddObjective({...student, subject_area_id: area.id, goal_id: goalGroup.id})}
-                                      size="sm"
-                                      variant="ghost"
-                                      className="h-6 rounded-full text-xs px-2 bg-primary/5 hover:bg-primary/10 text-primary"
-                                    >
-                                      <Plus className="h-3 w-3 mr-1" />
-                                      Add
-                                    </Button>
-                                  </div>
-                                  
-                                  <div className="space-y-2 pl-3 border-l-2 border-primary/10">
-                                    {goalGroup.objectives.map((objective) => (
-                                      <motion.div
-                                        key={objective.id}
-                                        initial={{ x: -10, opacity: 0 }}
-                                        animate={{ x: 0, opacity: 1 }}
-                                        transition={{ duration: 0.2 }}
-                                        className="bg-background rounded-xl overflow-hidden shadow-sm transition-all border border-border/50 group hover:shadow-md hover:border-primary/30"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          // Enhance objective with area and goal info if needed
-                                          const enhancedObjective = {
-                                            ...objective,
-                                            subject_area_id: objective.subject_area_id || area.id,
-                                            subject_area: objective.subject_area || { 
-                                              id: area.id, 
-                                              name: area.name 
-                                            },
-                                            goal: objective.goal || {
-                                              id: goalGroup.id,
-                                              title: goalGroup.title
-                                            }
-                                          };
-                                          
-                                          onObjectiveClick(enhancedObjective);
-                                        }}
-                                      >
-                                        <div className="p-4 cursor-pointer">
-                                          <div className="flex items-start justify-between gap-2">
-                                            <div className="flex-1">
-                                              <p className="text-sm text-emphasis-high line-clamp-2">{objective.description}</p>
-                                              <div className="flex items-center mt-2 text-xs text-emphasis-medium gap-2">
-                                                <span className={`px-2 py-0.5 rounded-full ${objective.objective_type === 'binary' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
-                                                  {objective.objective_type === 'binary' ? 'Yes/No' : 'Trial Based'}
-                                                </span>
-                                                {objective.target_consistency_trials > 0 && (
-                                                  <span className="flex items-center">
-                                                    <Target className="w-3 h-3 mr-1 opacity-70" />
-                                                    {objective.target_consistency_successes}/{objective.target_consistency_trials}
-                                                  </span>
-                                                )}
-                                              </div>
-                                            </div>
-                                            <div onClick={(e) => e.stopPropagation()}>
-                                              <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                  <Button 
-                                                    variant="ghost" 
-                                                    size="icon"
-                                                    className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 rounded-full"
-                                                    onClick={(e) => e.stopPropagation()}
-                                                  >
-                                                    <MoreHorizontal className="h-4 w-4" />
-                                                  </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end">
-                                                  <DropdownMenuItem onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    onEditObjective(objective);
-                                                  }}>
-                                                    <Pencil className="h-4 w-4 mr-2" />
-                                                    Edit
-                                                  </DropdownMenuItem>
-                                                  <DropdownMenuItem 
-                                                    className="text-destructive hover:bg-destructive/10"
-                                                    onClick={(e) => {
-                                                      e.stopPropagation();
-                                                      onDeleteObjective(objective);
-                                                    }}
-                                                  >
-                                                    <Trash2 className="h-4 w-4 mr-2" />
-                                                    Delete
-                                                  </DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                              </DropdownMenu>
-                                            </div>
-                                          </div>
-                                        </div>
-                                      </motion.div>
-                                    ))}
-                                  </div>
-                                </div>
-                              ))}
-                              
-                              {(!groupedObjectivesByArea[area.id]?.goalGroups.length || 
-                                groupedObjectivesByArea[area.id]?.goalGroups.every(g => !g.objectives.length)) && (
-                                  <div className="bg-background rounded-xl p-4 text-sm text-emphasis-medium mb-2 border border-border/30 shadow-sm">
-                                    No objectives found for this area of need. Click "Add Objective" to create one.
-                                  </div>
-                                )}
-                            </div>
-                          </div>
-                        </motion.div>
-                      )
-                    ))}
-                  </AnimatePresence>
-
-                  {initialized && (!subjectAreas || subjectAreas.length === 0) && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ duration: 0.3 }}
-                      className="text-center py-8 bg-accent/20 rounded-xl border border-border/30 text-emphasis-medium"
-                    >
-                      <p className="mb-3">No areas of need found for this student.</p>
-                      <Button
-                        onClick={() => onAddObjective(student)}
-                        variant="outline"
-                        size="sm"
-                        className="mx-auto"
-                      >
-                        <Plus className="h-4 w-4 mr-1" />
-                        Add Objective
-                      </Button>
-                    </motion.div>
-                  )}
-                </div>
-              </div>
-            </div>
-            
-            {/* Right Column: Student Info */}
-            <div className="lg:col-span-1 space-y-4 h-fit">
-              <div className="bg-primary/5 rounded-xl p-5 border border-border">
-                {/* Student Info */}
-                <div className="flex items-center gap-4 mb-5">
+          <div className="p-4 flex flex-col">
+            {/* Student Info Header - Case File Style */}
+            <div className="mb-6 bg-accent/10">
+              <div className="flex flex-wrap gap-6 mb-4 items-center justify-between">
+                {/* Avatar and Basic Info */}
+                <div className="flex items-center gap-4 w-full sm:w-auto">
                   <Avatar className="h-16 w-16 bg-primary/20 border border-primary/10">
                     <AvatarFallback className="text-xl font-semibold text-primary">
                       {studentName?.charAt(0) || "S"}
                     </AvatarFallback>
                   </Avatar>
-                  <div>
-                    <h2 className="text-lg font-semibold text-emphasis-high">{studentName}</h2>
-                    {createdAt && (
-                      <div className="flex items-center text-sm text-emphasis-medium mt-1">
-                        <Clock className="w-3.5 h-3.5 mr-1 text-primary/70" />
-                        Added {formatDate(createdAt)}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
-                {/* Sessions Info */}
-                <div className="bg-background rounded-xl p-4 border border-border/40 mb-4">
-                  <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
-                    <FileCheck className="h-4 w-4 text-primary" />
-                    Sessions
-                  </h4>
-                  
-                  <div className="space-y-3 text-sm">
-                    <div className="flex justify-between">
-                      <div className="text-emphasis-medium">Total Sessions:</div>
-                      <div className="font-medium">{sessions.length}</div>
-                    </div>
-                    
-                    <div className="flex justify-between">
-                      <div className="text-emphasis-medium">Last Session:</div>
-                      <div className="font-medium">{formatDate(stats.lastSessionDate)}</div>
-                    </div>
-                    
-                    <div className="flex justify-between">
-                      <div className="text-emphasis-medium">Remaining:</div>
-                      <div className="font-medium">{stats.objectivesNotLogged} objectives</div>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Additional Student Info */}
-                {(supervisorName || reviewDate) && (
-                  <div className="bg-background rounded-xl p-4 border border-border/40">
-                    <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
-                      <User className="h-4 w-4 text-primary" />
-                      Additional Info
-                    </h4>
-                    
-                    <div className="space-y-3 text-sm">
-                      {supervisorName && (
-                        <div className="flex justify-between">
-                          <div className="text-emphasis-medium">Supervisor:</div>
-                          <div className="font-medium">{supervisorName}</div>
+                  <div className="flex-1">
+                    <h2 className="text-xl font-semibold text-emphasis-high">{studentName}</h2>
+                    <div className="flex flex-wrap gap-2 mt-1.5">
+                      {gradeLevel && (
+                        <div className="bg-primary/5 px-2.5 py-1 text-xs rounded-full border border-border/30">
+                          Grade {gradeLevel}
                         </div>
                       )}
-                      
-                      {reviewDate && (
-                        <div className="flex justify-between">
-                          <div className="text-emphasis-medium">Review Date:</div>
-                          <div className="font-medium">{formatDate(reviewDate)}</div>
+                      {disabilityType && (
+                        <div className="bg-primary/5 px-2.5 py-1 text-xs rounded-full border border-border/30 max-w-[200px] truncate">
+                          {disabilityType}
                         </div>
                       )}
                     </div>
                   </div>
-                )}
+                </div>
+                              
+                {/* Session Stats */}
+                <div className="p-3 flex flex-col min-w-[150px] w-full sm:w-auto mt-4 sm:mt-0">
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                    <div className="text-emphasis-medium">Total Sessions:</div>
+                    <div className="font-medium text-right">{sessions.length}</div>
+                    <div className="text-emphasis-medium">Last Session:</div>
+                    <div className="font-medium text-right">{formatDate(stats.lastSessionDate)}</div>
+                    <div className="text-emphasis-medium">Objectives:</div>
+                    <div className="font-medium text-right">{stats.totalObjectives}</div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Student Summary Section */}
+              {summary && summary !== "" && (
+                <div className="bg-background rounded-lg p-4 border border-border/30">
+                  <h3 className="font-medium text-emphasis-high mb-2 text-base flex items-center gap-2">
+                    <User className="h-4 w-4 text-primary" />
+                    Summary
+                  </h3>
+                  <p className="text-base text-emphasis-medium leading-relaxed">{summary}</p>
+                </div>
+              )}
+            </div>
+            
+            {/* Areas of Need */}
+            <div className="border border-border/20 rounded-xl bg-accent/5 p-6">
+              <div className="flex flex-wrap justify-between items-center mb-6 gap-3">
+                <div>
+                  <h3 className="font-medium text-emphasis-high mb-1 text-lg flex items-center gap-2">
+                    <Activity className="w-4 h-4 text-primary" />
+                    Areas of Need
+                  </h3>
+                  <p className="text-sm text-emphasis-medium">Select areas to view objectives</p>
+                </div>
+              
+                <div className="flex items-center gap-3 mt-2 sm:mt-0">
+                  <Button 
+                    onClick={() => onAddObjective(student)}
+                    variant="default"
+                    size="sm"
+                    className="h-9 px-4 flex items-center gap-1.5 rounded-full shadow-sm"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span className="sm:inline">Add Objective</span>
+                  </Button>
+                
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="h-9 px-4 flex items-center gap-1.5 rounded-full"
+                      >
+                        <span className="hidden sm:inline">More Options</span>
+                        <MoreHorizontal className="w-4 h-4 sm:hidden" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuItem onClick={() => onEditStudent(student)}>
+                        <Pencil className="h-4 w-4 mr-2" />
+                        Edit Student Details
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onAddObjective({...student, isAddingGoal: true})}>
+                        <Target className="h-4 w-4 mr-2" />
+                        Add New Goal
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onAddObjective({...student, isAddingSubjectArea: true})}>
+                        <BookOpen className="h-4 w-4 mr-2" />
+                        Add Subject Area
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="text-destructive" onClick={() => onDeleteStudent(student)}>
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete Student
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+
+              <div className="mb-5">
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {subjectAreas.map((area) => {
+                    const hasObjectives = 
+                      (area.objectives && area.objectives.length > 0) || 
+                      (area.objective && area.objective.length > 0);
+                    
+                    return (
+                      <button
+                        key={area.id}
+                        onClick={() => toggleArea(area.id)}
+                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+                          selectedAreas[area.id] 
+                            ? "bg-primary text-primary-foreground shadow-sm transform scale-105" 
+                            : "bg-accent/60 text-emphasis-high hover:bg-primary/20"
+                        }`}
+                      >
+                        {area.name}
+                        {hasObjectives && <span className="ml-1 opacity-70">({(area.objectives || area.objective || []).length})</span>}
+                      </button>
+                    );
+                  })}
+                
+                  {subjectAreas.length === 0 && !isLoadingAreas && (
+                    <div className="w-full text-sm text-center text-muted-foreground py-2">
+                      No subject areas found. Add one to get started.
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-5">
+                <AnimatePresence>
+                  {subjectAreas.map((area) => (
+                    selectedAreas[area.id] && (
+                      <motion.div 
+                        key={area.id} 
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="mb-6">
+                          <div className="flex justify-between items-center mb-3">
+                            <h4 className="text-emphasis-high font-medium flex items-center">
+                              <span className="h-2 w-2 rounded-full bg-primary mr-2"></span>
+                              {area.name}
+                            </h4>
+                          </div>
+                          
+                          {/* Goals and Objectives */}
+                          <div className="space-y-4">
+                            {groupedObjectivesByArea[area.id]?.goalGroups.map((goalGroup) => (
+                              <div key={goalGroup.id} className="space-y-2">
+                                <div className="flex items-center mb-1 gap-1.5 justify-between">
+                                  <div className="flex items-center">
+                                    <Layers className="w-3.5 h-3.5 text-primary/70 mr-1.5" />
+                                    <h5 className="text-sm font-medium text-emphasis-high">{goalGroup.title}</h5>
+                                  </div>
+                                </div>
+                                
+                                <div className="space-y-2 pl-3 border-l-2 border-primary/10">
+                                  {goalGroup.objectives.map((objective) => (
+                                    <motion.div
+                                      key={objective.id}
+                                      initial={{ x: -10, opacity: 0 }}
+                                      animate={{ x: 0, opacity: 1 }}
+                                      transition={{ duration: 0.2 }}
+                                      className="bg-background rounded-xl overflow-hidden shadow-sm transition-all border border-border/50 group hover:shadow-md hover:border-primary/30"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        // Enhance objective with area and goal info if needed
+                                        const enhancedObjective = {
+                                          ...objective,
+                                          subject_area_id: objective.subject_area_id || area.id,
+                                          subject_area: objective.subject_area || { 
+                                            id: area.id, 
+                                            name: area.name 
+                                          },
+                                          goal: objective.goal || {
+                                            id: goalGroup.id,
+                                            title: goalGroup.title
+                                          }
+                                        };
+                                        
+                                        onObjectiveClick(enhancedObjective);
+                                      }}
+                                    >
+                                      <div className="p-4 cursor-pointer">
+                                        <div className="flex items-start justify-between gap-2">
+                                          <div className="flex-1">
+                                            <p className="text-sm text-emphasis-high line-clamp-2">{objective.description}</p>
+                                            <div className="flex items-center mt-2 text-xs text-emphasis-medium gap-2">
+                                              <span className={`px-2 py-0.5 rounded-full ${objective.objective_type === 'binary' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
+                                                {objective.objective_type === 'binary' ? 'Yes/No' : 'Trial Based'}
+                                              </span>
+                                              {objective.target_consistency_trials > 0 && (
+                                                <span className="flex items-center">
+                                                  <Target className="w-3 h-3 mr-1 opacity-70" />
+                                                  {objective.target_consistency_successes}/{objective.target_consistency_trials}
+                                                </span>
+                                              )}
+                                            </div>
+                                          </div>
+                                          <div onClick={(e) => e.stopPropagation()}>
+                                            <DropdownMenu>
+                                              <DropdownMenuTrigger asChild>
+                                                <Button 
+                                                  variant="ghost" 
+                                                  size="icon"
+                                                  className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 rounded-full"
+                                                  onClick={(e) => e.stopPropagation()}
+                                                >
+                                                  <MoreHorizontal className="h-4 w-4" />
+                                                </Button>
+                                              </DropdownMenuTrigger>
+                                              <DropdownMenuContent align="end">
+                                                <DropdownMenuItem onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  onEditObjective(objective);
+                                                }}>
+                                                  <Pencil className="h-4 w-4 mr-2" />
+                                                  Edit
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem 
+                                                  className="text-destructive hover:bg-destructive/10"
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    onDeleteObjective(objective);
+                                                  }}
+                                                >
+                                                  <Trash2 className="h-4 w-4 mr-2" />
+                                                  Delete
+                                                </DropdownMenuItem>
+                                              </DropdownMenuContent>
+                                            </DropdownMenu>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </motion.div>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                            
+                            {(!groupedObjectivesByArea[area.id]?.goalGroups.length || 
+                              groupedObjectivesByArea[area.id]?.goalGroups.every(g => !g.objectives.length)) && (
+                                <div className="bg-background rounded-xl p-4 text-sm text-emphasis-medium mb-2 border border-border/30 shadow-sm">
+                                  No objectives found for this area of need. Click "Add Objective" to create one.
+                                </div>
+                              )}
+                          </div>
+                        </div>
+                      </motion.div>
+                    )
+                  ))}
+                </AnimatePresence>
               </div>
             </div>
           </div>
         </div>
           
-        {/* Sessions Panel with Integrated Button - On Top Layer - MATCH ObjectiveView EXACTLY */}
+        {/* Sessions Panel with Integrated Button - On Top Layer */}
         <motion.div 
           className="absolute inset-0 flex flex-col pointer-events-none z-10 bg-background"
           initial={{ y: "calc(100% - 50px)" }}
@@ -645,7 +611,7 @@ export function StudentView({
             <Button 
               variant="outline" 
               onClick={toggleSessions} 
-              className="w-full h-full justify-center gap-2 hover:bg-primary/10 relative z-10 border-none rounded-none shadow-none"
+              className="w-full h-full justify-center gap-2 bg-primary/5 text-black hover:bg-primary/15 relative z-10 border-none rounded-none shadow-none"
             >
               {showSessions ? "Hide Sessions" : "View All Sessions"}
               <motion.div

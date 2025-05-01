@@ -270,7 +270,7 @@ export default function ObjectiveView({ objective, isOpen, onClose, previewMode 
             </div>
             
             {/* Student Information - Responsive */}
-            <div className="flex flex-wrap items-center gap-2 text-xs">
+            <div className="flex flex-wrap items-center gap-2 text-xs mr-8">
               <div className="bg-primary/5 px-3 py-1.5 rounded-full border border-border/30 flex items-center gap-1.5">
                 <Users className="h-3.5 w-3.5 text-primary/80" />
                 <span className="font-medium">{objectiveData?.student?.name || 'Student'}</span>
@@ -453,7 +453,7 @@ export default function ObjectiveView({ objective, isOpen, onClose, previewMode 
                       <Button 
                         variant="outline" 
                         onClick={toggleSessions} 
-                        className="w-full h-full justify-center gap-2 hover:bg-primary/10 relative z-10 border-none rounded-none shadow-none"
+                        className="w-full h-full justify-center gap-2 bg-primary/5 text-black hover:bg-primary/15 relative z-10 border-none rounded-none shadow-none"
                       >
                         {showSessions ? "Hide Sessions" : "View All Sessions"}
                         <motion.div

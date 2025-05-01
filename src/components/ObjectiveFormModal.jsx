@@ -1001,7 +1001,7 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
           </div>
           
           {/* Fixed bottom bar - outside the scrollable area */}
-          <div className="h-[100px] border-t px-6 py-3 bg-gradient-to-r from-muted/80 to-muted flex flex-col justify-center flex-shrink-0">
+          <div className="h-[120px] border-t px-6 py-3 bg-gradient-to-r from-muted/80 to-muted flex flex-col justify-center flex-shrink-0">
             {isAddingInFooter && currentStep === 2 ? (
               <div className="flex flex-col gap-2">
                 <div className="text-sm font-medium flex items-center gap-1.5 text-blue-700">
@@ -1083,15 +1083,19 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
             ) : (
               <>
                 {/* Selection path */}
-                <div className="flex items-center mb-2 gap-1.5">
+                <div className="flex items-center gap-1.5">
                   <div className="text-xs text-muted-foreground mr-1">Selected:</div>
                   
-                  <div className="flex items-center">
+                  <div className="flex items-center py-4">
                     {selectedStudent ? (
-                      <div className="flex items-center gap-1.5 bg-primary/10 text-primary text-sm px-3 py-1 rounded-full font-medium">
+                      <button
+                        type="button"
+                        onClick={() => setCurrentStep(1)}
+                        className="flex items-center gap-1.5 bg-primary/10 text-primary text-sm px-3 py-1 rounded-full font-medium hover:bg-primary/20 transition-colors"
+                      >
                         <User className="h-3.5 w-3.5" />
                         <span>{selectedStudent.name}</span>
-                      </div>
+                      </button>
                     ) : (
                       <div className="text-xs text-muted-foreground bg-muted/50 px-3 py-1 rounded-full">
                         No student selected
@@ -1103,10 +1107,14 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
                     )}
                     
                     {form.watch('subjectArea') && (
-                      <div className="flex items-center gap-1.5 bg-blue-50 text-blue-700 text-sm px-3 py-1 rounded-full font-medium border border-blue-100">
+                      <button
+                        type="button"
+                        onClick={() => setCurrentStep(2)}
+                        className="flex items-center gap-1.5 bg-blue-50 text-blue-700 text-sm px-3 py-1 rounded-full font-medium border border-blue-100 hover:bg-blue-100 transition-colors"
+                      >
                         <BookOpen className="h-3.5 w-3.5" />
                         <span>{subjectAreas.find(a => a.id === form.watch('subjectArea'))?.name}</span>
-                      </div>
+                      </button>
                     )}
                     
                     {(form.watch('subjectArea') && form.watch('goal')) && (
@@ -1114,10 +1122,28 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
                     )}
                     
                     {form.watch('goal') && (
-                      <div className="flex items-center gap-1.5 bg-green-50 text-green-700 text-sm px-3 py-1 rounded-full font-medium border border-green-100">
+                      <button
+                        type="button"
+                        onClick={() => setCurrentStep(3)}
+                        className="flex items-center gap-1.5 bg-green-50 text-green-700 text-sm px-3 py-1 rounded-full font-medium border border-green-100 hover:bg-green-100 transition-colors"
+                      >
                         <Target className="h-3.5 w-3.5" />
                         <span>{goals.find(g => g.id === form.watch('goal'))?.title}</span>
-                      </div>
+                      </button>
+                    )}
+                    
+                    {(isEditing || (currentStep === 4 && form.watch('objectiveDescription')?.length >= 10)) && (
+                      <>
+                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground mx-1" />
+                        <button
+                          type="button"
+                          onClick={() => setCurrentStep(4)}
+                          className="flex items-center gap-1.5 bg-purple-50 text-purple-700 text-sm px-3 py-1 rounded-full font-medium border border-purple-100 hover:bg-purple-100 transition-colors"
+                        >
+                          <Target className="h-3.5 w-3.5" />
+                          <span>Objective Details</span>
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>
