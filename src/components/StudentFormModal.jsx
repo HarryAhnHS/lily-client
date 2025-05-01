@@ -102,12 +102,15 @@ export function StudentFormModal({ student, onSuccess, open, onOpenChange }) {
       if (!response.ok) {
         throw new Error(`Failed to ${isEditing ? 'update' : 'create'} student: ${response.status}`);
       }
+
+      console.log("StudentFormModal, onSubmit, response:", response);
       
       toast.success(`Student ${isEditing ? 'updated' : 'added'} successfully`);
       form.reset();
       onOpenChange(false);
       
       if (onSuccess) {
+        console.log("StudentFormModal, onSuccess, calling onSuccess");
         onSuccess();
       }
     } catch (error) {

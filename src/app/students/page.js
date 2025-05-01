@@ -10,10 +10,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { ObjectiveFormModal } from '@/components/ObjectiveFormModal';
-import { Users, Plus, MoreHorizontal, Search, X } from 'lucide-react';
+import { Users, Plus, MoreHorizontal, Search, X, ArrowUpDown } from 'lucide-react';
 import { StudentView } from '@/components/StudentView';
 import ObjectiveView from '@/components/ObjectiveView';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { format } from 'date-fns';
 
 export default function StudentsPage() {
   const { session, loading } = useAuth();
@@ -29,6 +30,7 @@ export default function StudentsPage() {
   const [selectedObjectiveForEdit, setSelectedObjectiveForEdit] = useState(null);
   const [loadingStudentIds, setLoadingStudentIds] = useState(new Set());
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortConfig, setSortConfig] = useState({ key: 'updated_at', direction: 'desc' });
   const isLoadingDetails = (studentId) => loadingStudentIds.has(studentId);
 
   useEffect(() => {
@@ -38,34 +40,35 @@ export default function StudentsPage() {
   }, [loading, session, router]);
 
   useEffect(() => {
-    const fetchStudents = async () => {
-      if (!session) return;
-      
-      setIsLoading(true);
-      setError(null);
-      
-      try {
-        const response = await authorizedFetch('/students/students', session?.access_token, {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-        
-        if (!response.ok) {
-          throw new Error(`Failed to fetch students: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        setStudents(data);
-      } catch (err) {
-        console.error('Error fetching students:', err);
-        setError('Failed to load students. Please try again later.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
     fetchStudents();
   }, [session]);
+
+  const fetchStudents = async () => {
+    if (!session) return;
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const response = await authorizedFetch('/students/students', session?.access_token, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch students: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      setStudents(data);
+    } catch (err) {
+      console.error('Error fetching students:', err);
+      setError('Failed to load students. Please try again later.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Helper function to format grade level
   const formatGradeLevel = (gradeLevel) => {
@@ -79,17 +82,50 @@ export default function StudentsPage() {
     return `${gradeLevel}${suffix} grade`;
   };
 
-  // Filter students based on search query
-  const filteredStudents = students.filter(student => {
-    if (!searchQuery.trim()) return true;
-    
-    const query = searchQuery.toLowerCase();
-    return (
-      student.name?.toLowerCase().includes(query) ||
-      student.disability_type?.toLowerCase().includes(query) ||
-      (student.grade_level !== undefined && formatGradeLevel(student.grade_level).toLowerCase().includes(query))
-    );
-  });
+  // Helper function to format date
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    try {
+      return format(new Date(dateString), 'MMM d, yyyy');
+    } catch (err) {
+      return 'N/A';
+    }
+  };
+
+  const handleSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  // Filter students based on search query and sort them
+  const filteredAndSortedStudents = students
+    .filter(student => {
+      if (!searchQuery.trim()) return true;
+      
+      const query = searchQuery.toLowerCase();
+      return (
+        student.name?.toLowerCase().includes(query) ||
+        student.disability_type?.toLowerCase().includes(query) ||
+        (student.grade_level !== undefined && formatGradeLevel(student.grade_level).toLowerCase().includes(query))
+      );
+    })
+    .sort((a, b) => {
+      if (sortConfig.key === 'name') {
+        const nameA = (a.name || '').toLowerCase();
+        const nameB = (b.name || '').toLowerCase();
+        return sortConfig.direction === 'asc' 
+          ? nameA.localeCompare(nameB)
+          : nameB.localeCompare(nameA);
+      } else if (sortConfig.key === 'updated_at') {
+        const dateA = a.updated_at ? new Date(a.updated_at) : new Date(0);
+        const dateB = b.updated_at ? new Date(b.updated_at) : new Date(0);
+        return sortConfig.direction === 'asc' ? dateA - dateB : dateB - dateA;
+      }
+      return 0;
+    });
 
   const fetchStudentDetails = async (studentId) => {
     if (!session || isLoadingDetails(studentId)) return;
@@ -189,6 +225,8 @@ export default function StudentsPage() {
 
   const handleStudentAdded = async () => {
     await fetchStudents();
+
+    console.log("handleStudentAdded, students:", students);
     
     // If we were editing the currently selected student, refresh it
     if (selectedStudentForEdit && selectedStudent && selectedStudentForEdit.id === selectedStudent.id) {
@@ -201,11 +239,13 @@ export default function StudentsPage() {
         
         const updatedStudentData = await response.json();
         
-        // Update the selected student state while preserving other properties like objectives
-        setSelectedStudent(prevStudent => ({
-          ...prevStudent,
-          ...updatedStudentData
+        const [updatedStudent] = updatedStudentData; // destructure first object
+        console.log("handleStudentAdded, updated student data:", updatedStudent);
+        setSelectedStudent(prev => ({
+          ...prev,
+          ...updatedStudent
         }));
+        console.log("handleStudentAdded, in student view after call, selectedStudent:", selectedStudent);
       } catch (err) {
         console.error('Error refreshing student after edit:', err);
         toast.error('Failed to refresh student data. Please try again later.');
@@ -370,27 +410,47 @@ export default function StudentsPage() {
           </div>
 
           <div className="flex-1 bg-background rounded-[16px] flex flex-col overflow-hidden border border-border shadow-sm">
-            <div className="grid grid-cols-3 gap-4 p-4 border-b border-border font-medium text-emphasis-high sticky top-0 bg-[var(--surface-raised)] z-10">
-              <div className="col-span-1">Student Name</div>
+            <div className="grid grid-cols-4 gap-4 p-4 border-b border-border font-medium text-emphasis-high sticky top-0 bg-[var(--surface-raised)] z-10">
+              <div className="col-span-1">
+                <Button
+                  variant="ghost"
+                  onClick={() => handleSort('name')}
+                  className="flex items-center gap-1 p-0 h-auto font-medium text-emphasis-high hover:bg-transparent"
+                >
+                  Student Name
+                  <ArrowUpDown className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
               <div className="col-span-1">Disability Type</div>
               <div className="col-span-1">Grade Level</div>
+              <div className="col-span-1">
+                <Button
+                  variant="ghost"
+                  onClick={() => handleSort('updated_at')}
+                  className="flex items-center gap-1 p-0 h-auto font-medium text-emphasis-high hover:bg-transparent"
+                >
+                  Last Updated
+                  <ArrowUpDown className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
             </div>
             <div className="h-full overflow-y-auto hide-scrollbar flex-1">
-              {filteredStudents.length === 0 ? (
+              {filteredAndSortedStudents.length === 0 ? (
                 <div className="flex items-center justify-center h-32 text-muted-foreground">
                   {searchQuery ? 'No students match your search' : 'No students found'}
                 </div>
               ) : (
-                filteredStudents.map((student) => (
+                filteredAndSortedStudents.map((student) => (
                   <div
                     key={student.id}
                     onClick={() => !isLoadingDetails(student.id) && fetchStudentDetails(student.id)}
-                    className={`grid grid-cols-3 gap-4 p-4 border-b border-border hover:bg-primary/10 transition-colors cursor-pointer ${isLoadingDetails(student.id) ? 'opacity-70 pointer-events-none' : ''}`}
+                    className={`grid grid-cols-4 gap-4 p-4 border-b border-border hover:bg-primary/10 transition-colors cursor-pointer ${isLoadingDetails(student.id) ? 'opacity-70 pointer-events-none' : ''}`}
                   >
                     <div className="col-span-1 text-emphasis-high font-medium">{student.name}</div>
                     <div className="col-span-1 text-emphasis-medium">{student.disability_type || 'N/A'}</div>
+                    <div className="col-span-1 text-emphasis-medium">{formatGradeLevel(student.grade_level)}</div>
                     <div className="col-span-1 flex items-center justify-between">
-                      <span className="text-emphasis-medium">{formatGradeLevel(student.grade_level)}</span>
+                      <span className="text-emphasis-medium">{formatDate(student.updated_at)}</span>
                       <div className="flex items-center gap-2">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
