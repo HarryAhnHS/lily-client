@@ -19,7 +19,7 @@ export default function StudentsPage() {
   const { session, loading } = useAuth();
   const router = useRouter();
   const [students, setStudents] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [selectedObjective, setSelectedObjective] = useState(null);
@@ -331,7 +331,7 @@ export default function StudentsPage() {
           onObjectiveClick={handleObjectiveClick}
         />
       ) : (
-        <div className="w-full h-[calc(100vh-200px)] flex flex-col max-w-7xl mx-auto bg-[#e0e0e0] rounded-[20px] p-5 m-12">
+        <div className="w-full h-[calc(100vh-200px)] flex flex-col max-w-7xl mx-auto bg-[var(--soft-primary)] rounded-[20px] p-5 m-12">
           <div className="flex justify-between items-center mb-5">
             <div className="flex items-center gap-2">
               <div className="bg-black rounded-md p-1">

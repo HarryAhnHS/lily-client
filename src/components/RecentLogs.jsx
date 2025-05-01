@@ -8,11 +8,17 @@ import { authorizedFetch } from "@/services/api";
 import { formatDate } from "@/lib/utils";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
-export default function RecentLogs({ session }) {
+export default function RecentLogs({ session, onLoadingChange }) {
   const [recentLogs, setRecentLogs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [students, setStudents] = useState({});
+
+  useEffect(() => {
+    if (onLoadingChange) {
+      onLoadingChange(true);
+    }
+  }, [onLoadingChange]);
 
   // Fetch students data to get names
   useEffect(() => {
@@ -45,13 +51,13 @@ export default function RecentLogs({ session }) {
     };
     
     fetchStudents();
-  }, [session]);
+  }, []);
 
   // Fetch recent logs
   useEffect(() => {
     const fetchRecentLogs = async () => {
       if (!session) return;
-      setIsLoading(true);
+      onLoadingChange(true);
       setError(null);
 
       try {
@@ -73,12 +79,12 @@ export default function RecentLogs({ session }) {
         console.error("Error fetching recent logs:", err);
         setError("Failed to load recent logs. Please try again later.");
       } finally {
-        setIsLoading(false);
+        onLoadingChange(false);
       }
     };
     
     fetchRecentLogs();
-  }, [session]);
+  }, []);
 
   // Get student name from ID
   const getStudentName = (studentId) => {
@@ -102,11 +108,7 @@ export default function RecentLogs({ session }) {
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-grow overflow-y-auto">
-        {isLoading ? (
-          <div className='flex justify-center items-center h-full w-full'>
-            <LoadingSpinner />
-          </div>
-        ) : error ? (
+        {error ? (
           <div className="text-center py-4 text-red-500">{error}</div>
         ) : recentLogs.length === 0 ? (
           <div className="text-center py-4 text-muted-foreground">No recent logs found</div>

@@ -30,19 +30,21 @@ const ai = new GoogleGenAI({
 });
 
 export default function Home() {
-  const { session, loading } = useAuth() || { session: true, loading: false };
+  const { session, loading: authLoading } = useAuth() || { session: true, loading: false };
   const router = useRouter();
 
   const [students, setStudents] = useState([]);
-  const [isLoadingData, setIsLoadingData] = useState(true);
+  const [isLoadingData, setIsLoadingData] = useState(false);
+  const [isLoadingWeekly, setIsLoadingWeekly] = useState(false);
+  const [isLoadingLogs, setIsLoadingLogs] = useState(false);
   const [error, setError] = useState(null);
 
   // Optional login redirect
   useEffect(() => {
-    if (!loading && !session) {
+    if (!authLoading && !session) {
       router.replace("/login");
     }
-  }, [loading, session, router]);
+  }, [authLoading, session, router]);
 
   // Fetch students list
   useEffect(() => {
@@ -74,9 +76,12 @@ export default function Home() {
     };
     
     fetchStudents();
-  }, [session]);
+  }, []);
 
-  if (loading) {
+  // Only auth and initial data fetch should block rendering
+  const isInitialLoading = authLoading || isLoadingData;
+
+  if (isInitialLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <LoadingSpinner />
@@ -84,10 +89,18 @@ export default function Home() {
     );
   }
 
-  // console.log(session);
+  // Log all loading states
+  console.log("Loading states:", {authLoading, isLoadingData, isLoadingWeekly, isLoadingLogs});
 
   return (
     <div className="min-h-screen relative overflow-hidden">
+      {/* Global loading overlay for component loading */}
+      {(isLoadingWeekly || isLoadingLogs) && (
+        <div className="fixed inset-0 bg-background/80 flex items-center justify-center z-50">
+          <LoadingSpinner />
+        </div>
+      )}
+      
       <main className="max-w-6xl mx-auto px-4 py-8 space-y-6 relative z-10 overflow-hidden">
         {/* Header with greeting */}
         <div className="flex justify-between items-center">
@@ -111,12 +124,18 @@ export default function Home() {
 
           {/* Right column - Recent Logs */}
           <div className="lg:col-span-1 overflow-hidden h-[300px]">
-            <RecentLogs session={session} />
+            <RecentLogs 
+              session={session} 
+              onLoadingChange={setIsLoadingLogs} 
+            />
           </div>
           
           {/* Weekly Overview - Full Width */}
           <div className="lg:col-span-2 overflow-hidden h-[400px]">
-            <WeeklyObjectivesOverview session={session} />
+            <WeeklyObjectivesOverview 
+              session={session} 
+              onLoadingChange={setIsLoadingWeekly} 
+            />
           </div>
         </div>
       </main>

@@ -14,9 +14,8 @@ import {
 import { Bell, ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { authorizedFetch } from "@/services/api";
 
-export default function WeeklyObjectivesOverview({ session }) {
+export default function WeeklyObjectivesOverview({ session, onLoadingChange }) {
   const [period, setPeriod] = useState('this-week');
-  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [data, setData] = useState({
@@ -27,11 +26,16 @@ export default function WeeklyObjectivesOverview({ session }) {
     objectives: []
   });
 
+  useEffect(() => {
+    if (onLoadingChange) {
+      onLoadingChange(true);
+    }
+  }, [onLoadingChange]);
+
   // Fetch weekly data
   useEffect(() => {
     const fetchWeeklyData = async () => {
       if (!session) return;
-      setIsLoading(true);
       setError(null);
 
       try {
@@ -64,12 +68,13 @@ export default function WeeklyObjectivesOverview({ session }) {
         console.error("Error fetching weekly overview:", err);
         setError("Failed to load weekly overview. Please try again later.");
       } finally {
-        setIsLoading(false);
+        if (onLoadingChange) {
+          onLoadingChange(false);
+        }
       }
     };
-
     fetchWeeklyData();
-  }, [session, period]);
+  }, [period]);
 
   const handlePeriodChange = (value) => {
     setPeriod(value);
@@ -120,11 +125,7 @@ export default function WeeklyObjectivesOverview({ session }) {
       </CardHeader>
 
       <CardContent className="pb-0 space-y-6 flex-1 flex flex-col">
-        {isLoading ? (
-          <div className="flex justify-center py-8 h-full w-full">
-            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-          </div>
-        ) : error ? (
+        {error ? (
           <div className="text-center py-8 text-red-500 h-full w-full">{error}</div>
         ) : (
           <>
