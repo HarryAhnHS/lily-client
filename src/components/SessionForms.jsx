@@ -8,8 +8,9 @@ import {
   DialogHeader,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
-import { Mic, ClipboardEdit } from 'lucide-react';
+import { Mic, ClipboardEdit, ClipboardList } from 'lucide-react';
 import { SessionManualStudentSelect } from './SessionManualLogForm';
 import { SessionManualObjectiveSelect } from './ObjectivesMultiSelect';
 import { SessionManualProgressForm } from './ObjectiveProgressForm';
@@ -189,26 +190,36 @@ export function SessionFormController({ students, open, onOpenChange }) {
 
   return (
     <>
-      {/* Input Selection Buttons */}
-      <div className="flex items-center gap-4">
-        <Button 
-          onClick={() => openForm(FORM_TYPES.VOICE)}
-          className="h-48 flex-1 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-secondary/20 to-secondary/5 hover:from-secondary/30 hover:to-secondary/10 border border-secondary/20"
-          variant="outline"
-        >
-          <Mic className="h-8 w-8 mb-2" />
-          <span className="text-lg font-medium">Voice</span>
-        </Button>
-        
-        <Button 
-          onClick={() => openForm(FORM_TYPES.MANUAL_STUDENT)}
-          className="h-48 flex-1 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-secondary/20 to-secondary/5 hover:from-secondary/30 hover:to-secondary/10 border border-secondary/20"
-          variant="outline"
-        >
-          <ClipboardEdit className="h-8 w-8 mb-2" />
-          <span className="text-lg font-medium">Manual</span>
-        </Button>
-      </div>
+      <Card className="shadow-md backdrop-blur-sm bg-card h-full overflow-hidden rounded-4xl">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg font-medium flex items-center gap-2">
+            <ClipboardList className="w-5 h-5 text-primary"/>
+            <span>Log Progress</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-4">
+           {/* Input Selection Buttons */}
+          <div className="flex items-center gap-4">
+            <Button 
+              onClick={() => openForm(FORM_TYPES.VOICE)}
+              className="h-48 flex-1 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-secondary/20 to-secondary/5 hover:from-secondary/30 hover:to-secondary/10 border border-secondary/20"
+              variant="outline"
+            >
+              <Mic className="h-8 w-8 mb-2" />
+              <span className="text-lg font-medium">Voice</span>
+            </Button>
+            
+            <Button 
+              onClick={() => openForm(FORM_TYPES.MANUAL_STUDENT)}
+              className="h-48 flex-1 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-secondary/20 to-secondary/5 hover:from-secondary/30 hover:to-secondary/10 border border-secondary/20"
+              variant="outline"
+            >
+              <ClipboardEdit className="h-8 w-8 mb-2" />
+              <span className="text-lg font-medium">Manual</span>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Dialog Container for all forms */}
       <Dialog open={dialogOpen} onOpenChange={handleOpenChange}>

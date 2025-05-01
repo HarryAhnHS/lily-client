@@ -8,7 +8,7 @@ import { Footer } from '@/components/Footer';
 import './globals.css';
 import { ThemeProvider } from 'next-themes';
 import { Sidebar } from '@/components/Sidebar';
-import FlowerChain from '@/components/FlowerChain';
+import Backdrop from '@/components/Backdrop';
 import { usePathname } from 'next/navigation';
 
 export default function RootLayout({ children }) {
@@ -18,13 +18,13 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className='bg-background text-foreground'>
+        <Backdrop />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <AuthProvider>
             <SidebarProvider>
-              <div className="min-h-screen flex flex-col overflow-hidden">
+              <div className="min-h-screen flex flex-col overflow-hidden relative z-10">
                 <Header />
                 <main className={`flex-1 overflow-hidden ${!isLoginPage ? 'pt-16 pl-24 pr-4' : 'pt-16'}`}>
-                  {!isLoginPage && <FlowerChain />}
                   {children}
                 </main>
                 {!isLoginPage && <Footer />}

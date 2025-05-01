@@ -91,7 +91,7 @@ export default function RecentLogs({ session }) {
   };
 
   return (
-    <Card className="shadow-md border border-border/40 backdrop-blur-sm bg-card/95 h-[350px] flex flex-col">
+    <Card className="shadow-md border border-border/40 backdrop-blur-sm bg-[#EDEAE4] h-[350px] flex flex-col">
       <CardHeader className="bg-muted/30 pb-3 flex-shrink-0">
         <CardTitle className="text-lg font-medium flex items-center gap-2">
           <div className="w-5 h-5 flex items-center justify-center rounded-full bg-primary/20">

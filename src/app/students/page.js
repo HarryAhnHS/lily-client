@@ -189,16 +189,71 @@ export default function StudentsPage() {
     setSelectedObjectiveForEdit(null);
   };
 
-  const handleStudentAdded = () => {
-    fetchStudents();
+  const handleStudentAdded = async () => {
+    await fetchStudents();
+    
+    // If we were editing the currently selected student, refresh it
+    if (selectedStudentForEdit && selectedStudent && selectedStudentForEdit.id === selectedStudent.id) {
+      try {
+        const response = await authorizedFetch(`/students/student/${selectedStudentForEdit.id}`, session?.access_token);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch updated student details: ${response.status}`);
+        }
+        
+        const updatedStudentData = await response.json();
+        
+        // Update the selected student state while preserving other properties like objectives
+        setSelectedStudent(prevStudent => ({
+          ...prevStudent,
+          ...updatedStudentData
+        }));
+      } catch (err) {
+        console.error('Error refreshing student after edit:', err);
+        toast.error('Failed to refresh student data. Please try again later.');
+      }
+    }
+    
     handleCloseStudentModal();
   };
 
   const handleObjectiveAdded = async () => {
     await fetchStudents();
+    
+    // Refresh objectives if we have a selected student
     if (selectedStudent) {
-      await fetchStudentDetails(selectedStudent.id);
+      try {
+        // Get the updated objectives
+        const objectivesResponse = await authorizedFetch(
+          `/objectives/student/${selectedStudent.id}?include_details=true`,
+          session?.access_token
+        );
+        
+        if (!objectivesResponse.ok) {
+          throw new Error(`Failed to fetch updated objectives: ${objectivesResponse.status}`);
+        }
+        
+        const updatedObjectives = await objectivesResponse.json();
+        
+        // Update the selected student with the new objectives
+        setSelectedStudent(prevStudent => ({
+          ...prevStudent,
+          objectives: updatedObjectives
+        }));
+        
+        // If we were editing the currently viewed objective, update that too
+        if (selectedObjectiveForEdit && selectedObjective && selectedObjectiveForEdit.id === selectedObjective.id) {
+          const updatedObjective = updatedObjectives.find(obj => obj.id === selectedObjective.id);
+          if (updatedObjective) {
+            setSelectedObjective(updatedObjective);
+          }
+        }
+      } catch (err) {
+        console.error('Error refreshing objectives after edit:', err);
+        toast.error('Failed to refresh objective data. Please try again later.');
+      }
     }
+    
     handleCloseObjectiveModal();
   };
 

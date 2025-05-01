@@ -88,8 +88,8 @@ export default function WeeklyObjectivesOverview({ session }) {
   const current = data.objectives[currentIndex];
 
   return (
-    <Card className="shadow-md border border-border/40 backdrop-blur-sm bg-card/95 rounded-2xl">
-      <CardHeader className="bg-muted/30 pb-3 rounded-t-2xl">
+    <Card className="shadow-md border border-border/40 bg-[#EDEAE4] backdrop-blur-sm rounded-2xl">
+      <CardHeader className="pb-3 rounded-t-2xl">
         <div className="flex justify-between items-center">
           <CardTitle className="text-lg font-medium flex items-center gap-2">
             <svg
@@ -135,7 +135,7 @@ export default function WeeklyObjectivesOverview({ session }) {
               <div className="text-sm text-muted-foreground mb-2">
                 {data.completedCount}/{data.totalCount} objectives logged this week
               </div>
-              <Progress value={data.completionPercentage} className="h-2 bg-muted" />
+              <Progress value={data.completionPercentage} className="h-2 bg-" />
               <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
                 <Bell className="w-4 h-4" />
                 <span>{data.remainingCount} objectives left</span>

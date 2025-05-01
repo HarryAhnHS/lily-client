@@ -16,7 +16,7 @@ import { Bell, ClipboardList, UserRoundCheck, ArrowUpRight, ChevronLeft, Chevron
 import { authorizedFetch } from "@/services/api";
 import { Progress } from "@/components/ui/progress";
 import { SessionFormController } from "@/components/SessionForms";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+
 import RecentLogs from "@/components/RecentLogs";
 import WeeklyObjectivesOverview from "@/components/WeeklyObjectivesOverview";
 
@@ -84,6 +84,8 @@ export default function Home() {
     );
   }
 
+  // console.log(session);
+
   return (
     <div className="min-h-screen relative overflow-hidden">
       <main className="max-w-6xl mx-auto px-4 py-8 space-y-6 relative z-10 overflow-hidden">
@@ -93,7 +95,7 @@ export default function Home() {
             <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
               <UserRoundCheck className="w-4 h-4 text-primary" />
             </div>
-            <h2 className="text-2xl font-semibold">Good evening, {session?.user?.email}</h2>
+            <h2 className="text-2xl font-semibold">Good evening, {session?.user?.user_metadata?.name}</h2>
           </div>
           <Button size="sm" variant="outline" className="flex items-center gap-2">
             <Bell className="w-4 h-4" />
@@ -101,21 +103,10 @@ export default function Home() {
           </Button>
         </div>
 
-        {/* Session Forms Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 overflow-hidden">
           {/* Left column - Session Input Options */}
           <div className="lg:col-span-1 overflow-hidden">
-            <Card className="shadow-md border border-border/40 backdrop-blur-sm bg-card/95 h-full overflow-hidden">
-              <CardHeader className="bg-muted/30 pb-3">
-                <CardTitle className="text-lg font-medium flex items-center gap-2">
-                  <ClipboardList className="w-5 h-5 text-primary" />
-                  <span>Log Progress</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-4">
-                <SessionFormController students={students} />
-              </CardContent>
-            </Card>
+            <SessionFormController students={students} />
           </div>
 
           {/* Right column - Recent Logs */}

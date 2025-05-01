@@ -18,6 +18,12 @@ module.exports = {
           '100%': { width: '100%' },
         },
       },
+      colors: {
+        // 'card-primary': '#EDEAE4',
+        // 'card-secondary': '#D3D0CA',
+        // 'card-foreground-primary': '#3E3E3E',
+        // 'card-foreground-secondary': '#898989',
+      },
     },
   },
   plugins: [

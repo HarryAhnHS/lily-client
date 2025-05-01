@@ -45,8 +45,8 @@
 
 :root {
   --radius: 0.625rem;
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card: #EDEAE4; 
+  --card-foreground: #3E3E3E;
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
   --primary: oklch(0.205 0 0);
@@ -76,13 +76,18 @@
   --sidebar-ring: oklch(0.708 0 0);
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
+  
+  --soft-primary: #EDEAE4;
+  --soft-secondary: #dcd8cf;
+  --soft-foreground-primary: #3E3E3E;
+  --soft-foreground-secondary: #898989;
 }
 
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
+  --card: #65635e; /* Keep the same in dark mode if you want */
+  --card-foreground: #f6f6f6;
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
   --primary: oklch(0.922 0 0);
@@ -110,6 +115,11 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+
+  --soft-primary: #65635e;
+  --soft-secondary: #727272;
+  --soft-foreground-primary: #f6f6f6;
+  --soft-foreground-secondary: #d7d7d7;
 }
 
 @layer base {

@@ -16,32 +16,32 @@ export function Sidebar() {
   };
 
   return (
-    <div className="fixed left-5 top-1/2 -translate-y-1/2 rounded-2xl bg-neutral-800 shadow-lg z-10 flex flex-col items-center py-5 px-3">
+    <div className="fixed left-5 top-1/2 -translate-y-1/2 rounded-2xl bg-card shadow-lg z-10 flex flex-col items-center py-5 px-3">
       <nav className="flex flex-col items-center gap-7">
         <Link 
           href="/" 
-          className={`text-white p-2 rounded-full hover:bg-neutral-700 transition-colors ${pathname === '/' ? 'bg-neutral-700' : ''}`}
-          aria-label="Home"
+          className={`text-foreground p-2 rounded-sm hover:bg-[var(--soft-secondary)] transition-colors ${pathname === '/' ? 'bg-[var(--soft-secondary)]' : ''}`}
+          aria-label="Home" 
         >
           <Home className="w-5 h-5" />
         </Link>
         <Link
           href="/students"
-          className={`text-white p-2 rounded-full hover:bg-neutral-700 transition-colors ${pathname === '/students' ? 'bg-neutral-700' : ''}`}
+          className={`text-foreground p-2 rounded-sm hover:bg-[var(--soft-secondary)] transition-colors ${pathname === '/students' ? 'bg-[var(--soft-secondary)]' : ''}`}
           aria-label="Students"
         >
-          <User className="w-5 h-5" />
+          <User className="w-5 h-5 font-light" />
         </Link>
         <Link
           href="#"
-          className={`text-white p-2 rounded-full hover:bg-neutral-700 transition-colors ${pathname === '/settings' ? 'bg-neutral-700' : ''}`}
+          className={`text-foreground p-2 rounded-sm hover:bg-[var(--soft-secondary)] transition-colors ${pathname === '/settings' ? 'bg-[var(--soft-secondary)]' : ''}`}
           aria-label="Settings"
         >
           <Settings className="w-5 h-5" />
         </Link>
         <button
           onClick={handleSignOut}
-          className="text-white p-2 rounded-full hover:bg-neutral-700 transition-colors"
+          className="text-foreground p-2 rounded-sm hover:bg-[var(--soft-secondary)] transition-colors"
           aria-label="Sign Out"
         >
           <LogOut className="w-5 h-5" />

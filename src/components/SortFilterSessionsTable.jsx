@@ -382,8 +382,8 @@ export function SortFilterSessionsTable({
 
       <div className="rounded-md border border-gray-200 bg-white w-full">
         <div className="overflow-x-auto">
-          <div className="inline-block min-w-full align-middle">
-            <Table className="min-w-full divide-y divide-gray-200">
+          <div className="">
+            <Table className="divide-y divide-gray-200 w-full">
               <TableHeader className="bg-gray-50">
                 <TableRow className="hover:bg-gray-100 border-b border-gray-200">
                   <TableHead className="w-[90px]">
@@ -476,7 +476,7 @@ export function SortFilterSessionsTable({
                           {session.objective_progress.is_success ? "Yes" : "No"}
                         </Badge>
                       </TableCell>
-                      <TableCell className="w-[130px] text-gray-900">
+                      <TableCell className="w-[100px] text-gray-900">
                         <div className="line-clamp-2">
                           {session.memo || '-'}
                         </div>

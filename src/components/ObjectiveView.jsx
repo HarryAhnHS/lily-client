@@ -5,7 +5,6 @@ import { ChevronRight, CheckCircle2, XCircle, CircleDot, ArrowLeft } from 'lucid
 import { toast } from 'sonner';
 import { SortFilterSessionsTable } from '@/components/SortFilterSessionsTable';
 import { useAuth } from '@/app/context/auth-context';
-import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -250,7 +249,7 @@ export default function ObjectiveView({ objective, isOpen, onClose, previewMode 
       return (
         <div 
           key={index} 
-          className={`w-6 h-6 rounded-full ${color}`}
+          className={`w-4 h-4 sm:w-6 sm:h-6 rounded-full ${color}`}
         />
       );
     });
@@ -258,141 +257,145 @@ export default function ObjectiveView({ objective, isOpen, onClose, previewMode 
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-full h-[calc(100vh-200px)] flex flex-col max-w-7xl mx-auto bg-[#e0e0e0] rounded-[20px] p-5 m-12">
-        <div className="h-8 border-b border-gray-200 flex items-center pl-2">
-          <DialogTitle className="sr-only">Objective Details</DialogTitle>
-          <Button 
-            variant="ghost" 
-            className="inline-flex items-center h-7 px-2 text-black"
-            onClick={onClose}
-          >
-            <ArrowLeft className="h-4 w-4 text-black mr-1" />
-            <span className="font-medium">Back</span>
-          </Button>
-        </div>
-        
-        <div className="overflow-y-auto max-h-[calc(90vh-32px)] px-4 pt-2 pb-4">
-          {isLoading && objectiveData === null ? (
-            <div className="flex items-center justify-center h-64">
-              <div className="animate-spin h-10 w-10 border-4 border-black border-opacity-25 rounded-full border-t-black"></div>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {/* Main Objective Box */}
-              <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
-                <div className="space-y-2">
-                  <p className="text-lg text-gray-800 leading-snug font-medium">{safeDescription}</p>
-                  <div className="flex items-center text-sm text-gray-600 gap-1">
-                    <span className="font-medium">{safeSubjectArea}</span>
-                    <ChevronRight className="h-4 w-4 text-gray-400" />
-                    <span>{safeGoal}</span>
-                  </div>
-                  {safeObjectiveType !== 'binary' && (
-                    <div className="text-sm text-gray-700">
-                      Target: {safeTargetSuccesses} out of {safeTargetTrials} trials
-                      {safeObjectiveType === 'trial' && (
-                        <span className="ml-2">with {Math.round(safeTargetAccuracy * 100)}% accuracy</span>
-                      )}
-                    </div>
-                  )}
-                </div>
+      <DialogContent className="w-full max-w-5xl mx-auto p-0 h-auto max-h-[90vh] overflow-hidden border-0 sm:rounded-lg rounded-none">
+        <div className="flex flex-col h-full w-full bg-[#e0e0e0]">
+          <div className="h-8 border-b border-gray-200 flex items-center pl-2 bg-white">
+            <DialogTitle className="sr-only">Objective Details</DialogTitle>
+            <Button 
+              variant="ghost" 
+              className="inline-flex items-center h-7 px-2 text-black"
+              onClick={onClose}
+            >
+              <ArrowLeft className="h-4 w-4 text-black mr-1" />
+              <span className="font-medium">Back</span>
+            </Button>
+          </div>
+          
+          <div className="overflow-y-auto p-4 sm:p-6 flex-1">
+            {isLoading && objectiveData === null ? (
+              <div className="flex items-center justify-center h-64">
+                <div className="animate-spin h-10 w-10 border-4 border-black border-opacity-25 rounded-full border-t-black"></div>
               </div>
-              
-              {/* Progress Section - Only shown when not in preview mode */}
-              {!previewMode && (
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <div className="text-base font-medium text-gray-800">Total Progress:</div>
-                    <div className="text-base font-medium text-gray-800">{progressPercentage}%</div>
-                  </div>
-                  <div className="flex space-x-2">
-                    {renderProgressDots()}
-                  </div>
-                </div>
-              )}
-              
-              {/* Moments of Progress - Shown differently in preview mode */}
-              <div>
-                <h2 className="text-lg font-medium text-gray-900 mb-2">
-                  {previewMode ? 'Progress Tracking' : 'Moments of Progress'}
-                </h2>
-                
-                <div className="bg-white rounded-lg overflow-hidden border border-gray-200">
-                  {previewMode ? (
-                    <div className="p-4 text-center text-gray-500">
-                      <p>No sessions yet. Progress will be tracked here after adding the student.</p>
+            ) : (
+              <div className="space-y-4">
+                {/* Main Objective Box */}
+                <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                  <div className="space-y-2">
+                    <p className="text-lg text-gray-800 leading-snug font-medium">{safeDescription}</p>
+                    <div className="flex items-center text-sm text-gray-600 gap-1">
+                      <span className="font-medium">{safeSubjectArea}</span>
+                      <ChevronRight className="h-4 w-4 text-gray-400" />
+                      <span>{safeGoal}</span>
                     </div>
-                  ) : (
-                    <>
-                      {/* Table Header */}
-                      <div className="grid grid-cols-12 gap-3 border-b p-3 bg-gray-50 text-gray-800 font-medium">
-                        <div className="col-span-3">Date</div>
-                        <div className="col-span-2">Score</div>
-                        <div className="col-span-7">Notes</div>
-                      </div>
-                      
-                      {/* Table Content */}
-                      <div className="divide-y divide-gray-100">
-                        {recentSessions.length > 0 ? (
-                          recentSessions.map((session) => (
-                            <div key={session.id} className="grid grid-cols-12 gap-3 p-3 text-gray-800 hover:bg-gray-50">
-                              <div className="col-span-3">{formatDate(session.created_at)}</div>
-                              <div className="col-span-2 flex items-center">
-                                {getStatusIcon(session)}
-                                <span className="ml-1">
-                                  {session.objective_progress?.trials_completed || 0}/
-                                  {session.objective_progress?.trials_total || 10}
-                                </span>
-                              </div>
-                              <div className="col-span-7 text-gray-600">
-                                {session.memo || "No notes recorded"}
-                              </div>
-                            </div>
-                          ))
-                        ) : (
-                          <div className="p-3 text-center text-gray-500">No progress moments recorded yet</div>
+                    {safeObjectiveType !== 'binary' && (
+                      <div className="text-sm text-gray-700">
+                        Target: {safeTargetSuccesses} out of {safeTargetTrials} trials
+                        {safeObjectiveType === 'trial' && (
+                          <span className="ml-2">with {Math.round(safeTargetAccuracy * 100)}% accuracy</span>
                         )}
                       </div>
-                    </>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Progress Section - Only shown when not in preview mode */}
+                {!previewMode && (
+                  <div>
+                    <div className="flex justify-between items-center mb-1">
+                      <div className="text-base font-medium text-gray-800">Total Progress:</div>
+                      <div className="text-base font-medium text-gray-800">{progressPercentage}%</div>
+                    </div>
+                    <div className="flex space-x-2">
+                      {renderProgressDots()}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Moments of Progress - Shown differently in preview mode */}
+                <div>
+                  <h2 className="text-lg font-medium text-gray-900 mb-2">
+                    {previewMode ? 'Progress Tracking' : 'Moments of Progress'}
+                  </h2>
+                  
+                  <div className="bg-white rounded-lg overflow-hidden border border-gray-200">
+                    {previewMode ? (
+                      <div className="p-4 text-center text-gray-500">
+                        <p>No sessions yet. Progress will be tracked here after adding the student.</p>
+                      </div>
+                    ) : (
+                      <>
+                        {/* Table Header */}
+                        <div className="grid grid-cols-12 gap-2 border-b p-3 bg-gray-50 text-gray-800 font-medium">
+                          <div className="col-span-4 sm:col-span-3">Date</div>
+                          <div className="col-span-3 sm:col-span-2">Score</div>
+                          <div className="col-span-5 sm:col-span-7">Notes</div>
+                        </div>
+                        
+                        {/* Table Content */}
+                        <div className="divide-y divide-gray-100">
+                          {recentSessions.length > 0 ? (
+                            recentSessions.map((session) => (
+                              <div key={session.id} className="grid grid-cols-12 gap-2 p-3 text-gray-800 hover:bg-gray-50">
+                                <div className="col-span-4 sm:col-span-3 text-sm sm:text-base">{formatDate(session.created_at)}</div>
+                                <div className="col-span-3 sm:col-span-2 flex items-center text-sm sm:text-base">
+                                  {getStatusIcon(session)}
+                                  <span className="ml-1">
+                                    {session.objective_progress?.trials_completed || 0}/
+                                    {session.objective_progress?.trials_total || 10}
+                                  </span>
+                                </div>
+                                <div className="col-span-5 sm:col-span-7 text-gray-600 text-sm sm:text-base">
+                                  {session.memo || "No notes recorded"}
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="p-3 text-center text-gray-500">No progress moments recorded yet</div>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  
+                  {/* Additional Sessions Table - not shown in preview mode */}
+                  {!previewMode && sessions.length > 5 && (
+                    <div className="bg-white rounded-lg overflow-hidden border border-gray-200 mt-3 p-4">
+                      <h3 className="text-base font-medium text-gray-900 mb-2">All Progress History</h3>
+                      <div className="overflow-x-auto">
+                        <SortFilterSessionsTable 
+                          sessions={sessions}
+                          showActions={true}
+                          onSuccess={() => fetchCompleteData()}
+                        />
+                      </div>
+                    </div>
                   )}
                 </div>
                 
-                {/* Additional Sessions Table - not shown in preview mode */}
-                {!previewMode && sessions.length > 5 && (
-                  <div className="bg-white rounded-lg overflow-hidden border border-gray-200 mt-3 p-4">
-                    <h3 className="text-base font-medium text-gray-900 mb-2">All Progress History</h3>
-                    <SortFilterSessionsTable 
-                      sessions={sessions}
-                      showActions={true}
-                      onSuccess={() => fetchCompleteData()}
-                    />
-                  </div>
-                )}
-              </div>
-              
-              {/* Requirements & Details (hidden by default but expandable) */}
-              <div className="bg-white rounded-lg p-3 border border-gray-200">
-                <details>
-                  <summary className="cursor-pointer text-base font-medium text-gray-800">
-                    Additional Details
-                  </summary>
-                  <div className="mt-2 space-y-2 text-sm text-gray-600">
-                    <p>Type: <span className="font-medium">{safeObjectiveType}</span></p>
-                    {!previewMode && (
-                      <p>Created: <span className="font-medium">{formatDate(safeCreatedAt)}</span></p>
-                    )}
-                    <div className="pt-2 border-t border-gray-100">
-                      <p className="font-medium mb-1">Success Criteria:</p>
-                      <p>{safeTargetSuccesses} out of {safeTargetTrials} trials successful</p>
-                      {safeObjectiveType === 'trial' && (
-                        <p className="mt-1">Target Accuracy: {Math.round(safeTargetAccuracy * 100)}%</p>
+                {/* Requirements & Details (hidden by default but expandable) */}
+                <div className="bg-white rounded-lg p-3 border border-gray-200">
+                  <details>
+                    <summary className="cursor-pointer text-base font-medium text-gray-800">
+                      Additional Details
+                    </summary>
+                    <div className="mt-2 space-y-2 text-sm text-gray-600">
+                      <p>Type: <span className="font-medium">{safeObjectiveType}</span></p>
+                      {!previewMode && (
+                        <p>Created: <span className="font-medium">{formatDate(safeCreatedAt)}</span></p>
                       )}
+                      <div className="pt-2 border-t border-gray-100">
+                        <p className="font-medium mb-1">Success Criteria:</p>
+                        <p>{safeTargetSuccesses} out of {safeTargetTrials} trials successful</p>
+                        {safeObjectiveType === 'trial' && (
+                          <p className="mt-1">Target Accuracy: {Math.round(safeTargetAccuracy * 100)}%</p>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </details>
+                  </details>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </DialogContent>
     </Dialog>
