@@ -78,7 +78,8 @@
   --foreground: oklch(0.145 0 0);
   
   --soft-primary: #EDEAE4;
-  --soft-secondary: #dcd8cf;
+  --soft-secondary: #E7E3DC;
+  --soft-border: #D3D0CA;
   --soft-foreground-primary: #3E3E3E;
   --soft-foreground-secondary: #898989;
 }
@@ -118,6 +119,7 @@
 
   --soft-primary: #65635e;
   --soft-secondary: #727272;
+  --soft-border: #8c8c8c;
   --soft-foreground-primary: #f6f6f6;
   --soft-foreground-secondary: #d7d7d7;
 }

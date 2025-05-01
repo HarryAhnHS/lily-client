@@ -105,17 +105,17 @@ export default function Home() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 overflow-hidden">
           {/* Left column - Session Input Options */}
-          <div className="lg:col-span-1 overflow-hidden">
+          <div className="lg:col-span-1 overflow-hidden h-[300px]">
             <SessionFormController students={students} />
           </div>
 
           {/* Right column - Recent Logs */}
-          <div className="lg:col-span-1 overflow-hidden">
+          <div className="lg:col-span-1 overflow-hidden h-[300px]">
             <RecentLogs session={session} />
           </div>
           
           {/* Weekly Overview - Full Width */}
-          <div className="lg:col-span-2 overflow-hidden">
+          <div className="lg:col-span-2 overflow-hidden h-[400px]">
             <WeeklyObjectivesOverview session={session} />
           </div>
         </div>

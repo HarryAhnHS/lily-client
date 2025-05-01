@@ -88,8 +88,8 @@ export default function WeeklyObjectivesOverview({ session }) {
   const current = data.objectives[currentIndex];
 
   return (
-    <Card className="shadow-md border border-border/40 bg-[#EDEAE4] backdrop-blur-sm rounded-2xl">
-      <CardHeader className="pb-3 rounded-t-2xl">
+    <Card className="backdrop-blur-sm bg-card h-full rounded-4xl flex flex-col">
+      <CardHeader>
         <div className="flex justify-between items-center">
           <CardTitle className="text-lg font-medium flex items-center gap-2">
             <svg
@@ -119,13 +119,13 @@ export default function WeeklyObjectivesOverview({ session }) {
         </div>
       </CardHeader>
 
-      <CardContent className="pt-4 space-y-6">
+      <CardContent className="pb-0 space-y-6 flex-1 flex flex-col">
         {isLoading ? (
-          <div className="flex justify-center py-8">
+          <div className="flex justify-center py-8 h-full w-full">
             <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
           </div>
         ) : error ? (
-          <div className="text-center py-8 text-red-500">{error}</div>
+          <div className="text-center py-8 text-red-500 h-full w-full">{error}</div>
         ) : (
           <>
             <div>
@@ -135,7 +135,7 @@ export default function WeeklyObjectivesOverview({ session }) {
               <div className="text-sm text-muted-foreground mb-2">
                 {data.completedCount}/{data.totalCount} objectives logged this week
               </div>
-              <Progress value={data.completionPercentage} className="h-2 bg-" />
+              <Progress value={data.completionPercentage} className="h-2" />
               <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
                 <Bell className="w-4 h-4" />
                 <span>{data.remainingCount} objectives left</span>
@@ -143,8 +143,8 @@ export default function WeeklyObjectivesOverview({ session }) {
             </div>
 
             {current && (
-              <Card className="overflow-hidden shadow-sm border border-border/60 bg-muted/5 rounded-xl">
-                <CardHeader className="bg-secondary/10 py-3 px-4 border-b border-border/40">
+              <Card className="overflow-hidden bg-[var(--soft-secondary)] w-full">
+                <CardHeader className="bg-secondary/10 py-3 border-b border-border/40">
                   <CardTitle className="text-md font-medium flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="h-6 w-6 rounded-full bg-primary/20 text-xs flex items-center justify-center text-primary font-bold">
@@ -160,12 +160,11 @@ export default function WeeklyObjectivesOverview({ session }) {
                     </Button>
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-4">
+                <CardContent className="px-2">
                   <p className="text-sm mb-3">
                     {current.description}
                   </p>
                   <div className="flex justify-between items-center text-sm text-muted-foreground">
-                    <span>Not logged</span>
                     <div className="flex gap-1">
                       <Button
                         size="sm"

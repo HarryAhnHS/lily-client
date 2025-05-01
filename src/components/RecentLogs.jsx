@@ -6,6 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Bell, ArrowUpRight } from "lucide-react";
 import { authorizedFetch } from "@/services/api";
 import { formatDate } from "@/lib/utils";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 export default function RecentLogs({ session }) {
   const [recentLogs, setRecentLogs] = useState([]);
@@ -91,8 +92,8 @@ export default function RecentLogs({ session }) {
   };
 
   return (
-    <Card className="shadow-md border border-border/40 backdrop-blur-sm bg-[#EDEAE4] h-[350px] flex flex-col">
-      <CardHeader className="bg-muted/30 pb-3 flex-shrink-0">
+    <Card className="backdrop-blur-sm bg-card h-full rounded-4xl flex flex-col">
+      <CardHeader>
         <CardTitle className="text-lg font-medium flex items-center gap-2">
           <div className="w-5 h-5 flex items-center justify-center rounded-full bg-primary/20">
             <Bell className="w-3 h-3 text-primary" />
@@ -100,17 +101,17 @@ export default function RecentLogs({ session }) {
           <span>View Recent Logs</span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="pt-4 flex-grow overflow-hidden">
+      <CardContent className="flex-grow overflow-y-auto">
         {isLoading ? (
-          <div className="flex justify-center py-4">
-            <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <div className='flex justify-center items-center h-full w-full'>
+            <LoadingSpinner />
           </div>
         ) : error ? (
           <div className="text-center py-4 text-red-500">{error}</div>
         ) : recentLogs.length === 0 ? (
           <div className="text-center py-4 text-muted-foreground">No recent logs found</div>
         ) : (
-          <div className="space-y-3 h-full overflow-y-auto pr-1 pb-2 scrollbar-thin hover:scrollbar-thumb-primary/20">
+          <div className="space-y-3 h-full overflow-y-auto pr-1 pb-2">
             {recentLogs.map((log) => (
               <div key={log.id} className="flex items-center justify-between py-2 border-b last:border-0">
                 <div className="flex flex-col">

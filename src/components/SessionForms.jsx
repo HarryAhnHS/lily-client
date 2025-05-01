@@ -190,19 +190,19 @@ export function SessionFormController({ students, open, onOpenChange }) {
 
   return (
     <>
-      <Card className="shadow-md backdrop-blur-sm bg-card h-full overflow-hidden rounded-4xl">
-        <CardHeader className="pb-3">
+      <Card className="backdrop-blur-sm bg-card h-full overflow-hidden rounded-4xl flex flex-col">
+        <CardHeader>
           <CardTitle className="text-lg font-medium flex items-center gap-2">
             <ClipboardList className="w-5 h-5 text-primary"/>
             <span>Log Progress</span>
           </CardTitle>
         </CardHeader>
-        <CardContent className="pt-4">
+        <CardContent>
            {/* Input Selection Buttons */}
           <div className="flex items-center gap-4">
             <Button 
               onClick={() => openForm(FORM_TYPES.VOICE)}
-              className="h-48 flex-1 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-secondary/20 to-secondary/5 hover:from-secondary/30 hover:to-secondary/10 border border-secondary/20"
+              className="h-48 flex-1 flex flex-col items-center justify-center gap-2 bg-[var(--soft-secondary)] border-[var(--soft-border)]"
               variant="outline"
             >
               <Mic className="h-8 w-8 mb-2" />
@@ -211,7 +211,7 @@ export function SessionFormController({ students, open, onOpenChange }) {
             
             <Button 
               onClick={() => openForm(FORM_TYPES.MANUAL_STUDENT)}
-              className="h-48 flex-1 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-secondary/20 to-secondary/5 hover:from-secondary/30 hover:to-secondary/10 border border-secondary/20"
+              className="h-48 flex-1 flex flex-col items-center justify-center gap-2 bg-[var(--soft-secondary)] border-[var(--soft-border)]"
               variant="outline"
             >
               <ClipboardEdit className="h-8 w-8 mb-2" />
