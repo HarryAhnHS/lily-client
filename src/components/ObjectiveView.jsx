@@ -406,7 +406,7 @@ export default function ObjectiveView({ objective, isOpen, onClose, previewMode 
                               {recentSessions.map((session, index) => (
                                 <motion.div 
                                   key={session.id || index}
-                                  className="flex items-center justify-between text-sm p-3 rounded-lg bg-background transition-colors border border-border/30 hover:bg-accent/5"
+                                  className="flex items-center justify-between text-sm p-3 rounded-lg bg-background transition-colors border border-border/30"
                                   initial={{ opacity: 0, x: -10 }}
                                   animate={{ opacity: 1, x: 0 }}
                                   transition={{ delay: 0.1 * index, duration: 0.3 }}

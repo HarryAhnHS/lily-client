@@ -369,7 +369,7 @@ export default function StudentsPage() {
           onObjectiveClick={handleObjectiveClick}
         />
       ) : (
-        <div className="w-full h-[calc(100vh-200px)] flex flex-col max-w-7xl mx-auto bg-[var(--soft-primary)] rounded-[20px] p-5 m-12">
+        <div className="w-full h-[calc(100vh-200px)] flex flex-col max-w-7xl mx-auto bg-[var(--soft-primary)] rounded-[24px] p-5 m-12">
           <div className="flex justify-between items-center mb-5">
             <div className="flex items-center gap-2">
               <div className="rounded-md p-1">

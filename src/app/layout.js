@@ -22,7 +22,7 @@ export default function RootLayout({ children }) {
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <AuthProvider>
             <SidebarProvider>
-              <div className="min-h-screen flex flex-col overflow-hidden relative z-10">
+              <div className="h-screen flex flex-col overflow-hidden relative z-10">
                 <Header />
                 <main className={`flex-1 overflow-hidden ${!isLoginPage ? 'pt-16 pl-24 pr-4' : 'pt-16'}`}>
                   {children}
