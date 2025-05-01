@@ -190,7 +190,7 @@ export function SessionFormController({ students, open, onOpenChange }) {
 
   return (
     <>
-      <Card className="backdrop-blur-sm bg-card h-full overflow-hidden rounded-4xl flex flex-col">
+      <Card className="backdrop-blur-sm bg-[var(--soft-primary)] h-full overflow-hidden rounded-4xl flex flex-col">
         <CardHeader>
           <CardTitle className="text-lg font-medium flex items-center gap-2">
             <ClipboardList className="w-5 h-5 text-primary"/>

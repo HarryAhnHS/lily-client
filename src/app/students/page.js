@@ -29,6 +29,7 @@ export default function StudentsPage() {
   const [selectedObjectiveForEdit, setSelectedObjectiveForEdit] = useState(null);
   const [loadingStudentIds, setLoadingStudentIds] = useState(new Set());
   const [searchQuery, setSearchQuery] = useState('');
+  const isLoadingDetails = (studentId) => loadingStudentIds.has(studentId);
 
   useEffect(() => {
     if (!loading && !session) {
@@ -36,7 +37,35 @@ export default function StudentsPage() {
     }
   }, [loading, session, router]);
 
-  const isLoadingDetails = (studentId) => loadingStudentIds.has(studentId);
+  useEffect(() => {
+    const fetchStudents = async () => {
+      if (!session) return;
+      
+      setIsLoading(true);
+      setError(null);
+      
+      try {
+        const response = await authorizedFetch('/students/students', session?.access_token, {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch students: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        setStudents(data);
+      } catch (err) {
+        console.error('Error fetching students:', err);
+        setError('Failed to load students. Please try again later.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchStudents();
+  }, [session]);
 
   // Helper function to format grade level
   const formatGradeLevel = (gradeLevel) => {
@@ -61,33 +90,6 @@ export default function StudentsPage() {
       (student.grade_level !== undefined && formatGradeLevel(student.grade_level).toLowerCase().includes(query))
     );
   });
-
-  const fetchStudents = async () => {
-    if (!session) return;
-    
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const response = await authorizedFetch('/students/students', session?.access_token, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch students: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      setStudents(data);
-    } catch (err) {
-      console.error('Error fetching students:', err);
-      setError('Failed to load students. Please try again later.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const fetchStudentDetails = async (studentId) => {
     if (!session || isLoadingDetails(studentId)) return;
@@ -163,10 +165,6 @@ export default function StudentsPage() {
       });
     }
   };
-
-  useEffect(() => {
-    fetchStudents();
-  }, [session]);
 
   const handleOpenStudentModal = (student = null) => {
     setSelectedStudentForEdit(student);
@@ -334,10 +332,10 @@ export default function StudentsPage() {
         <div className="w-full h-[calc(100vh-200px)] flex flex-col max-w-7xl mx-auto bg-[var(--soft-primary)] rounded-[20px] p-5 m-12">
           <div className="flex justify-between items-center mb-5">
             <div className="flex items-center gap-2">
-              <div className="bg-black rounded-md p-1">
-                <Users className="w-5 h-5 text-white" />
+              <div className="rounded-md p-1">
+                <Users className="w-5 h-5" />
               </div>
-              <span className="text-[#1a1a1a] font-medium">Students</span>
+              <span className="font-medium">Students</span>
             </div>
             <div className="flex items-center gap-4">
               <div className="relative w-64">
@@ -348,7 +346,7 @@ export default function StudentsPage() {
                     placeholder="Search students..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9 pr-9 py-2 bg-white text-[#1a1a1a] shadow-sm border-gray-200 focus-visible:ring-black placeholder:text-gray-500"
+                    className="pl-9 pr-9 py-2 bg-background text-foreground shadow-sm focus-visible:ring-foreground"
                   />
                   {searchQuery && (
                     <button 
@@ -362,7 +360,8 @@ export default function StudentsPage() {
               </div>
               <Button
                 onClick={() => handleOpenStudentModal()}
-                className="bg-black text-white hover:bg-gray-900 flex items-center gap-2 transition-transform hover:scale-105"
+                variant="outline"
+                className="flex items-center gap-2 transition-transform"
               >
                 <Plus className="w-4 h-4" />
                 Add Student
@@ -370,61 +369,53 @@ export default function StudentsPage() {
             </div>
           </div>
 
-          <div className="flex-1 bg-white rounded-[16px] flex flex-col overflow-hidden">
-            <div className="grid grid-cols-3 gap-4 p-4 border-b border-[#e0e0e0] font-medium text-[#1a1a1a] sticky top-0 bg-white z-10">
+          <div className="flex-1 bg-background rounded-[16px] flex flex-col overflow-hidden border border-border shadow-sm">
+            <div className="grid grid-cols-3 gap-4 p-4 border-b border-border font-medium text-emphasis-high sticky top-0 bg-[var(--surface-raised)] z-10">
               <div className="col-span-1">Student Name</div>
               <div className="col-span-1">Disability Type</div>
               <div className="col-span-1">Grade Level</div>
             </div>
             <div className="h-full overflow-y-auto hide-scrollbar flex-1">
               {filteredStudents.length === 0 ? (
-                <div className="flex items-center justify-center h-32 text-gray-500">
+                <div className="flex items-center justify-center h-32 text-muted-foreground">
                   {searchQuery ? 'No students match your search' : 'No students found'}
                 </div>
               ) : (
                 filteredStudents.map((student) => (
                   <div
                     key={student.id}
-                    className="grid grid-cols-3 gap-4 p-4 border-b border-[#e0e0e0] hover:bg-[#f0f0f0] transition-colors"
+                    onClick={() => !isLoadingDetails(student.id) && fetchStudentDetails(student.id)}
+                    className={`grid grid-cols-3 gap-4 p-4 border-b border-border hover:bg-primary/10 transition-colors cursor-pointer ${isLoadingDetails(student.id) ? 'opacity-70 pointer-events-none' : ''}`}
                   >
-                    <div className="col-span-1 text-[#1a1a1a] font-medium">{student.name}</div>
-                    <div className="col-span-1 text-[#1a1a1a]">{student.disability_type || 'N/A'}</div>
+                    <div className="col-span-1 text-emphasis-high font-medium">{student.name}</div>
+                    <div className="col-span-1 text-emphasis-medium">{student.disability_type || 'N/A'}</div>
                     <div className="col-span-1 flex items-center justify-between">
-                      <span className="text-[#1a1a1a]">{formatGradeLevel(student.grade_level)}</span>
+                      <span className="text-emphasis-medium">{formatGradeLevel(student.grade_level)}</span>
                       <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          className="text-[#1a1a1a] hover:bg-[#e0e0e0] flex items-center gap-2 transition-all hover:scale-105"
-                          onClick={() => fetchStudentDetails(student.id)}
-                          disabled={isLoadingDetails(student.id)}
-                        >
-                          {isLoadingDetails(student.id) ? (
-                            <>
-                              <LoadingSpinner className="w-4 h-4" />
-                              Loading...
-                            </>
-                          ) : (
-                            'View Details'
-                          )}
-                        </Button>
                         <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button className="text-[#1a1a1a] p-1 hover:bg-[#e0e0e0] rounded-md">
+                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                            <button className="text-emphasis-high p-1 hover:bg-[var(--interactive-hover)] rounded-md">
                               <MoreHorizontal className="w-5 h-5" />
                             </button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
                             <DropdownMenuItem 
-                              onClick={() => handleOpenStudentModal(student)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenStudentModal(student);
+                              }}
                               className="cursor-pointer"
                             >
                               Edit Student
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem 
-                              onClick={() => handleDeleteStudent(student)}
-                              className="cursor-pointer text-red-600 hover:bg-red-50"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteStudent(student);
+                              }}
+                              className="cursor-pointer text-[var(--status-error)] hover:bg-[var(--status-error)]/10"
                             >
                               Delete
                             </DropdownMenuItem>

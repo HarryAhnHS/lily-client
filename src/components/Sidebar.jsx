@@ -16,7 +16,7 @@ export function Sidebar() {
   };
 
   return (
-    <div className="fixed left-5 top-1/2 -translate-y-1/2 rounded-2xl bg-card shadow-lg z-10 flex flex-col items-center py-5 px-3">
+    <div className="fixed left-5 top-1/2 -translate-y-1/2 rounded-2xl bg-[var(--soft-primary)] shadow-lg z-10 flex flex-col items-center py-5 px-3">
       <nav className="flex flex-col items-center gap-7">
         <Link 
           href="/" 

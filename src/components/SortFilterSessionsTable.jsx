@@ -232,14 +232,14 @@ export function SortFilterSessionsTable({
   };
 
   return (
-    <div className="space-y-4 w-full">
-      <div className="flex justify-between items-center">
-        <div className="flex gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+    <div className="space-y-4 w-full h-full flex flex-col">
+      <div className="mb-0 pt-2 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+          <div className="relative flex-1 w-full md:w-64">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-emphasis-medium" />
             <Input
               placeholder="Search sessions..."
-              className="pl-8 bg-white text-gray-900 border-gray-200"
+              className="pl-8 bg-background w-full"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -247,11 +247,11 @@ export function SortFilterSessionsTable({
           <Collapsible
             open={isFiltersOpen}
             onOpenChange={setIsFiltersOpen}
-            className="space-y-2 text-gray-900"
+            className="space-y-2 w-full"
           >
             <div className="flex items-center justify-between">
               <CollapsibleTrigger asChild>
-                <Button variant="outline" className="flex items-center gap-2 bg-white text-gray-900 border-gray-200 hover:bg-gray-100 hover:text-gray-900">
+                <Button variant="outline" className="flex items-center gap-2 w-full md:w-auto">
                   <Filter className="h-4 w-4" />
                   Filters
                   <ChevronRight className={cn(
@@ -262,16 +262,16 @@ export function SortFilterSessionsTable({
               </CollapsibleTrigger>
             </div>
             <CollapsibleContent className="space-y-4">
-              <div className="flex flex-wrap gap-4 p-4 border rounded-lg bg-white border-gray-200">
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-medium text-gray-900">Date Range</label>
+              <div className="flex flex-wrap gap-4 p-4 border rounded-lg bg-background border-border">
+                <div className="flex flex-col gap-2 w-full sm:w-auto">
+                  <label className="text-sm font-medium text-emphasis-high">Date Range</label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
                         className={cn(
-                          "w-[300px] justify-start text-left font-normal bg-white border-gray-200",
-                          !dateRange?.from && "text-gray-500"
+                          "w-full sm:w-[300px] justify-start text-left font-normal",
+                          !dateRange?.from && "text-emphasis-low"
                         )}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
@@ -289,7 +289,7 @@ export function SortFilterSessionsTable({
                         )}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 bg-white" align="start">
+                    <PopoverContent className="w-auto p-0" align="start">
                       <Calendar
                         initialFocus
                         mode="range"
@@ -297,19 +297,18 @@ export function SortFilterSessionsTable({
                         selected={dateRange}
                         onSelect={handleDateSelect}
                         numberOfMonths={2}
-                        className="bg-white text-gray-900"
                       />
                     </PopoverContent>
                   </Popover>
                 </div>
 
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-medium text-gray-900">Student</label>
+                <div className="flex flex-col gap-2 w-full sm:w-auto">
+                  <label className="text-sm font-medium text-emphasis-high">Student</label>
                   <Select value={filterStudent} onValueChange={setFilterStudent}>
-                    <SelectTrigger className="w-[180px] bg-white text-gray-900 border-gray-200">
+                    <SelectTrigger className="w-full sm:w-[180px]">
                       <SelectValue placeholder="Filter by student" />
                     </SelectTrigger>
-                    <SelectContent className="bg-white text-gray-900">
+                    <SelectContent>
                       <SelectItem value="all">All Students</SelectItem>
                       {getUniqueStudents().map((student) => (
                         <SelectItem key={student.id} value={student.id}>
@@ -320,13 +319,13 @@ export function SortFilterSessionsTable({
                   </Select>
                 </div>
 
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-medium text-gray-900">Subject Area</label>
+                <div className="flex flex-col gap-2 w-full sm:w-auto">
+                  <label className="text-sm font-medium text-emphasis-high">Subject Area</label>
                   <Select value={filterSubject} onValueChange={setFilterSubject}>
-                    <SelectTrigger className="w-[180px] bg-white text-gray-900 border-gray-200">
+                    <SelectTrigger className="w-full sm:w-[180px]">
                       <SelectValue placeholder="Filter by subject" />
                     </SelectTrigger>
-                    <SelectContent className="bg-white text-gray-900">
+                    <SelectContent>
                       <SelectItem value="all">All Subjects</SelectItem>
                       {getUniqueSubjects().map((subject) => (
                         <SelectItem key={subject.id} value={subject.id}>
@@ -337,13 +336,13 @@ export function SortFilterSessionsTable({
                   </Select>
                 </div>
 
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-medium text-gray-900">Objective Type</label>
+                <div className="flex flex-col gap-2 w-full sm:w-auto">
+                  <label className="text-sm font-medium text-emphasis-high">Objective Type</label>
                   <Select value={filterType} onValueChange={setFilterType}>
-                    <SelectTrigger className="w-[180px] bg-white text-gray-900 border-gray-200">
+                    <SelectTrigger className="w-full sm:w-[180px]">
                       <SelectValue placeholder="Filter by type" />
                     </SelectTrigger>
-                    <SelectContent className="bg-white text-gray-900">
+                    <SelectContent>
                       <SelectItem value="all">All Types</SelectItem>
                       {getUniqueObjectiveTypes().map((type) => (
                         <SelectItem key={type} value={type}>
@@ -354,13 +353,13 @@ export function SortFilterSessionsTable({
                   </Select>
                 </div>
 
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-medium text-gray-900">Goal</label>
+                <div className="flex flex-col gap-2 w-full sm:w-auto">
+                  <label className="text-sm font-medium text-emphasis-high">Goal</label>
                   <Select value={filterGoal} onValueChange={setFilterGoal}>
-                    <SelectTrigger className="w-[180px] bg-white text-gray-900 border-gray-200">
+                    <SelectTrigger className="w-full sm:w-[180px]">
                       <SelectValue placeholder="Filter by goal" />
                     </SelectTrigger>
-                    <SelectContent className="bg-white text-gray-900">
+                    <SelectContent>
                       <SelectItem value="all">All Goals</SelectItem>
                       {getUniqueGoals().map((goal) => (
                         <SelectItem key={goal.id} value={goal.id}>
@@ -374,61 +373,65 @@ export function SortFilterSessionsTable({
             </CollapsibleContent>
           </Collapsible>
         </div>
-        <Button variant="outline" className="flex items-center gap-2 bg-white text-gray-900 border-gray-200 hover:bg-gray-100 hover:text-gray-900" onClick={handleExport}>
+        <Button 
+          variant="outline" 
+          className="flex items-center gap-2 mt-2 md:mt-0 w-full md:w-auto" 
+          onClick={handleExport}
+        >
           <Download className="h-4 w-4" />
           Export to CSV
         </Button>
       </div>
 
-      <div className="rounded-md border border-gray-200 bg-white w-full">
-        <div className="overflow-x-auto">
-          <div className="">
-            <Table className="divide-y divide-gray-200 w-full">
-              <TableHeader className="bg-gray-50">
-                <TableRow className="hover:bg-gray-100 border-b border-gray-200">
-                  <TableHead className="w-[90px]">
+      <div className="flex-1 rounded-md border border-border bg-background w-full overflow-hidden">
+        <div className="h-full overflow-auto">
+          <div className="h-full min-w-[800px]">
+            <Table className="divide-y divide-border w-full">
+              <TableHeader className="sticky top-0 bg-[var(--surface-raised)] z-10">
+                <TableRow className="hover:bg-primary/5 border-b border-border">
+                  <TableHead className="w-[10%] min-w-[90px]">
                     <Button
                       variant="ghost"
                       onClick={() => handleSort('date')}
-                      className="flex items-center gap-1 text-gray-700 hover:text-gray-900"
+                      className="flex items-center gap-1 text-emphasis-high hover:text-emphasis-high"
                     >
                       Date
                       <ArrowUpDown className="h-4 w-4" />
                     </Button>
                   </TableHead>
-                  <TableHead className="w-[100px]">
+                  <TableHead className="w-[10%] min-w-[100px]">
                     <Button
                       variant="ghost"
                       onClick={() => handleSort('name')}
-                      className="flex items-center gap-1 text-gray-700 hover:text-gray-900"
+                      className="flex items-center gap-1 text-emphasis-high hover:text-emphasis-high"
                     >
                       Student
                       <ArrowUpDown className="h-4 w-4" />
                     </Button>
                   </TableHead>
-                  <TableHead className="w-[100px] text-gray-700">
+                  <TableHead className="w-[10%] min-w-[100px] text-emphasis-high">
                     Area of Need
                   </TableHead>
-                  <TableHead className="w-[120px] text-gray-700">
+                  <TableHead className="w-[10%] min-w-[120px] text-emphasis-high">
                     Goal
                   </TableHead>
-                  <TableHead className="w-[200px] text-gray-700">
+                  <TableHead className="w-[25%] min-w-[200px] text-emphasis-high">
                     Objective
                   </TableHead>
-                  <TableHead className="w-[70px] text-gray-700">
+                  <TableHead className="w-[5%] min-w-[70px] text-emphasis-high">
                     Type
                   </TableHead>
-                  <TableHead className="w-[70px] text-gray-700">
+                  <TableHead className="w-[5%] min-w-[70px] text-emphasis-high">
                     Outcome
                   </TableHead>
-                  <TableHead className="w-[70px] text-gray-700">
+                  <TableHead className="w-[5%] min-w-[70px] text-emphasis-high">
                     Success
                   </TableHead>
-                  <TableHead className="w-[130px] text-gray-700">
+                  <TableHead className="w-[15%] min-w-[130px] text-emphasis-high">
                     Memo
                   </TableHead>
                   {showActions && (
-                    <TableHead className="w-[50px]"></TableHead>
+                    <TableHead className="w-[5%] min-w-[50px]"></TableHead>
                   )}
                 </TableRow>
               </TableHeader>
@@ -437,7 +440,7 @@ export function SortFilterSessionsTable({
                   <TableRow>
                     <TableCell 
                       colSpan={showActions ? 10 : 9} 
-                      className="h-24 text-center text-gray-500 bg-white"
+                      className="h-[200px] text-center text-emphasis-medium"
                     >
                       No sessions available
                     </TableCell>
@@ -446,58 +449,58 @@ export function SortFilterSessionsTable({
                   getFilteredAndSortedSessions().map((session) => (
                     <TableRow 
                       key={`${session.id}-${session.objective_progress.id}`} 
-                      className="hover:bg-gray-50 border-b border-gray-200 text-gray-900 bg-white"
+                      className="hover:bg-primary/5 border-b border-border text-emphasis-high"
                     >
-                      <TableCell className="font-medium w-[90px] text-gray-900">
+                      <TableCell className="font-medium w-[10%] min-w-[90px]">
                         {formatDate(session.created_at)}
                       </TableCell>
-                      <TableCell className="w-[100px] text-gray-900">
+                      <TableCell className="w-[10%] min-w-[100px]">
                         {session.student.name}
                       </TableCell>
-                      <TableCell className="w-[100px] whitespace-normal text-gray-900">
+                      <TableCell className="w-[10%] min-w-[100px] whitespace-normal">
                         {session.objective.subject_area.name}
                       </TableCell>
-                      <TableCell className="w-[120px] whitespace-normal text-gray-900">
+                      <TableCell className="w-[10%] min-w-[120px] whitespace-normal">
                         {session.objective.goal?.title || 'N/A'}
                       </TableCell>
-                      <TableCell className="w-[200px] whitespace-normal text-gray-900">
+                      <TableCell className="w-[25%] min-w-[200px] whitespace-normal">
                         <div className="line-clamp-3">
                           {session.objective.description}
                         </div>
                       </TableCell>
-                      <TableCell className="w-[70px] text-gray-900">
+                      <TableCell className="w-[5%] min-w-[70px]">
                         {session.objective.objective_type}
                       </TableCell>
-                      <TableCell className="w-[70px] text-gray-900">
+                      <TableCell className="w-[5%] min-w-[70px]">
                         {formatOutcome(session)}
                       </TableCell>
-                      <TableCell className="w-[70px]">
-                        <Badge variant={session.objective_progress.is_success ? "success" : "destructive"} className={session.objective_progress.is_success ? "bg-green-100 text-green-800 border-green-200" : "bg-red-100 text-red-800 border-red-200"}>
+                      <TableCell className="w-[5%] min-w-[70px]">
+                        <Badge variant={session.objective_progress.is_success ? "success" : "destructive"}>
                           {session.objective_progress.is_success ? "Yes" : "No"}
                         </Badge>
                       </TableCell>
-                      <TableCell className="w-[100px] text-gray-900">
+                      <TableCell className="w-[15%] min-w-[100px]">
                         <div className="line-clamp-2">
                           {session.memo || '-'}
                         </div>
                       </TableCell>
                       {showActions && (
-                        <TableCell className="w-[50px]">
+                        <TableCell className="w-[5%] min-w-[50px]">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" className="h-8 w-8 p-0 text-gray-700 hover:text-gray-900 hover:bg-gray-100">
+                              <Button variant="ghost" className="h-8 w-8 p-0">
                                 <span className="sr-only">Open menu</span>
                                 <MoreHorizontal className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="bg-white text-gray-900 border-gray-200">
-                              <DropdownMenuLabel className="text-gray-900">Actions</DropdownMenuLabel>
-                              <DropdownMenuItem onClick={() => handleEditSession(session)} className="text-gray-900 hover:bg-gray-100">
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuItem onClick={() => handleEditSession(session)}>
                                 Edit Session
                               </DropdownMenuItem>
-                              <DropdownMenuSeparator className="bg-gray-200" />
+                              <DropdownMenuSeparator />
                               <DropdownMenuItem 
-                                className="text-red-600 hover:bg-red-50"
+                                className="text-destructive hover:bg-destructive/10"
                                 onClick={() => handleDeleteSession(session.id)}
                               >
                                 Delete

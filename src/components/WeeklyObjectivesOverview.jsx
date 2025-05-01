@@ -13,11 +13,13 @@ import {
 } from "@/components/ui/select";
 import { Bell, ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { authorizedFetch } from "@/services/api";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
-export default function WeeklyObjectivesOverview({ session, onLoadingChange }) {
+export default function WeeklyObjectivesOverview({ session }) {
   const [period, setPeriod] = useState('this-week');
   const [error, setError] = useState(null);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
   const [data, setData] = useState({
     completionPercentage: 0,
     completedCount: 0,
@@ -26,16 +28,11 @@ export default function WeeklyObjectivesOverview({ session, onLoadingChange }) {
     objectives: []
   });
 
-  useEffect(() => {
-    if (onLoadingChange) {
-      onLoadingChange(true);
-    }
-  }, [onLoadingChange]);
-
   // Fetch weekly data
   useEffect(() => {
     const fetchWeeklyData = async () => {
       if (!session) return;
+      setIsLoading(true);
       setError(null);
 
       try {
@@ -68,9 +65,7 @@ export default function WeeklyObjectivesOverview({ session, onLoadingChange }) {
         console.error("Error fetching weekly overview:", err);
         setError("Failed to load weekly overview. Please try again later.");
       } finally {
-        if (onLoadingChange) {
-          onLoadingChange(false);
-        }
+        setIsLoading(false);
       }
     };
     fetchWeeklyData();
@@ -93,7 +88,7 @@ export default function WeeklyObjectivesOverview({ session, onLoadingChange }) {
   const current = data.objectives[currentIndex];
 
   return (
-    <Card className="backdrop-blur-sm bg-card h-full rounded-4xl flex flex-col">
+    <Card className="backdrop-blur-sm bg-[var(--soft-primary)] h-full rounded-4xl flex flex-col">
       <CardHeader>
         <div className="flex justify-between items-center">
           <CardTitle className="text-lg font-medium flex items-center gap-2">
@@ -125,7 +120,11 @@ export default function WeeklyObjectivesOverview({ session, onLoadingChange }) {
       </CardHeader>
 
       <CardContent className="pb-0 space-y-6 flex-1 flex flex-col">
-        {error ? (
+        {isLoading ? (
+          <div className="flex items-center justify-center h-full">
+            <LoadingSpinner />
+          </div>
+        ) : error ? (
           <div className="text-center py-8 text-red-500 h-full w-full">{error}</div>
         ) : (
           <>

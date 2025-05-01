@@ -203,26 +203,27 @@ export function StudentView({
   const summary = student.summary;
 
   return (
-    <div className="w-full h-[calc(100vh-200px)] flex flex-col max-w-7xl mx-auto bg-[#e0e0e0] rounded-[20px] p-5 m-12">
+    <div className="w-full h-[calc(100vh-200px)] flex flex-col max-w-7xl mx-auto bg-[var(--soft-primary)] rounded-[20px] p-5 m-12">
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-2">
-          <div className="bg-black rounded-md p-1">
-            <Users className="w-5 h-5 text-white" />
+          <div className="rounded-md p-1">
+            <Users className="w-5 h-5" />
           </div>
-          <span className="text-[#1a1a1a] font-medium">Students</span>
+          <span className="text-foreground font-medium">Students</span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
           <Button
             onClick={() => onAddObjective(student)}
-            className="bg-black text-white hover:bg-gray-900 flex items-center gap-2"
+            variant="outline"
+            className="flex items-center gap-2 transition-transform"
           >
             <Plus className="w-4 h-4" />
             Add Objective
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="text-[#1a1a1a] p-1 hover:bg-[#d0d0d0] rounded-md">
-                <MoreHorizontal className="w-6 h-6" />
+              <button className="text-foreground p-1 hover:bg-accent rounded-md">
+                <MoreHorizontal className="w-5 h-5" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-40">
@@ -230,7 +231,7 @@ export function StudentView({
                 <Pencil className="h-4 w-4 mr-2" />
                 Edit
               </DropdownMenuItem>
-              <DropdownMenuItem className="text-red-600" onClick={() => onDeleteStudent(student)}>
+              <DropdownMenuItem className="text-destructive hover:bg-destructive/10" onClick={() => onDeleteStudent(student)}>
                 <Trash2 className="h-4 w-4 mr-2" />
                 Delete
               </DropdownMenuItem>
@@ -242,38 +243,38 @@ export function StudentView({
       <div className="mb-4">
         <button 
           onClick={onBack} 
-          className="text-[#595959] flex items-center gap-1 hover:text-black transition-colors duration-200 hover:scale-105 transform p-1 rounded-md"
+          className="text-emphasis-medium flex items-center gap-1 hover:text-emphasis-high transition-colors duration-200 hover:scale-105 transform p-1 rounded-md"
         >
           <ChevronLeft className="w-4 h-4" />
           Back
         </button>
       </div>
 
-      <div className="bg-[#f0f0f0] rounded-[16px] p-4 mb-6 flex-1 overflow-y-auto">
+      <div className="bg-[var(--soft-secondary)] rounded-[16px] p-4 mb-6 flex-1 overflow-y-auto border border-border">
         <div className="mb-4">
-          <h2 className="text-xl font-medium text-[#1a1a1a]">{studentName}</h2>
+          <h2 className="text-xl font-medium text-emphasis-high">{studentName}</h2>
           <div className="mt-2 grid grid-cols-2 gap-4">
             <div>
-              <span className="text-sm text-[#595959]">Grade Level</span>
-              <p className="text-[#1a1a1a]">Grade {gradeLevel || 'N/A'}</p>
+              <span className="text-sm text-emphasis-medium">Grade Level</span>
+              <p className="text-emphasis-high">Grade {gradeLevel || 'N/A'}</p>
             </div>
             <div>
-              <span className="text-sm text-[#595959]">Disability Type</span>
-              <p className="text-[#1a1a1a]">{disabilityType || 'Not specified'}</p>
+              <span className="text-sm text-emphasis-medium">Disability Type</span>
+              <p className="text-emphasis-high">{disabilityType || 'Not specified'}</p>
             </div>
           </div>
         </div>
 
         <div className="overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
           <div className="mb-6">
-            <h3 className="font-medium text-[#1a1a1a] mb-2">Student Summary</h3>
-            <p className="text-sm text-[#1a1a1a]">{summary && summary !== "" ? summary : 'Add sessions to dynamically generate an updating summary of the student.'}</p>
+            <h3 className="font-medium text-emphasis-high mb-2">Student Summary</h3>
+            <p className="text-sm text-emphasis-medium">{summary && summary !== "" ? summary : 'Add sessions to dynamically generate an updating summary of the student.'}</p>
           </div>
 
           <div className="mb-6">
             <div className="mb-4">
-              <h3 className="font-medium text-[#1a1a1a]">Areas of Need</h3>
-              <p className="text-sm text-[#595959] mt-1">Select areas to view objectives</p>
+              <h3 className="font-medium text-emphasis-high">Areas of Need</h3>
+              <p className="text-sm text-emphasis-medium mt-1">Select areas to view objectives</p>
             </div>
 
             <div className="mb-4">
@@ -283,8 +284,10 @@ export function StudentView({
                     key={area.id}
                     onClick={() => toggleArea(area.id)}
                     className={`px-4 py-2 rounded-md ${
-                      selectedAreas[area.id] ? "bg-black text-white" : "bg-[#d0d0d0] text-[#1a1a1a]"
-                    }`}
+                      selectedAreas[area.id] 
+                        ? "bg-primary text-primary-foreground" 
+                        : "bg-accent text-emphasis-high hover:bg-primary/10"
+                    } transition-colors`}
                   >
                     {area.name}
                   </button>
@@ -296,13 +299,13 @@ export function StudentView({
               {subjectAreas.map((area) => (
                 selectedAreas[area.id] && (
                   <div key={area.id} className="mb-4">
-                    <h4 className="text-[#1a1a1a] font-medium mb-2">{area.name}</h4>
+                    <h4 className="text-emphasis-high font-medium mb-2">{area.name}</h4>
                     <div className="space-y-2">
                       {(area.objectives || area.objective || []).length > 0 ? (
                         (area.objectives || area.objective || []).map((objective) => (
                           <div
                             key={objective.id}
-                            className="bg-white rounded-md p-3 text-sm text-[#1a1a1a] mb-2 flex justify-between items-center group cursor-pointer hover:bg-gray-100 hover:shadow-md transition-all relative"
+                            className="bg-[var(--surface-subtle)] rounded-md p-3 text-sm text-emphasis-high mb-2 flex justify-between items-center group cursor-pointer hover:bg-primary/10 hover:shadow-sm transition-all border border-border"
                             onClick={(e) => {
                               e.stopPropagation();
                               console.log("Objective clicked:", objective.id, objective);
@@ -354,7 +357,7 @@ export function StudentView({
                                     Edit
                                   </DropdownMenuItem>
                                   <DropdownMenuItem 
-                                    className="text-red-600"
+                                    className="text-destructive hover:bg-destructive/10"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       onDeleteObjective(objective);
@@ -369,7 +372,7 @@ export function StudentView({
                           </div>
                         ))
                       ) : (
-                        <div className="bg-white rounded-md p-3 text-sm text-gray-500 mb-2">
+                        <div className="bg-[var(--surface-subtle)] rounded-md p-3 text-sm text-emphasis-low mb-2 border border-border">
                           No objectives found for this area of need. Click "Add Objective" to create one.
                         </div>
                       )}
@@ -380,7 +383,7 @@ export function StudentView({
             </div>
 
             {(!subjectAreas || subjectAreas.length === 0) && (
-              <div className="text-center py-8 text-[#595959]">
+              <div className="text-center py-8 text-emphasis-medium">
                 No areas of need found for this student. Use "Add Objective" to create objectives which will be organized by area of need.
               </div>
             )}
@@ -389,7 +392,7 @@ export function StudentView({
       </div>
 
       {/* Sessions Table */}
-      <div className="bg-[#f0f0f0] rounded-[16px] p-4 h-68 overflow-y-auto hide-scrollbar">
+      <div className="h-68 overflow-y-auto hide-scrollbar">
         <SortFilterSessionsTable 
           sessions={sessions}
           showActions={true}
