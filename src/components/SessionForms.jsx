@@ -91,6 +91,9 @@ export function SessionFormController({ students, open, onOpenChange }) {
     if (onOpenChange) {
       onOpenChange(false);
     }
+    
+    // Refresh the entire page to update all components (recent logs and weekly objectives)
+    window.location.reload();
   };
 
   // Get the title and description based on the current form

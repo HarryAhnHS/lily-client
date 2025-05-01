@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { authorizedFetch } from '@/services/api';
-import { ChevronRight, CheckCircle2, XCircle, CircleDot, ArrowLeft } from 'lucide-react';
+import { ChevronRight, CheckCircle2, XCircle, CircleDot, ArrowLeft, Target, Calendar, Clock, BarChart3, Layers, Activity, FileCheck, ChevronDown, ChevronUp, Info, Users, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { SortFilterSessionsTable } from '@/components/SortFilterSessionsTable';
 import { useAuth } from '@/app/context/auth-context';
@@ -11,6 +11,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Progress } from '@/components/ui/progress';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+import PerformanceCharts from '@/components/PerformanceCharts';
 
 export default function ObjectiveView({ objective, isOpen, onClose, previewMode = false }) {
   const { session } = useAuth();
@@ -19,6 +23,7 @@ export default function ObjectiveView({ objective, isOpen, onClose, previewMode 
   const [objectiveData, setObjectiveData] = useState(null);
   const [subjectArea, setSubjectArea] = useState(null);
   const [goal, setGoal] = useState(null);
+  const [showSessions, setShowSessions] = useState(false);
 
   // Initialize with the objective data we already have
   useEffect(() => {
@@ -39,6 +44,7 @@ export default function ObjectiveView({ objective, isOpen, onClose, previewMode 
 
   // Fetch complete objective data and sessions when modal opens
   useEffect(() => {
+    setIsLoading(true);
     if (isOpen && objective?.id && session && !previewMode) {
       fetchCompleteData();
     } else if (isOpen && previewMode) {
@@ -164,8 +170,8 @@ export default function ObjectiveView({ objective, isOpen, onClose, previewMode 
     try {
       const date = new Date(dateString);
       return date.toLocaleDateString('en-US', { 
-        month: '2-digit', 
-        day: '2-digit',
+        month: 'long', 
+        day: 'numeric',
         year: 'numeric'
       });
     } catch (error) {
@@ -193,7 +199,7 @@ export default function ObjectiveView({ objective, isOpen, onClose, previewMode 
   const getStatusIcon = (session) => {
     const progress = session.objective_progress;
     if (!progress || progress.is_success === null) {
-      return <CircleDot className="h-5 w-5 text-yellow-500" />;
+      return <CircleDot className="h-5 w-5 text-amber-500" />;
     }
     return progress.is_success ? 
       <CheckCircle2 className="h-5 w-5 text-green-500" /> : 
@@ -236,167 +242,254 @@ export default function ObjectiveView({ objective, isOpen, onClose, previewMode 
   
   const progressPercentage = calculateProgress();
 
-  // Generate progress dots (5 total)
-  const renderProgressDots = () => {
-    const totalDots = 5;
-    const filledDots = Math.round((progressPercentage / 100) * totalDots);
-    
-    return Array(totalDots).fill(0).map((_, index) => {
-      const color = index < filledDots 
-        ? index < 2 ? "bg-red-400" : "bg-green-600" 
-        : "bg-gray-300";
-      
-      return (
-        <div 
-          key={index} 
-          className={`w-4 h-4 sm:w-6 sm:h-6 rounded-full ${color}`}
-        />
-      );
-    });
+  // Toggle sessions view
+  const toggleSessions = () => {
+    setShowSessions(!showSessions);
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-full max-w-5xl mx-auto p-0 h-auto max-h-[90vh] overflow-hidden border-0 sm:rounded-lg rounded-none">
-        <div className="flex flex-col h-full w-full bg-[#e0e0e0]">
-          <div className="h-8 border-b border-gray-200 flex items-center pl-2 bg-white">
-            <DialogTitle className="sr-only">Objective Details</DialogTitle>
-            <Button 
-              variant="ghost" 
-              className="inline-flex items-center h-7 px-2 text-black"
-              onClick={onClose}
-            >
-              <ArrowLeft className="h-4 w-4 text-black mr-1" />
-              <span className="font-medium">Back</span>
-            </Button>
+      <DialogContent className="bg-background w-full max-w-5xl mx-auto p-0 h-[800px] overflow-hidden border border-border/50 sm:rounded-xl rounded-none shadow-lg">
+        <VisuallyHidden>
+          <DialogTitle>Objective Assessment</DialogTitle>
+        </VisuallyHidden>
+        <motion.div 
+          className="flex flex-col h-full w-full relative"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 20 }}
+          transition={{ duration: 0.3 }}
+        >
+          {/* Clipboard Top Bar */}
+          <div className="bg-primary/10 p-4 border-b border-border/30 flex flex-wrap justify-between items-center gap-2">
+            <div className="flex items-center gap-3">
+              <div className="bg-background h-7 w-7 rounded-full border border-border/50 flex items-center justify-center">
+                <Target className="h-4 w-4 text-primary" />
+              </div>
+              <h3 className="text-sm font-medium">Objective Assessment</h3>
+            </div>
+            
+            {/* Student Information - Responsive */}
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              <div className="bg-primary/5 px-3 py-1.5 rounded-full border border-border/30 flex items-center gap-1.5">
+                <Users className="h-3.5 w-3.5 text-primary/80" />
+                <span className="font-medium">{objectiveData?.student?.name || 'Student'}</span>
+              </div>
+              {objectiveData?.student?.grade_level && (
+                <div className="bg-primary/5 px-3 py-1.5 rounded-full border border-border/30">
+                  Grade {objectiveData?.student?.grade_level}
+                </div>
+              )}
+              {objectiveData?.student?.disability_type && (
+                <div className="bg-primary/5 px-3 py-1.5 rounded-full border border-border/30 max-w-[200px] truncate">
+                  {objectiveData?.student?.disability_type}
+                </div>
+              )}
+            </div>
           </div>
           
-          <div className="overflow-y-auto p-4 sm:p-6 flex-1">
+          {/* Main Content */}
+          <div className="h-[calc(100%-50px)] relative overflow-hidden">
             {isLoading && objectiveData === null ? (
               <div className="flex items-center justify-center h-64">
-                <div className="animate-spin h-10 w-10 border-4 border-black border-opacity-25 rounded-full border-t-black"></div>
+                <div className="animate-spin h-10 w-10 border-4 border-primary border-opacity-25 rounded-full border-t-primary"></div>
               </div>
             ) : (
-              <div className="space-y-4">
-                {/* Main Objective Box */}
-                <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
-                  <div className="space-y-2">
-                    <p className="text-lg text-gray-800 leading-snug font-medium">{safeDescription}</p>
-                    <div className="flex items-center text-sm text-gray-600 gap-1">
-                      <span className="font-medium">{safeSubjectArea}</span>
-                      <ChevronRight className="h-4 w-4 text-gray-400" />
-                      <span>{safeGoal}</span>
-                    </div>
-                    {safeObjectiveType !== 'binary' && (
-                      <div className="text-sm text-gray-700">
-                        Target: {safeTargetSuccesses} out of {safeTargetTrials} trials
-                        {safeObjectiveType === 'trial' && (
-                          <span className="ml-2">with {Math.round(safeTargetAccuracy * 100)}% accuracy</span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
-                {/* Progress Section - Only shown when not in preview mode */}
-                {!previewMode && (
-                  <div>
-                    <div className="flex justify-between items-center mb-1">
-                      <div className="text-base font-medium text-gray-800">Total Progress:</div>
-                      <div className="text-base font-medium text-gray-800">{progressPercentage}%</div>
-                    </div>
-                    <div className="flex space-x-2">
-                      {renderProgressDots()}
-                    </div>
-                  </div>
-                )}
-                
-                {/* Moments of Progress - Shown differently in preview mode */}
-                <div>
-                  <h2 className="text-lg font-medium text-gray-900 mb-2">
-                    {previewMode ? 'Progress Tracking' : 'Moments of Progress'}
-                  </h2>
-                  
-                  <div className="bg-white rounded-lg overflow-hidden border border-gray-200">
-                    {previewMode ? (
-                      <div className="p-4 text-center text-gray-500">
-                        <p>No sessions yet. Progress will be tracked here after adding the student.</p>
-                      </div>
-                    ) : (
-                      <>
-                        {/* Table Header */}
-                        <div className="grid grid-cols-12 gap-2 border-b p-3 bg-gray-50 text-gray-800 font-medium">
-                          <div className="col-span-4 sm:col-span-3">Date</div>
-                          <div className="col-span-3 sm:col-span-2">Score</div>
-                          <div className="col-span-5 sm:col-span-7">Notes</div>
+              <>
+                {/* Main Content Area - Objective Details - Scrollable */}
+                <div className="absolute inset-0 overflow-y-auto">
+                  <div className="p-4">
+                    {/* Content Area */}
+                    <div className="p-2">
+                        <motion.h2 
+                          className="text-lg text-emphasis-high leading-snug font-medium mb-4"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: 0.1, duration: 0.3 }}
+                        >
+                          <span className="text-lg font-light mb-4">Objective:&nbsp;</span>
+                          {safeDescription}
+                        </motion.h2>
+                        
+                        {/* Hierarchical Path - Styled more elegantly */}
+                        <motion.div 
+                          className="flex items-center flex-wrap gap-3 p-3 bg-primary/5 rounded-lg text-sm mb-5 border border-border/30"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          <div className="flex items-center gap-2">
+                            <div className="bg-primary/10 p-1.5 rounded-md">
+                              <Activity className="w-3.5 h-3.5 text-primary" />
+                            </div>
+                            <div>
+                              <div className="text-xs text-emphasis-medium mb-0.5">Area of Need</div>
+                              <div className="font-medium">{safeSubjectArea}</div>
+                            </div>
+                          </div>
+                          
+                          <ChevronRight className="w-4 h-4 text-emphasis-low" />
+                          
+                          <div className="flex items-center gap-2">
+                            <div className="bg-primary/10 p-1.5 rounded-md">
+                              <Layers className="w-3.5 h-3.5 text-primary" />
+                            </div>
+                            <div>
+                              <div className="text-xs text-emphasis-medium mb-0.5">Goal</div>
+                              <div className="font-medium">{safeGoal}</div>
+                            </div>
+                          </div>
+                        </motion.div>
+                      
+                      {/* Objective Info */}
+                      <div className="mb-6">
+                        {/* Target Criteria */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                          <div className="bg-primary/5 p-3 rounded-lg border border-border/30 transition-colors hover:bg-primary/10">
+                            <div className="text-xs text-emphasis-medium mb-1 flex items-center gap-1">
+                              <Info className="w-3 h-3 text-primary" />
+                              Type
+                            </div>
+                            <div className="font-medium">{safeObjectiveType === 'binary' ? 'Yes/No (Binary)' : 'Trial Based'}</div>
+                          </div>
+                          
+                          
+                          <div className="bg-primary/5 p-3 rounded-lg border border-border/30 transition-colors hover:bg-primary/10">
+                            <div className="text-xs text-emphasis-medium mb-1 flex items-center gap-1">
+                              <Target className="w-3 h-3 text-primary" />
+                              Target Success
+                            </div>
+                            <div className="font-medium">
+                              {safeTargetSuccesses} out of {safeTargetTrials}
+                            </div>
+                          </div>
+                          
+                          {safeObjectiveType === 'trial' && safeTargetAccuracy > 0 && (
+                            <div className="bg-primary/5 p-3 rounded-lg border border-border/30 transition-colors hover:bg-primary/10">
+                              <div className="text-xs text-emphasis-medium mb-1 flex items-center gap-1">
+                                <BarChart3 className="w-3 h-3 text-primary" />
+                                Accuracy Target
+                              </div>
+                              <div className="font-medium">{Math.round(safeTargetAccuracy * 100)}%</div>
+                            </div>
+                          )}
+                          
+                          <div className="bg-primary/5 p-3 rounded-lg border border-border/30 transition-colors hover:bg-primary/10">
+                            <div className="text-xs text-emphasis-medium mb-1 flex items-center gap-1">
+                              <Users className="w-3 h-3 text-primary" />
+                              Sessions
+                            </div>
+                            <div className="font-medium">{sessions.length || 0} total</div>
+                          </div>
                         </div>
                         
-                        {/* Table Content */}
-                        <div className="divide-y divide-gray-100">
-                          {recentSessions.length > 0 ? (
-                            recentSessions.map((session) => (
-                              <div key={session.id} className="grid grid-cols-12 gap-2 p-3 text-gray-800 hover:bg-gray-50">
-                                <div className="col-span-4 sm:col-span-3 text-sm sm:text-base">{formatDate(session.created_at)}</div>
-                                <div className="col-span-3 sm:col-span-2 flex items-center text-sm sm:text-base">
-                                  {getStatusIcon(session)}
-                                  <span className="ml-1">
-                                    {session.objective_progress?.trials_completed || 0}/
-                                    {session.objective_progress?.trials_total || 10}
-                                  </span>
-                                </div>
-                                <div className="col-span-5 sm:col-span-7 text-gray-600 text-sm sm:text-base">
-                                  {session.memo || "No notes recorded"}
-                                </div>
+                        {/* Performance Charts - Show even with no sessions */}
+                        {!previewMode && (
+                          <PerformanceCharts 
+                            sessions={sessions}
+                            objectiveType={safeObjectiveType}
+                            trialBased={safeObjectiveType === 'trial'} 
+                          />
+                        )}
+                        
+                        {/* Recent Sessions Quick View - Enhanced styling */}
+                        {!previewMode && sessions.length > 0 && recentSessions.length > 0 && (
+                          <div className="bg-primary/5 p-4 rounded-xl border border-border/30 mb-6">
+                            <h4 className="font-medium mb-4 flex items-center gap-2">
+                              <div className="bg-primary/10 p-1 rounded-md">
+                                <Clock className="h-4 w-4 text-primary" />
                               </div>
-                            ))
-                          ) : (
-                            <div className="p-3 text-center text-gray-500">No progress moments recorded yet</div>
-                          )}
-                        </div>
-                      </>
-                    )}
-                  </div>
-                  
-                  {/* Additional Sessions Table - not shown in preview mode */}
-                  {!previewMode && sessions.length > 5 && (
-                    <div className="bg-white rounded-lg overflow-hidden border border-gray-200 mt-3 p-4">
-                      <h3 className="text-base font-medium text-gray-900 mb-2">All Progress History</h3>
-                      <div className="overflow-x-auto">
-                        <SortFilterSessionsTable 
-                          sessions={sessions}
-                          showActions={true}
-                          onSuccess={() => fetchCompleteData()}
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-                
-                {/* Requirements & Details (hidden by default but expandable) */}
-                <div className="bg-white rounded-lg p-3 border border-gray-200">
-                  <details>
-                    <summary className="cursor-pointer text-base font-medium text-gray-800">
-                      Additional Details
-                    </summary>
-                    <div className="mt-2 space-y-2 text-sm text-gray-600">
-                      <p>Type: <span className="font-medium">{safeObjectiveType}</span></p>
-                      {!previewMode && (
-                        <p>Created: <span className="font-medium">{formatDate(safeCreatedAt)}</span></p>
-                      )}
-                      <div className="pt-2 border-t border-gray-100">
-                        <p className="font-medium mb-1">Success Criteria:</p>
-                        <p>{safeTargetSuccesses} out of {safeTargetTrials} trials successful</p>
-                        {safeObjectiveType === 'trial' && (
-                          <p className="mt-1">Target Accuracy: {Math.round(safeTargetAccuracy * 100)}%</p>
+                              <span>Recent Sessions</span>
+                            </h4>
+                            
+                            <div className="space-y-2">
+                              {recentSessions.map((session, index) => (
+                                <motion.div 
+                                  key={session.id || index}
+                                  className="flex items-center justify-between text-sm p-3 rounded-lg bg-background transition-colors border border-border/30 hover:bg-accent/5"
+                                  initial={{ opacity: 0, x: -10 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: 0.1 * index, duration: 0.3 }}
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <div className="flex-shrink-0">
+                                      {getStatusIcon(session)}
+                                    </div>
+                                    <div className="flex flex-col">
+                                      <span className="font-medium">{formatDate(session.created_at)}</span>
+                                      <span className="text-xs text-emphasis-medium">
+                                        {formatTime(session.created_at)}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div className="px-3 py-1 bg-primary/5 rounded-full text-xs font-medium">
+                                    {getTrialText(session)}
+                                  </div>
+                                </motion.div>
+                              ))}
+                            </div>
+                          </div>
                         )}
                       </div>
                     </div>
-                  </details>
+                  </div>
                 </div>
-              </div>
+                
+                {/* Sessions Panel with Integrated Button - On Top Layer */}
+                {!previewMode && (
+                  <motion.div 
+                    className="absolute inset-0 flex flex-col pointer-events-none z-10 bg-background"
+                    initial={{ y: "calc(100% - 50px)" }}
+                    animate={{ y: showSessions ? 0 : "calc(100% - 50px)" }}
+                    transition={{ 
+                      type: "spring",
+                      stiffness: 300,
+                      damping: 30,
+                      mass: 0.8
+                    }}
+                  >
+                    {/* Integrated Toggle Button */}
+                    <div className="pointer-events-auto relative z-20 h-[50px]">
+                      <Button 
+                        variant="outline" 
+                        onClick={toggleSessions} 
+                        className="w-full h-full justify-center gap-2 hover:bg-primary/10 relative z-10 border-none rounded-none shadow-none"
+                      >
+                        {showSessions ? "Hide Sessions" : "View All Sessions"}
+                        <motion.div
+                          animate={{ rotate: showSessions ? 180 : 0 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <ChevronUp className="h-4 w-4" />
+                        </motion.div>
+                      </Button>
+                    </div>
+                    
+                    {/* Sessions Content Panel */}
+                    <div className="flex-1 overflow-hidden pointer-events-auto">
+                      <div className="overflow-y-auto h-full p-5">
+                        {sessions.length > 0 ? (
+                          <SortFilterSessionsTable sessions={sessions} />
+                        ) : (
+                          <div className="h-full flex flex-col items-center justify-center text-center p-6">
+                            <div className="bg-primary/10 rounded-full p-4 mb-4">
+                              <FileCheck className="h-6 w-6 text-primary" />
+                            </div>
+                            <h3 className="text-lg font-medium mb-2">No Sessions Yet</h3>
+                            <p className="text-emphasis-medium text-sm max-w-md">
+                              No sessions have been recorded for this objective. 
+                              Log some progress to start tracking performance.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </>
             )}
           </div>
-        </div>
+        </motion.div>
       </DialogContent>
     </Dialog>
   );
