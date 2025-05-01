@@ -504,6 +504,7 @@ export default function StudentsPage() {
         students={students}
         open={showObjectiveModal}
         onOpenChange={handleCloseObjectiveModal}
+        onStudentOpenChange={handleOpenStudentModal}
       />
       <ObjectiveView
         objective={selectedObjective}

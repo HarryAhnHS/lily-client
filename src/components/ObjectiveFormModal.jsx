@@ -33,8 +33,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus } from 'lucide-react';
+import { Plus, User, BookOpen, Target, Check, Search, ArrowRight, ArrowLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 // Form schema for objective
 const objectiveFormSchema = z.object({
@@ -81,6 +83,15 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
   const [isCreatingGoal, setIsCreatingGoal] = useState(false);
   const isEditing = !!objective;
 
+  // New state for search and step navigation
+  const [studentSearch, setStudentSearch] = useState('');
+  const [subjectSearch, setSubjectSearch] = useState('');
+  const [goalSearch, setGoalSearch] = useState('');
+  const [currentStep, setCurrentStep] = useState(1);
+  
+  // Add new state to track if we're adding in the footer
+  const [isAddingInFooter, setIsAddingInFooter] = useState(false);
+  
   const form = useForm({
     resolver: zodResolver(objectiveFormSchema),
     defaultValues: {
@@ -286,7 +297,7 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
       form.setValue('subjectArea', newArea.id);
       setNewSubjectArea('');
       setIsAddingSubjectArea(false);
-
+      setIsAddingInFooter(false);
 
       toast.success('Subject area added successfully');
     } catch (error) {
@@ -325,6 +336,7 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
       form.setValue('goal', newGoal.id);
       setNewGoalTitle('');
       setIsAddingGoal(false);
+      setIsAddingInFooter(false);
       toast.success('Goal added');
     } catch (err) {
       console.error('Error creating goal:', err);
@@ -340,413 +352,831 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
     onStudentOpenChange(true);
   };
 
+  // Reset current step when modal opens
+  useEffect(() => {
+    if (open) {
+      setCurrentStep(1);
+    }
+  }, [open]);
+  
+  const totalSteps = 4; // Student -> Subject -> Goal -> Details
+  
+  const handleNext = () => {
+    // Validate current step before proceeding
+    switch (currentStep) {
+      case 1: // Validate student selection
+        if (!form.getValues('studentId')) {
+          toast.error('Please select a student first');
+          return;
+        }
+        break;
+      case 2: // Validate subject area
+        if (!form.getValues('subjectArea')) {
+          toast.error('Please select a subject area first');
+          return;
+        }
+        break;
+      case 3: // Validate goal
+        if (!form.getValues('goal')) {
+          toast.error('Please select a goal first');
+          return;
+        }
+        break;
+      default:
+        break;
+    }
+    
+    setCurrentStep(prev => Math.min(prev + 1, totalSteps));
+  };
+  
+  const handleBack = () => {
+    setCurrentStep(prev => Math.max(prev - 1, 1));
+  };
+
+  // Helper function to get step title
+  const getStepTitle = (step) => {
+    switch (step) {
+      case 1: return 'Select Student';
+      case 2: return 'Select Subject Area';
+      case 3: return 'Select Goal';
+      case 4: return 'Define Objective';
+      default: return '';
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{isEditing ? 'Edit Objective' : 'Add New Objective'}</DialogTitle>
+      <DialogContent className="sm:max-w-[900px] h-[800px] p-0 overflow-hidden flex flex-col gap-0">
+        {/* Fixed Header - Step Title */}
+        <DialogHeader className="p-6 pb-3 h-[100px] flex-shrink-0">
+          <DialogTitle className="text-xl flex items-center justify-between">
+            <span>{isEditing ? 'Edit Objective' : 'Add New Objective'}</span>
+            <div className="text-sm font-normal text-muted-foreground">
+              Step {currentStep} of {totalSteps}
+            </div>
+          </DialogTitle>
           <DialogDescription>
-            {isEditing ? 'Update the learning objective.' : 'Create a new learning objective for a student.'}
+            {getStepTitle(currentStep)}
           </DialogDescription>
         </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="space-y-4">
-              <FormField
-                control={form.control}
-                name="studentId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Student <span className="text-red-500">*</span></FormLabel>
-                    <div className="flex gap-2">
-                      <Select 
-                        onValueChange={(value) => {
-                          field.onChange(value);
-                          const student = students.find(s => s.id === value);
-                          setSelectedStudent(student);
-                          // Reset dependent fields
-                          form.setValue('subjectArea', '');
-                          form.setValue('goal', '');
-                        }}
-                        value={field.value}
-                        disabled={isLoadingStudents}
-                        className="flex-1"
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a student" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {students?.map((student) => (
-                            <SelectItem key={`student-${student.id}`} value={student.id}>
-                              {student.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+        
+        {/* Main content wrapper - flex layout with header, scrollable content, and footer */}
+        <div className="flex flex-col flex-1 overflow-hidden">
+          {/* Main content area */}
+          <div className="flex-1 overflow-hidden">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} id="main-form" className="h-full flex flex-col">
+                <div className="px-6 h-full flex flex-col">
+                  
+                  {/* Step 1: Student Selection */}
+                  {currentStep === 1 && (
+                    <FormField
+                      control={form.control}
+                      name="studentId"
+                      className="h-full flex flex-col"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col h-full">
+                          {/* Fixed Search Area */}
+                          <div className="flex-shrink-0 mb-3 space-y-3">
+                            {/* Search bar for students */}
+                            <div className="relative">
+                              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                placeholder="Search students..."
+                                value={studentSearch}
+                                onChange={(e) => setStudentSearch(e.target.value)}
+                                className="pl-8 h-9"
+                              />
+                            </div>
+                            
+                            <FormMessage />
+                          </div>
+                          
+                          {/* Scrollable Visual Selection */}
+                          <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+                            <FormControl className="flex-1 overflow-hidden">
+                              <div className="h-full overflow-y-auto pb-4">
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-3">
+                                  {students
+                                    ?.filter(student => 
+                                      student.name.toLowerCase().includes(studentSearch.toLowerCase())
+                                    )
+                                    .map((student) => (
+                                      <div
+                                        key={`student-card-${student.id}`}
+                                        onClick={() => {
+                                          field.onChange(student.id);
+                                          setSelectedStudent(student);
+                                          form.setValue('subjectArea', '');
+                                          form.setValue('goal', '');
+                                        }}
+                                        className={cn(
+                                          "cursor-pointer relative h-24 p-3 rounded-xl transition-all flex flex-col justify-center items-center gap-2 group overflow-hidden",
+                                          field.value === student.id 
+                                            ? "bg-gradient-to-br from-primary/20 to-primary/10 border-primary border shadow-md" 
+                                            : "bg-gradient-to-br from-gray-50 to-white border-muted border hover:shadow-sm hover:border-primary/40"
+                                        )}
+                                      >
+                                        <div className={cn(
+                                          "rounded-full p-2 transition-all",
+                                          field.value === student.id
+                                            ? "bg-primary/20 text-primary"
+                                            : "bg-gray-100 text-gray-600 group-hover:bg-primary/10 group-hover:text-primary"
+                                        )}>
+                                          <User className="h-5 w-5" />
+                                        </div>
+                                        <div className="font-medium text-center truncate w-full text-sm">
+                                          {student.name}
+                                        </div>
+                                        {field.value === student.id && (
+                                          <div className="absolute top-2 right-2 rounded-full bg-primary text-white p-0.5">
+                                            <Check className="h-3 w-3" />
+                                          </div>
+                                        )}
+                                      </div>
+                                    ))}
+                                  {/* Empty state when no students match search */}
+                                  {students?.filter(student => 
+                                    student.name.toLowerCase().includes(studentSearch.toLowerCase())
+                                  ).length === 0 && (
+                                    <div className="col-span-3 py-10 text-center text-muted-foreground">
+                                      No students found matching your search
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </FormControl>
+                          </div>
+                          
+                          {/* Fixed bottom button */}
+                          <div className="flex-shrink-0 mt-3 p-3 border-t border-muted/50 flex items-center">
+                            <div className="flex-1">
+                              <span className="text-xs text-muted-foreground">Can't find the student?</span>
+                            </div>
+                            <Button 
+                              type="button" 
+                              size="sm"
+                              onClick={toggleStudentForm}
+                              className="flex items-center gap-1.5 rounded-full h-8 px-3 bg-primary/10 hover:bg-primary/20 text-primary border-none shadow-none"
+                            >
+                              <Plus className="h-3.5 w-3.5" /> 
+                              <span>Add New Student</span>
+                            </Button>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                  
+                  {/* Step 2: Subject Area Selection */}
+                  {currentStep === 2 && (
+                    <FormField
+                      control={form.control}
+                      name="subjectArea"
+                      className="h-full flex flex-col"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col h-full">
+                          {isAddingSubjectArea ? (
+                            <div className="flex gap-2">
+                              <FormControl>
+                                <Input
+                                  placeholder={`Add new subject area for ${selectedStudent?.name}`}
+                                  value={newSubjectArea}
+                                  onChange={(e) => setNewSubjectArea(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      e.preventDefault();
+                                      handleAddSubjectArea();
+                                    }
+                                  }}
+                                  className="h-9"
+                                />
+                              </FormControl>
+                              <Button 
+                                type="button" 
+                                variant="outline"
+                                onClick={handleAddSubjectArea}
+                                disabled={isCreatingSubjectArea}
+                                className="whitespace-nowrap"
+                              >
+                                {isCreatingSubjectArea ? 'Adding...' : 'Add'}
+                              </Button>
+                              <Button 
+                                type="button" 
+                                variant="ghost"
+                                onClick={() => {
+                                  setIsAddingSubjectArea(false);
+                                  setNewSubjectArea('');
+                                }}
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                          ) : (
+                            <>
+                              {/* Fixed Search Area */}
+                              <div className="flex-shrink-0 mb-3 space-y-3">
+                                <div className="relative">
+                                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                                  <Input
+                                    placeholder="Search subject areas..."
+                                    value={subjectSearch}
+                                    onChange={(e) => setSubjectSearch(e.target.value)}
+                                    className="pl-8 h-9"
+                                  />
+                                </div>
+                                
+                                <FormMessage />
+                              </div>
+                              
+                              {/* Scrollable Visual Selection */}
+                              <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+                                <FormControl className="flex-1 overflow-hidden">
+                                  <div className="h-full overflow-y-auto pb-4">
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-3">
+                                      {subjectAreas
+                                        ?.filter(area => 
+                                          area.name.toLowerCase().includes(subjectSearch.toLowerCase())
+                                        )
+                                        .map((area) => (
+                                          <div
+                                            key={`subject-card-${area.id}`}
+                                            onClick={() => {
+                                              field.onChange(area.id);
+                                              form.setValue('goal', '');
+                                            }}
+                                            className={cn(
+                                              "cursor-pointer relative h-24 p-3 rounded-xl transition-all flex flex-col justify-center items-center gap-2 group overflow-hidden",
+                                              field.value === area.id 
+                                                ? "bg-gradient-to-br from-blue-100 to-blue-50 border-blue-400 border shadow-md" 
+                                                : "bg-gradient-to-br from-gray-50 to-white border-muted border hover:shadow-sm hover:border-blue-300"
+                                            )}
+                                          >
+                                            <div className={cn(
+                                              "rounded-full p-2 transition-all",
+                                              field.value === area.id
+                                                ? "bg-blue-200 text-blue-700"
+                                                : "bg-gray-100 text-gray-600 group-hover:bg-blue-100 group-hover:text-blue-600"
+                                            )}>
+                                              <BookOpen className="h-5 w-5" />
+                                            </div>
+                                            <div className="font-medium text-center truncate w-full text-sm">
+                                              {area.name}
+                                            </div>
+                                            {field.value === area.id && (
+                                              <div className="absolute top-2 right-2 rounded-full bg-blue-500 text-white p-0.5">
+                                                <Check className="h-3 w-3" />
+                                              </div>
+                                            )}
+                                          </div>
+                                        ))}
+                                      {/* Empty state */}
+                                      {subjectAreas?.filter(area => 
+                                        area.name.toLowerCase().includes(subjectSearch.toLowerCase())
+                                      ).length === 0 && (
+                                        <div className="col-span-3 py-10 text-center text-muted-foreground">
+                                          No subject areas found matching your search
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </FormControl>
+                              </div>
+                              
+                              {/* Fixed bottom button */}
+                              <div className="flex-shrink-0 mt-3 p-3 border-t border-muted/50 flex items-center">
+                                <div className="flex-1">
+                                  <span className="text-xs text-muted-foreground">Need a new subject area?</span>
+                                </div>
+                                <Button 
+                                  type="button" 
+                                  size="sm"
+                                  onClick={() => setIsAddingInFooter(true)}
+                                  className="flex items-center gap-1.5 rounded-full h-8 px-3 bg-blue-50 hover:bg-blue-100 text-blue-700 border-none shadow-none"
+                                >
+                                  <Plus className="h-3.5 w-3.5" /> 
+                                  <span>Add Subject Area</span>
+                                </Button>
+                              </div>
+                            </>
+                          )}
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                  
+                  {/* Step 3: Goal Selection */}
+                  {currentStep === 3 && (
+                    <FormField
+                      control={form.control}
+                      name="goal"
+                      className="h-full flex flex-col"
+                      render={({ field }) => {
+                        const selectedSubjectArea = subjectAreas.find(
+                          area => area.id === form.getValues('subjectArea')
+                        );
+
+                        return (
+                          <FormItem className="flex flex-col h-full">
+                            {isAddingGoal ? (
+                              <div className="flex gap-2">
+                                <FormControl>
+                                  <Input
+                                    placeholder={`Add new goal for ${selectedSubjectArea?.name}`}
+                                    value={newGoalTitle}
+                                    onChange={(e) => setNewGoalTitle(e.target.value)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        handleAddGoal();
+                                      }
+                                    }}
+                                    className="h-9"
+                                  />
+                                </FormControl>
+                                <Button
+                                  type="button"
+                                  onClick={handleAddGoal}
+                                  disabled={isCreatingGoal}
+                                  className="whitespace-nowrap"
+                                >
+                                  {isCreatingGoal ? 'Adding...' : 'Add'}
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    setIsAddingGoal(false);
+                                    setNewGoalTitle('');
+                                  }}
+                                >
+                                  Cancel
+                                </Button>
+                              </div>
+                            ) : (
+                              <>
+                                {/* Fixed Search Area */}
+                                <div className="flex-shrink-0 mb-3 space-y-3">
+                                  <div className="relative">
+                                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                                    <Input
+                                      placeholder="Search goals..."
+                                      value={goalSearch}
+                                      onChange={(e) => setGoalSearch(e.target.value)}
+                                      className="pl-8 h-9"
+                                    />
+                                  </div>
+                                  
+                                  <FormMessage />
+                                </div>
+                                
+                                {/* Scrollable Visual Selection */}
+                                <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+                                  <FormControl className="flex-1 overflow-hidden">
+                                    <div className="h-full overflow-y-auto pb-4">
+                                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-3">
+                                        {goals
+                                          ?.filter(goal => 
+                                            goal.title.toLowerCase().includes(goalSearch.toLowerCase())
+                                          )
+                                          .map((goal) => (
+                                            <div
+                                              key={`goal-card-${goal.id}`}
+                                              onClick={() => field.onChange(goal.id)}
+                                              className={cn(
+                                                "cursor-pointer relative h-24 p-3 rounded-xl transition-all flex flex-col justify-center items-center gap-2 group overflow-hidden",
+                                                field.value === goal.id 
+                                                  ? "bg-gradient-to-br from-green-100 to-green-50 border-green-400 border shadow-md" 
+                                                  : "bg-gradient-to-br from-gray-50 to-white border-muted border hover:shadow-sm hover:border-green-300"
+                                              )}
+                                            >
+                                              <div className={cn(
+                                                "rounded-full p-2 transition-all",
+                                                field.value === goal.id
+                                                  ? "bg-green-200 text-green-700"
+                                                  : "bg-gray-100 text-gray-600 group-hover:bg-green-100 group-hover:text-green-600"
+                                              )}>
+                                                <Target className="h-5 w-5" />
+                                              </div>
+                                              <div className="font-medium text-center truncate w-full text-sm">
+                                                {goal.title}
+                                              </div>
+                                              {field.value === goal.id && (
+                                                <div className="absolute top-2 right-2 rounded-full bg-green-500 text-white p-0.5">
+                                                  <Check className="h-3 w-3" />
+                                                </div>
+                                              )}
+                                            </div>
+                                          ))}
+                                        {isLoadingGoals && (
+                                          <div className="col-span-3 py-10 text-center text-muted-foreground">
+                                            Loading goals...
+                                          </div>
+                                        )}
+                                        {!isLoadingGoals && goals?.filter(goal => 
+                                          goal.title.toLowerCase().includes(goalSearch.toLowerCase())
+                                        ).length === 0 && (
+                                          <div className="col-span-3 py-10 text-center text-muted-foreground">
+                                            No goals found matching your search
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </FormControl>
+                                </div>
+                                
+                                {/* Fixed bottom button */}
+                                <div className="flex-shrink-0 mt-3 p-3 border-t border-muted/50 flex items-center">
+                                  <div className="flex-1">
+                                    <span className="text-xs text-muted-foreground">Need a new goal?</span>
+                                  </div>
+                                  <Button 
+                                    type="button" 
+                                    size="sm"
+                                    onClick={() => setIsAddingInFooter(true)}
+                                    className="flex items-center gap-1.5 rounded-full h-8 px-3 bg-green-50 hover:bg-green-100 text-green-700 border-none shadow-none"
+                                  >
+                                    <Plus className="h-3.5 w-3.5" /> 
+                                    <span>Add Goal</span>
+                                  </Button>
+                                </div>
+                              </>
+                            )}
+                          </FormItem>
+                        );
+                      }}
+                    />
+                  )}
+                  
+                  {/* Step 4: Objective Details - Scrollable content */}
+                  {currentStep === 4 && (
+                    <div className="h-full flex flex-col">
+                      <div className="flex-1 overflow-y-auto pb-4">
+                        <div className="space-y-6">
+                          {/* Instructions */}
+                          <div className="bg-muted/30 rounded-lg p-4 border border-muted">
+                            <h3 className="font-medium mb-2 flex items-center gap-2">
+                              <span className="text-primary bg-primary/10 rounded-full p-1">
+                                <Target className="h-4 w-4" />
+                              </span>
+                              Define Your Objective
+                            </h3>
+                            <p className="text-sm text-muted-foreground">
+                              Describe the specific learning objective in detail and set the measurement criteria.
+                            </p>
+                          </div>
+                          
+                          <FormField
+                            control={form.control}
+                            name="objectiveDescription"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-base">Objective Description <span className="text-red-500">*</span></FormLabel>
+                                <FormControl>
+                                  <Textarea 
+                                    placeholder="Describe the specific objective in detail" 
+                                    className="min-h-[80px] resize-y"
+                                    {...field} 
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="objectiveType"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-base">Objective Type <span className="text-red-500">*</span></FormLabel>
+                                <div className="grid grid-cols-2 gap-3">
+                                  <div
+                                    className={cn(
+                                      "cursor-pointer rounded-lg border p-4 transition-all relative overflow-hidden",
+                                      field.value === 'binary'
+                                        ? "border-primary bg-primary/5 shadow-sm"
+                                        : "hover:border-primary/50 hover:bg-primary/5"
+                                    )}
+                                    onClick={() => field.onChange('binary')}
+                                  >
+                                    {field.value === 'binary' && (
+                                      <div className="absolute top-0 right-0 w-0 h-0 border-t-[30px] border-r-[30px] border-t-primary border-r-transparent" />
+                                    )}
+                                    <div className="font-medium mb-1 flex items-center gap-2">
+                                      <div className={cn(
+                                        "rounded-full p-1.5",
+                                        field.value === 'binary' ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"
+                                      )}>
+                                        <Check className="h-4 w-4" />
+                                      </div>
+                                      Binary
+                                    </div>
+                                    <div className="text-sm text-muted-foreground">
+                                      Simple yes/no or correct/incorrect outcomes
+                                    </div>
+                                  </div>
+                                  <div
+                                    className={cn(
+                                      "cursor-pointer rounded-lg border p-4 transition-all relative overflow-hidden",
+                                      field.value === 'trial'
+                                        ? "border-primary bg-primary/5 shadow-sm"
+                                        : "hover:border-primary/50 hover:bg-primary/5"
+                                    )}
+                                    onClick={() => field.onChange('trial')}
+                                  >
+                                    {field.value === 'trial' && (
+                                      <div className="absolute top-0 right-0 w-0 h-0 border-t-[30px] border-r-[30px] border-t-primary border-r-transparent" />
+                                    )}
+                                    <div className="font-medium mb-1 flex items-center gap-2">
+                                      <div className={cn(
+                                        "rounded-full p-1.5",
+                                        field.value === 'trial' ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"
+                                      )}>
+                                        <Target className="h-4 w-4" />
+                                      </div>
+                                      Trial
+                                    </div>
+                                    <div className="text-sm text-muted-foreground">
+                                      Multiple attempts with accuracy tracking
+                                    </div>
+                                  </div>
+                                </div>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          {form.watch('objectiveType') === 'trial' && (
+                            <FormField
+                              control={form.control}
+                              name="targetAccuracy"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel className="text-base">Target Accuracy (%)</FormLabel>
+                                  <FormControl>
+                                    <div className="relative">
+                                      <Input
+                                        type="number"
+                                        step="1"
+                                        min="0"
+                                        max="100"
+                                        {...field}
+                                        value={field.value ? Math.round(field.value * 100) : ''}
+                                        onChange={(e) => {
+                                          const value = e.target.value;
+                                          if (value === '') {
+                                            field.onChange('');
+                                          } else {
+                                            const percentage = parseFloat(value);
+                                            if (!isNaN(percentage)) {
+                                              field.onChange(percentage / 100);
+                                            }
+                                          }
+                                        }}
+                                        className="h-9 pr-8"
+                                      />
+                                      <div className="absolute right-3 top-2 text-muted-foreground">%</div>
+                                    </div>
+                                  </FormControl>
+                                  <FormDescription className="text-sm">
+                                    The minimum accuracy percentage required for success
+                                  </FormDescription>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          )}
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <FormField
+                              control={form.control}
+                              name="targetConsistencySuccesses"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel className="text-base">Successful Trials <span className="text-red-500">*</span></FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      type="number"
+                                      min="1"
+                                      {...field}
+                                      value={field.value ?? ''}
+                                      onChange={(e) => field.onChange(parseInt(e.target.value))}
+                                      className="h-9"
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={form.control}
+                              name="targetConsistencyTrials"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel className="text-base">Total Trials <span className="text-red-500">*</span></FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      type="number"
+                                      min="1"
+                                      {...field}
+                                      value={field.value ?? ''}
+                                      onChange={(e) => field.onChange(parseInt(e.target.value))}
+                                      className="h-9"
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </form>
+            </Form>
+          </div>
+          
+          {/* Fixed bottom bar - outside the scrollable area */}
+          <div className="h-[100px] border-t px-6 py-3 bg-gradient-to-r from-muted/80 to-muted flex flex-col justify-center flex-shrink-0">
+            {isAddingInFooter && currentStep === 2 ? (
+              <div className="flex flex-col gap-2">
+                <div className="text-sm font-medium flex items-center gap-1.5 text-blue-700">
+                  <BookOpen className="h-4 w-4" />
+                  <span>Add New Subject Area</span>
+                </div>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder={`Add new subject area for ${selectedStudent?.name}`}
+                    value={newSubjectArea}
+                    onChange={(e) => setNewSubjectArea(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddSubjectArea();
+                      }
+                    }}
+                    className="h-9 flex-1"
+                    autoFocus
+                  />
+                  <Button 
+                    type="button" 
+                    size="sm"
+                    onClick={handleAddSubjectArea}
+                    disabled={isCreatingSubjectArea}
+                    className="whitespace-nowrap bg-blue-500 hover:bg-blue-600"
+                  >
+                    {isCreatingSubjectArea ? 'Adding...' : 'Add'}
+                  </Button>
+                  <Button 
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsAddingInFooter(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            ) : isAddingInFooter && currentStep === 3 ? (
+              <div className="flex flex-col gap-2">
+                <div className="text-sm font-medium flex items-center gap-1.5 text-green-700">
+                  <Target className="h-4 w-4" />
+                  <span>Add New Goal</span>
+                </div>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder={`Add new goal for ${subjectAreas.find(a => a.id === form.watch('subjectArea'))?.name}`}
+                    value={newGoalTitle}
+                    onChange={(e) => setNewGoalTitle(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddGoal();
+                      }
+                    }}
+                    className="h-9 flex-1"
+                    autoFocus
+                  />
+                  <Button 
+                    type="button" 
+                    size="sm"
+                    onClick={handleAddGoal}
+                    disabled={isCreatingGoal}
+                    className="whitespace-nowrap bg-green-500 hover:bg-green-600"
+                  >
+                    {isCreatingGoal ? 'Adding...' : 'Add'}
+                  </Button>
+                  <Button 
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsAddingInFooter(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Selection path */}
+                <div className="flex items-center mb-2 gap-1.5">
+                  <div className="text-xs text-muted-foreground mr-1">Selected:</div>
+                  
+                  <div className="flex items-center">
+                    {selectedStudent ? (
+                      <div className="flex items-center gap-1.5 bg-primary/10 text-primary text-sm px-3 py-1 rounded-full font-medium">
+                        <User className="h-3.5 w-3.5" />
+                        <span>{selectedStudent.name}</span>
+                      </div>
+                    ) : (
+                      <div className="text-xs text-muted-foreground bg-muted/50 px-3 py-1 rounded-full">
+                        No student selected
+                      </div>
+                    )}
+                    
+                    {(selectedStudent && form.watch('subjectArea')) && (
+                      <ChevronRight className="h-3.5 w-3.5 text-muted-foreground mx-1" />
+                    )}
+                    
+                    {form.watch('subjectArea') && (
+                      <div className="flex items-center gap-1.5 bg-blue-50 text-blue-700 text-sm px-3 py-1 rounded-full font-medium border border-blue-100">
+                        <BookOpen className="h-3.5 w-3.5" />
+                        <span>{subjectAreas.find(a => a.id === form.watch('subjectArea'))?.name}</span>
+                      </div>
+                    )}
+                    
+                    {(form.watch('subjectArea') && form.watch('goal')) && (
+                      <ChevronRight className="h-3.5 w-3.5 text-muted-foreground mx-1" />
+                    )}
+                    
+                    {form.watch('goal') && (
+                      <div className="flex items-center gap-1.5 bg-green-50 text-green-700 text-sm px-3 py-1 rounded-full font-medium border border-green-100">
+                        <Target className="h-3.5 w-3.5" />
+                        <span>{goals.find(g => g.id === form.watch('goal'))?.title}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Navigation buttons */}
+                <div className="flex justify-between">
+                  <div>
+                    {currentStep > 1 && (
                       <Button 
                         type="button" 
-                        variant="outline"
-                        onClick={toggleStudentForm}
+                        variant="outline" 
+                        onClick={handleBack}
+                        className="flex items-center gap-1"
+                        size="sm"
                       >
-                        <Plus className="h-4 w-4" />
+                        <ArrowLeft className="h-4 w-4" /> Back
                       </Button>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="subjectArea"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Subject Area
-                      {selectedStudent && (
-                        <span className="text-muted-foreground ml-1 text-sm">
-                          for {selectedStudent.name}
-                        </span>
-                      )}
-                    </FormLabel>
-                    {isAddingSubjectArea ? (
+                    )}
+                  </div>
+                  <div>
+                    {currentStep < totalSteps ? (
+                      <Button 
+                        type="button" 
+                        onClick={handleNext}
+                        className="flex items-center gap-1"
+                        size="sm"
+                      >
+                        Next <ArrowRight className="h-4 w-4" />
+                      </Button>
+                    ) : (
                       <div className="flex gap-2">
-                        <FormControl>
-                          <Input
-                            placeholder={selectedStudent 
-                              ? `Add new subject area for ${selectedStudent.name}` 
-                              : "Select a student first"}
-                            value={newSubjectArea}
-                            onChange={(e) => setNewSubjectArea(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault();
-                                handleAddSubjectArea();
-                              }
-                            }}
-                            disabled={!selectedStudent}
-                          />
-                        </FormControl>
                         <Button 
                           type="button" 
-                          variant="outline"
-                          onClick={handleAddSubjectArea}
-                          disabled={isCreatingSubjectArea || !selectedStudent}
-                        >
-                          {isCreatingSubjectArea ? 'Adding...' : 'Add'}
-                        </Button>
-                        <Button 
-                          type="button" 
-                          variant="ghost"
-                          onClick={() => {
-                            setIsAddingSubjectArea(false);
-                            setNewSubjectArea('');
-                          }}
+                          variant="outline" 
+                          onClick={handleCancel}
+                          size="sm"
                         >
                           Cancel
                         </Button>
-                      </div>
-                    ) : (
-                      <div className="flex gap-2">
-                        <Select 
-                          onValueChange={(value) => {
-                            field.onChange(value);
-                            form.setValue('goal', '');
-                          }}
-                          value={field.value}
-                          className="flex-1"
-                          disabled={isLoadingSubjectAreas || !selectedStudent}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue 
-                                placeholder={
-                                  !selectedStudent 
-                                    ? "Select a student first" 
-                                    : `Select a subject area for ${selectedStudent.name}`
-                                } 
-                              />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {subjectAreas?.map((area) => (
-                              <SelectItem key={`subject-${area.id}`} value={area.id}>
-                                {area.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
                         <Button 
-                          type="button" 
-                          variant="outline"
-                          onClick={() => setIsAddingSubjectArea(true)}
-                          disabled={!selectedStudent}
-                          className="relative group"
+                          type="submit" 
+                          form="main-form"
+                          disabled={isSubmitting}
+                          size="sm"
                         >
-                          <Plus className="h-4 w-4" />
-                          {!selectedStudent && (
-                            <span className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 whitespace-nowrap bg-black/80 text-white text-xs rounded px-2 py-1 hidden group-hover:block">
-                              Select a student first
-                            </span>
-                          )}
+                          {isSubmitting ? 
+                            (isEditing ? 'Updating...' : 'Adding...') 
+                          : 
+                            (isEditing ? 'Update Objective' : 'Add Objective')
+                          }
                         </Button>
                       </div>
                     )}
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Goal */}
-              <FormField
-                control={form.control}
-                name="goal"
-                render={({ field }) => {
-                  const selectedSubjectArea = subjectAreas.find(
-                    area => area.id === form.getValues('subjectArea')
-                  );
-
-                  return (
-                    <FormItem>
-                      <FormLabel>
-                        Goal
-                        {selectedSubjectArea && selectedStudent && (
-                          <span className="text-muted-foreground ml-1 text-sm">
-                            for {selectedSubjectArea.name} for {selectedStudent.name}
-                          </span>
-                        )}
-                      </FormLabel>
-                      {isAddingGoal ? (
-                        <div className="flex gap-2">
-                          <FormControl>
-                            <Input
-                              placeholder={selectedSubjectArea 
-                                ? `Add new goal for ${selectedSubjectArea.name}` 
-                                : "Select a subject area first"}
-                              value={newGoalTitle}
-                              onChange={(e) => setNewGoalTitle(e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                  e.preventDefault();
-                                  handleAddGoal();
-                                }
-                              }}
-                              disabled={!selectedSubjectArea}
-                            />
-                          </FormControl>
-                          <Button
-                            type="button"
-                            onClick={handleAddGoal}
-                            disabled={isCreatingGoal || !selectedSubjectArea}
-                          >
-                            {isCreatingGoal ? 'Adding...' : 'Add'}
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            onClick={() => {
-                              setIsAddingGoal(false);
-                              setNewGoalTitle('');
-                            }}
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="flex gap-2">
-                          <Select
-                            onValueChange={field.onChange}
-                            value={field.value}
-                            disabled={isLoadingGoals || !selectedSubjectArea}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue 
-                                  placeholder={
-                                    !selectedSubjectArea 
-                                      ? "Select a subject area first" 
-                                      : `Select a goal for ${selectedSubjectArea.name}`
-                                  } 
-                                />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {goals?.map((goal) => (
-                                <SelectItem key={`goal-${goal.id}`} value={goal.id}>
-                                  {goal.title}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => setIsAddingGoal(true)}
-                            disabled={!selectedSubjectArea}
-                            className="relative group"
-                          >
-                            <Plus className="h-4 w-4" />
-                            {!selectedSubjectArea && (
-                              <span className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 whitespace-nowrap bg-black/80 text-white text-xs rounded px-2 py-1 hidden group-hover:block">
-                                Select a subject area first
-                              </span>
-                            )}
-                          </Button>
-                        </div>
-                      )}
-                      <FormMessage />
-                    </FormItem>
-                  );
-                }}
-              />
-
-              <FormField
-                control={form.control}
-                name="objectiveDescription"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Objective</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="Describe the specific objective in detail" 
-                        className="min-h-[100px]"
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="objectiveType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Objective Type <span className="text-red-500">*</span></FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select an objective type" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="binary">Binary</SelectItem>
-                        <SelectItem value="trial">Trial</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>
-                      Binary: Simple yes/no or correct/incorrect outcomes. Trial: Multiple attempts with accuracy tracking.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {form.watch('objectiveType') === 'trial' && (
-                <FormField
-                  control={form.control}
-                  name="targetAccuracy"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Target Accuracy (%)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          step="1"
-                          min="0"
-                          max="100"
-                          {...field}
-                          value={field.value ? Math.round(field.value * 100) : ''}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            if (value === '') {
-                              field.onChange('');
-                            } else {
-                              const percentage = parseFloat(value);
-                              if (!isNaN(percentage)) {
-                                field.onChange(percentage / 100);
-                              }
-                            }
-                          }}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        The minimum accuracy percentage required for success (e.g., 80 for 80%).
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
-
-              <FormField
-                control={form.control}
-                name="targetConsistencySuccesses"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Consistency Successes</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min="1"
-                        {...field}
-                        value={field.value ?? ''}
-                        onChange={(e) => field.onChange(parseInt(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      How many successful trials?
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="targetConsistencyTrials"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Consistency Trials</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min="1"
-                        {...field}
-                        value={field.value ?? ''}
-                        onChange={(e) => field.onChange(parseInt(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Out of how many trials?
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
-            <DialogFooter>
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={handleCancel}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 
-                  (isEditing ? 'Updating...' : 'Adding...') 
-                : 
-                  (isEditing ? 'Update Objective' : 'Add Objective')
-                }
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
