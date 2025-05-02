@@ -82,6 +82,7 @@ export function SessionFormController({ students, open, onOpenChange }) {
 
   // Handler for form submission success
   const handleFormSuccess = () => {
+    console.log("SessionForms: handleFormSuccess called, resetting states and closing dialog");
     // First reset all form states to prevent any rendering with stale data
     resetAllFormStates();
     // Then close the dialog
@@ -89,9 +90,11 @@ export function SessionFormController({ students, open, onOpenChange }) {
     
     // Notify parent
     if (onOpenChange) {
+      console.log("SessionForms: Notifying parent component via onOpenChange(false)");
       onOpenChange(false);
     }
     
+    console.log("SessionForms: Form submitted successfully, refreshing page");
     // Refresh the entire page to update all components (recent logs and weekly objectives)
     window.location.reload();
   };
@@ -226,12 +229,8 @@ export function SessionFormController({ students, open, onOpenChange }) {
 
       {/* Dialog Container for all forms */}
       <Dialog open={dialogOpen} onOpenChange={handleOpenChange}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{title}</DialogTitle>
-            <DialogDescription>{description}</DialogDescription>
-          </DialogHeader>
-
+        <DialogContent className="max-h-[90vh] max-w-[60vw] overflow-y-auto p-0">
+          <DialogTitle className="sr-only">{title}</DialogTitle>
           {renderForm()}
         </DialogContent>
       </Dialog>

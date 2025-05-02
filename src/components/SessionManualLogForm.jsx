@@ -4,23 +4,13 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/app/context/auth-context';
 import { authorizedFetch } from '@/services/api';
 import { Button } from '@/components/ui/button';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from '@/components/ui/command';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { X, ChevronsUpDown, Check, ChevronLeft } from 'lucide-react';
+import { User, BookOpen, Check, Search, ArrowRight, ArrowLeft, ChevronRight, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { SessionManualObjectiveSelect, SessionManualProgressForm } from '@/components/SessionForms';
+import { DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 export function SessionManualStudentSelect({ students, onComplete }) {
   const { session } = useAuth();
@@ -33,11 +23,15 @@ export function SessionManualStudentSelect({ students, onComplete }) {
   const [selectedSubjectAreasMap, setSelectedSubjectAreasMap] = useState({});
   // Track loading state per student
   const [loadingSubjectAreasMap, setLoadingSubjectAreasMap] = useState({});
-  // Track popover state per student
-  const [subjectAreasOpenMap, setSubjectAreasOpenMap] = useState({});
   const [showObjectives, setShowObjectives] = useState(false);
   const [showProgressForm, setShowProgressForm] = useState(false);
   const [selectedObjectives, setSelectedObjectives] = useState({});
+  
+  // New state for search and step navigation
+  const [studentSearch, setStudentSearch] = useState('');
+  const [subjectSearch, setSubjectSearch] = useState('');
+  const [currentStep, setCurrentStep] = useState(1);
+  const totalSteps = 3; // Students -> Objectives -> Progress
 
   const toggleStudent = (student) => {
     setSelectedStudentMap(prev => {
@@ -95,149 +89,6 @@ export function SessionManualStudentSelect({ students, onComplete }) {
     }
   };
 
-  const StudentCard = ({ student }) => {
-    const isSelected = selectedStudentMap[student.id];
-    const subjectAreas = studentSubjectAreas[student.id] || [];
-    const selectedSubjectAreas = selectedSubjectAreasMap[student.id] || [];
-    const isLoading = loadingSubjectAreasMap[student.id];
-    const isOpen = subjectAreasOpenMap[student.id] || false;
-
-    return (
-      <div className="border rounded-lg p-4 bg-card shadow-sm hover:shadow-md transition-all h-full flex flex-col">
-        {/* Student header - always visible */}
-        <div 
-          onClick={() => toggleStudent(student)}
-          className={cn(
-            "flex items-center justify-between cursor-pointer p-3 rounded-md transition-colors",
-            isSelected ? "bg-primary/10" : "hover:bg-muted"
-          )}
-        >
-          <div className="flex flex-col">
-            <h3 className="font-medium">{student.name}</h3>
-            <p className="text-xs text-muted-foreground">
-              {student.grade_level && `Grade ${student.grade_level}`}
-              {student.disability_type && ` • ${student.disability_type}`}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            {isSelected ? (
-              <div className="h-5 w-5 rounded-full bg-primary/20 flex items-center justify-center">
-                <Check className="h-3 w-3 text-primary" />
-              </div>
-            ) : (
-              <div className="h-5 w-5 rounded-full border border-muted-foreground/30"></div>
-            )}
-          </div>
-        </div>
-
-        {/* Subject area selector - only visible when student is selected */}
-        {isSelected && (
-          <div className="mt-4 pt-4 border-t flex-grow">
-            <div className="flex flex-col gap-3">
-              <label className="text-sm font-medium flex items-center gap-1">
-                <span>Subject Areas</span>
-                <span className="text-xs text-muted-foreground font-normal">(Select for {student.name})</span>
-              </label>
-              <Popover 
-                open={isOpen}
-                onOpenChange={(open) => setSubjectAreasOpenMap(prev => ({ 
-                  ...prev, 
-                  [student.id]: open 
-                }))}
-              >
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={isOpen}
-                    className="w-full justify-between"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      "Loading..."
-                    ) : selectedSubjectAreas.length > 0 ? (
-                      `${selectedSubjectAreas.length} selected`
-                    ) : (
-                      "Select subject areas"
-                    )}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
-                  <Command className="w-full">
-                    <CommandInput 
-                      placeholder={`Search ${student.name}'s subject areas...`}
-                      className="border-0 focus:ring-0"
-                    />
-                    <CommandEmpty className="py-3 text-sm text-center text-muted-foreground">No subject areas found.</CommandEmpty>
-                    <CommandGroup className="max-h-[200px] overflow-auto">
-                      {subjectAreas.map((area) => (
-                        <CommandItem
-                          key={area.id}
-                          value={area.id}
-                          className="cursor-pointer"
-                          onSelect={() => {
-                            setSelectedSubjectAreasMap(prev => {
-                              const currentSelected = prev[student.id] || [];
-                              const isAreaSelected = currentSelected.some(a => a.id === area.id);
-                              return {
-                                ...prev,
-                                [student.id]: isAreaSelected
-                                  ? currentSelected.filter(a => a.id !== area.id)
-                                  : [...currentSelected, area]
-                              };
-                            });
-                          }}
-                        >
-                          <div className={cn(
-                            "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
-                            selectedSubjectAreas.some(a => a.id === area.id)
-                              ? "bg-primary text-primary-foreground"
-                              : "opacity-50"
-                          )}>
-                            {selectedSubjectAreas.some(a => a.id === area.id) && (
-                              <Check className="h-3 w-3" />
-                            )}
-                          </div>
-                          <span className="text-sm">{area.name}</span>
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-
-              {/* Selected subject areas badges */}
-              {selectedSubjectAreas.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mt-2">
-                  {selectedSubjectAreas.map((area) => (
-                    <Badge
-                      key={area.id}
-                      variant="secondary"
-                      className="flex items-center gap-1 bg-secondary/20 text-xs py-1 px-2"
-                    >
-                      {area.name}
-                      <X
-                        className="h-3 w-3 cursor-pointer hover:text-destructive transition-colors"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedSubjectAreasMap(prev => ({
-                            ...prev,
-                            [student.id]: prev[student.id].filter(a => a.id !== area.id)
-                          }));
-                        }}
-                      />
-                    </Badge>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
-
   // page 1 -> page 2
   const handleNext = () => {
     setShowObjectives(true);
@@ -251,19 +102,42 @@ export function SessionManualStudentSelect({ students, onComplete }) {
 
   // Handler for when the ObjectiveProgressForm completes successfully
   const handleFormSuccess = () => {
+    console.log("SessionManualLogForm: handleFormSuccess called, resetting states");
     // Reset all form states
     setSelectedStudentMap({});
     setStudentSubjectAreas({});
     setSelectedSubjectAreasMap({});
     setLoadingSubjectAreasMap({});
-    setSubjectAreasOpenMap({});
     setShowObjectives(false);
     setShowProgressForm(false);
     setSelectedObjectives({});
     
+    // Call the onComplete callback to close all parent forms
     if (onComplete) {
+      console.log("SessionManualLogForm: Calling onComplete to notify parent");
       onComplete();
     }
+  };
+
+  // Helper function to get student name from ID
+  const getSelectedStudentName = (studentId) => {
+    const student = students.find(s => s.id === studentId);
+    return student ? student.name : 'Unknown Student';
+  };
+
+  // Helper function to get step title
+  const getStepTitle = (step) => {
+    switch (step) {
+      case 1: return 'Select Students & Subject Areas';
+      case 2: return 'Select Objectives';
+      case 3: return 'Log Progress';
+      default: return '';
+    }
+  };
+
+  // Get total count of subject areas selected across all students
+  const getTotalSubjectAreasCount = () => {
+    return Object.values(selectedSubjectAreasMap).reduce((sum, areas) => sum + areas.length, 0);
   };
 
   if (showProgressForm) {
@@ -289,29 +163,228 @@ export function SessionManualStudentSelect({ students, onComplete }) {
       />
     );
   }
+  
+  // Toggle subject area for a student
+  const toggleSubjectArea = (studentId, subjectArea) => {
+    setSelectedSubjectAreasMap(prev => {
+      const currentSelected = prev[studentId] || [];
+      const isAreaSelected = currentSelected.some(a => a.id === subjectArea.id);
+      
+      return {
+        ...prev,
+        [studentId]: isAreaSelected
+          ? currentSelected.filter(a => a.id !== subjectArea.id)
+          : [...currentSelected, subjectArea]
+      };
+    });
+  };
+  
+  // Check if a subject area is selected
+  const isSubjectAreaSelected = (studentId, subjectAreaId) => {
+    const selectedAreas = selectedSubjectAreasMap[studentId] || [];
+    return selectedAreas.some(area => area.id === subjectAreaId);
+  };
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-xl font-semibold">Select Students & Subject Areas</h2>
-      <p className="text-muted-foreground">Select students and their relevant subject areas to log progress.</p>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {students.map((student) => (
-          <StudentCard key={student.id} student={student} />
-        ))}
-      </div>
-      
-      <div className="flex justify-end mt-6">
-        <Button
-          onClick={handleNext}
-          disabled={Object.keys(selectedStudentMap).length === 0 || 
-            Object.entries(selectedSubjectAreasMap).some(([studentId, areas]) => 
-              selectedStudentMap[studentId] && areas.length === 0
-            )}
-          className="bg-primary hover:bg-primary/90"
-        >
-          Continue
-        </Button>
+    <div className="h-[800px] flex flex-col overflow-hidden">  
+      {/* Top navigation */}
+      <div className="border-b px-6 py-3 flex justify-between items-center flex-shrink-0 bg-gradient-to-r from-muted/80 to-muted">
+        <div className="flex items-center gap-3">
+          <h2 className="text-lg font-semibold">Select Students & Subject Areas</h2>
+        </div>
+        <div className="text-sm text-muted-foreground">
+          <span className="font-medium text-primary">{getTotalSubjectAreasCount()}</span> subject areas selected
+        </div>
+      </div>    
+      {/* Main content wrapper - flex layout with scrollable content */}
+      <div className="flex flex-col flex-1 overflow-hidden">
+        {/* Main content area */}
+        <div className="flex-1 overflow-hidden">
+          <div className="h-full flex flex-col">
+            <div className="px-6 py-3 flex flex-col h-full">
+              {/* Fixed Search Area */}
+              <div className="flex-shrink-0 mb-3">
+                <div className="relative">
+                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search students..."
+                    value={studentSearch}
+                    onChange={(e) => setStudentSearch(e.target.value)}
+                    className="pl-8 h-9"
+                  />
+                </div>
+              </div>
+              
+              {/* Scrollable Visual Selection */}
+              <div className="flex-1 overflow-auto">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pb-4">
+                    {students
+                      ?.filter(student => 
+                        student.name.toLowerCase().includes(studentSearch.toLowerCase())
+                      )
+                      .map((student) => {
+                        const isSelected = selectedStudentMap[student.id];
+                        const subjectAreas = studentSubjectAreas[student.id] || [];
+                        const selectedSubjectAreas = selectedSubjectAreasMap[student.id] || [];
+                        const isLoading = loadingSubjectAreasMap[student.id];
+                        
+                        return (
+                          <div
+                            key={`student-card-${student.id}`}
+                            className="flex flex-col"
+                          >
+                          <div
+                            className={cn(
+                              "cursor-pointer relative h-[140px] p-3 rounded-xl transition-all flex flex-col gap-2 group overflow-hidden",
+                              isSelected 
+                                ? "bg-gradient-to-br from-primary/20 to-primary/10 border-primary border shadow-md" 
+                                : "bg-gradient-to-br from-gray-50 to-white border-muted border hover:shadow-sm hover:border-primary/40"
+                            )}
+                          >
+                            {/* Header area - compact when selected */}
+                            <div
+                              onClick={() => toggleStudent(student)}
+                              className={cn(
+                                "flex transition-all", 
+                                isSelected 
+                                  ? "flex-row items-center justify-start gap-2 h-[40px]" 
+                                  : "flex-col items-center justify-center h-[120px]"
+                              )}
+                            >
+                              <div className={cn(
+                                "rounded-full transition-all flex-shrink-0",
+                                isSelected
+                                  ? "p-1.5 bg-primary/20 text-primary"
+                                  : "p-2.5 bg-gray-100 text-gray-600 group-hover:bg-primary/10 group-hover:text-primary"
+                              )}>
+                                <User className={isSelected ? "h-4 w-4" : "h-5 w-5"} />
+                              </div>
+                              <div className={cn(
+                                "font-medium truncate",
+                                isSelected ? "text-sm" : "text-center w-full text-sm mt-2"
+                              )}>
+                                {student.name}
+                              </div>
+                              {isSelected && (
+                                <div className="absolute top-2 right-2 rounded-full bg-primary text-white p-0.5">
+                                  <Check className="h-3 w-3" />
+                                </div>
+                              )}
+                            </div>
+                            
+                            {/* Subject area selection within the card - only visible when selected */}
+                            {isSelected && (
+                              <div className="flex-1 flex flex-col h-[80px]">
+                                <div className="text-xs font-medium text-muted-foreground mb-1">
+                                  Subject areas:
+                                </div>
+                                
+                                {isLoading ? (
+                                  <div className="text-xs text-center py-1">
+                                    Loading...
+                                  </div>
+                                ) : subjectAreas.length > 0 ? (
+                                  <div className="flex flex-wrap gap-1 overflow-y-auto flex-1 pb-1 px-0.5">
+                                    {subjectAreas.map((area) => (
+                                      <Badge
+                                        key={area.id}
+                                        variant="outline"
+                                        className={cn(
+                                          "cursor-pointer text-xs py-0.5 px-1.5 h-5",
+                                          isSubjectAreaSelected(student.id, area.id)
+                                            ? "bg-blue-100 text-blue-700 border-blue-300"
+                                            : "bg-muted/20 hover:bg-blue-50"
+                                        )}
+                                        onClick={() => toggleSubjectArea(student.id, area)}
+                                      >
+                                        {area.name}
+                                        {isSubjectAreaSelected(student.id, area.id) && (
+                                          <Check className="h-2.5 w-2.5 ml-0.5" />
+                                        )}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <div className="text-xs text-center py-1 text-muted-foreground">
+                                    No subject areas found
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            
+                            {/* Select prompt for unselected cards */}
+                            {!isSelected && (
+                              <div 
+                                onClick={() => toggleStudent(student)}
+                                className="absolute bottom-3 left-0 right-0 text-xs text-center text-muted-foreground hover:text-primary transition-colors"
+                              >
+                                Click to select
+                              </div>
+                            )}
+                          </div>
+                          </div>
+                        );
+                      })}
+                    
+                    {/* Empty state when no students match search */}
+                    {students?.filter(student => 
+                      student.name.toLowerCase().includes(studentSearch.toLowerCase())
+                    ).length === 0 && (
+                      <div className="col-span-3 py-10 text-center text-muted-foreground">
+                        No students found matching your search
+                      </div>
+                    )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Fixed bottom bar - outside the scrollable area */}
+        <div className="h-[120px] border-t px-6 bg-gradient-to-r from-muted/80 to-muted flex flex-col justify-center flex-shrink-0">
+          {/* Selection path */}
+          <div className="flex items-center gap-1.5">
+            <div className="text-xs text-muted-foreground mr-1">Selected:</div>
+            
+            <div className="flex items-center py-4">
+              {Object.keys(selectedStudentMap).length > 0 ? (
+                <>
+                  {Object.keys(selectedStudentMap).map((studentId, index) => (
+                    <div key={studentId} className="flex items-center">
+                      {index > 0 && <ChevronRight className="h-3.5 w-3.5 text-muted-foreground mx-1" />}
+                      <div className="flex items-center gap-1.5 bg-primary/10 text-primary text-sm px-3 py-1 rounded-full font-medium">
+                        <User className="h-3.5 w-3.5" />
+                        <span>{getSelectedStudentName(studentId)}</span>
+                        <span className="text-xs text-primary/70">
+                          ({(selectedSubjectAreasMap[studentId] || []).length} subjects)
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              ) : (
+                <div className="text-xs text-muted-foreground bg-muted/50 px-3 py-1 rounded-full">
+                  No students selected
+                </div>
+              )}
+            </div>
+          </div>
+          
+          {/* Navigation buttons */}
+          <div className="flex justify-end">
+            <Button
+              onClick={handleNext}
+              disabled={Object.keys(selectedStudentMap).length === 0 || 
+                Object.entries(selectedSubjectAreasMap).some(([studentId, areas]) => 
+                  selectedStudentMap[studentId] && areas.length === 0
+                )}
+              className="flex items-center gap-1"
+              size="sm"
+            >
+              Next <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );

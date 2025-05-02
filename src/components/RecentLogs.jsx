@@ -93,48 +93,52 @@ export default function RecentLogs({ session }) {
 
   return (
     <Card className="backdrop-blur-sm bg-primary/10 h-full rounded-4xl flex flex-col">
-      <CardHeader>
-        <CardTitle className="text-lg font-medium flex items-center gap-2">
-          <div className="w-5 h-5 flex items-center justify-center rounded-full bg-primary/20">
-            <Bell className="w-3 h-3 text-primary" />
-          </div>
-          <span>View Recent Logs</span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="flex-grow overflow-y-auto">
-        {isLoading ? (
-          <div className="flex items-center justify-center h-full">
-            <LoadingSpinner />
-          </div>
-        ) : error ? (
-          <div className="text-center py-4 text-red-500">{error}</div>
-        ) : recentLogs.length === 0 ? (
-          <div className="text-center py-4 text-muted-foreground">No recent logs found</div>
-        ) : (
-          <div className="h-full overflow-y-auto pr-1 pb-2 rounded-sm bg-primary/5">
-            {recentLogs.map((log) => (
-              <div key={log.id} className="px-2 flex items-center justify-between h-[60px] border border-border/40">
-                <div className="flex flex-col">
-                  <span className="font-medium">{getStudentName(log.student_id)}</span>
-                  <span className="text-xs text-muted-foreground">{formatMemo(log.memo)}</span>
-                </div>
-                <div className="flex items-center gap-4">
-                  <span className="text-sm text-muted-foreground">
-                    {formatDate(log.created_at)}
-                  </span>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-6 w-6 flex-shrink-0"
-                  >
-                    <ArrowUpRight className="h-4 w-4" />
-                  </Button>
-                </div>
+      {isLoading ? (
+        <div className="flex items-center justify-center h-full">
+          <LoadingSpinner />
+        </div>
+      ) : (
+        <>
+          <CardHeader>
+            <CardTitle className="text-lg font-medium flex items-center gap-2">
+              <div className="w-5 h-5 flex items-center justify-center rounded-full bg-primary/20">
+                <Bell className="w-3 h-3 text-primary" />
               </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
+              <span>View Recent Logs</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex-grow overflow-y-auto">
+            {error ? (
+              <div className="text-center py-4 text-red-500">{error}</div>
+            ) : recentLogs.length === 0 ? (
+              <div className="text-center py-4 text-muted-foreground">No recent logs found</div>
+            ) : (
+              <div className="h-full overflow-y-auto pr-1 pb-2 rounded-sm bg-primary/5">
+                {recentLogs.map((log) => (
+                  <div key={log.id} className="px-2 flex items-center justify-between h-[60px] border border-border/40">
+                    <div className="flex flex-col">
+                      <span className="font-medium">{getStudentName(log.student_id)}</span>
+                      <span className="text-xs text-muted-foreground">{formatMemo(log.memo)}</span>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <span className="text-sm text-muted-foreground">
+                        {formatDate(log.created_at)}
+                      </span>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-6 w-6 flex-shrink-0"
+                      >
+                        <ArrowUpRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </>
+      )}
     </Card>
   );
 } 

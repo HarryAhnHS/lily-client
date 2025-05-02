@@ -395,201 +395,235 @@ export function TranscriptObjectiveProgressForm({ sessions, onBack, onSuccess, o
 
   // If not in a dialog, we wrap with Dialog, otherwise just return the content
   return inDialog ? (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <DialogHeader>
-        <DialogTitle className="flex items-center justify-between">
+    <div className="h-[800px] flex flex-col overflow-hidden">
+      {/* Top navigation */}
+      <div className="border-b px-6 py-3 flex justify-between items-center flex-shrink-0 bg-gradient-to-r from-muted/80 to-muted">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" onClick={onBack} className="p-2 h-9 w-9">
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
+          <h2 className="text-lg font-semibold">AI-Generated Log</h2>
+        </div>
+        <div className="text-sm text-muted-foreground">
           <span>Session {currentSessionIndex + 1} of {sessions.length}</span>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 inline-flex ml-2">
             <Button 
-              variant="outline" 
+              variant="ghost" 
               size="icon"
               onClick={handlePreviousSession} 
               disabled={currentSessionIndex === 0}
               aria-label="Previous session"
+              className="h-7 w-7"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <Button 
-              variant="outline" 
+              variant="ghost" 
               size="icon"
               onClick={handleNextSession} 
               disabled={currentSessionIndex === sessions.length - 1}
               aria-label="Next session"
+              className="h-7 w-7"
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
-        </DialogTitle>
-        <DialogDescription id="form-description">
-          Review and edit AI-generated session data
-        </DialogDescription>
-      </DialogHeader>
-
-      {/* Transcript Card */}
-      <Card className="overflow-hidden border-muted-foreground/20">
-        <CardHeader className="bg-muted/50 p-3">
-          <CardTitle className="text-sm font-medium">Transcript</CardTitle>
-        </CardHeader>
-        <CardContent className="p-3 text-sm bg-muted/10">
-          <p>{currentSession.raw_input}</p>
-        </CardContent>
-      </Card>
-
-      {/* AI Analysis and Edit Section */}
-      <div className="space-y-5">
-        <div className="flex items-center gap-2">
-          <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center">
-            <CheckCircle className="h-3.5 w-3.5 text-primary" />
-          </div>
-          <h3 className="font-medium text-md">AI Analysis</h3>
-          <span className="text-xs text-muted-foreground">Review and edit as needed</span>
         </div>
-
-        {/* Student Selection */}
-        <div className="space-y-2">
-          <Label htmlFor="student-select" className="text-sm flex items-center gap-2">
-            Student
-            <span className="text-xs text-muted-foreground font-normal">(Who was this session about?)</span>
-          </Label>
-          <Select 
-            value={currentSessionData.student_id || ''} 
-            onValueChange={(value) => updateField('student_id', value)}
-          >
-            <SelectTrigger id="student-select" className="w-full">
-              <SelectValue placeholder="Select a student" className="w-full truncate pr-2" />
-            </SelectTrigger>
-            <SelectContent 
-              className="max-h-[300px] overflow-y-auto w-full min-w-[300px] max-w-[520px]"
-              side="bottom"
-              align="start"
-            >
-              {currentSession.matches.map((match) => (
-                <SelectItem key={match.student.id} value={match.student.id}>
-                  {match.student.name} {match.student.grade_level ? `(Grade ${match.student.grade_level})` : ''}
-                  {match.student.disability_type && ` • ${match.student.disability_type}`}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Objective Selection */}
-        <div className="space-y-2">
-          <Label htmlFor="objective-select" className="text-sm flex items-center gap-2">
-            Objective
-            <span className="text-xs text-muted-foreground font-normal">(What was being worked on?)</span>
-          </Label>
-          {currentSession.matches[0]?.objectives[0]?.queried_objective_description && (
-            <div className="text-xs text-muted-foreground pl-2 border-l-2 border-primary/30 mb-2">
-              AI detected: {currentSession.matches[0].objectives[0].queried_objective_description}
-            </div>
-          )}
-          {currentObjectives.length > 0 ? (
-            <Select 
-              value={currentSessionData.objective_id || ''} 
-              onValueChange={(value) => updateField('objective_id', value)}
-              disabled={!currentSessionData.student_id || currentObjectives.length === 0}
-            >
-              <SelectTrigger id="objective-select" className="w-full">
-                <SelectValue 
-                  placeholder={currentObjectives.length === 0 ? "No objectives found" : "Select an objective"} 
-                  className="w-full truncate pr-2"
-                />
-              </SelectTrigger>
-              <SelectContent 
-                className="max-h-[300px] overflow-y-auto w-[calc(100vw-80px)] max-w-[520px]"
-                side="bottom"
-                align="start"
-              >
-                {currentObjectives.map((objective) => (
-                  <SelectItem 
-                    key={objective.id} 
-                    value={objective.id}
-                    className="py-2 whitespace-normal break-words text-sm"
-                  >
-                    <div className="truncate w-full max-w-[450px]">{objective.description}</div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          ) : (
-            <div className="text-sm text-muted-foreground p-2 border rounded bg-muted/10">
-              No objectives available for selected student. Please add objectives first.
-            </div>
-          )}
-        </div>
-
-        {/* Progress Section with Hierarchy */}
-        {currentSelectedObjective && (
-          <Card className="overflow-hidden border-primary/20">
-            <CardHeader className="bg-primary/5 p-3">
-              <CardTitle className="text-sm font-medium flex items-center justify-between">
-                <span>Progress Tracking</span>
-                <div className="text-xs bg-primary/10 px-2 py-0.5 rounded">
-                  {currentSelectedObjective.objective_type === 'binary' ? 'Yes/No' : 'Trial Based'} 
-                </div>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 space-y-4">
-              {/* Hierarchical Path Display */}
-              <div className="text-sm space-y-2">
-                <div className="flex flex-col space-y-1">
-                  <div className="flex items-center text-xs text-muted-foreground gap-2">
-                    <span className="bg-secondary/30 px-1.5 py-0.5 rounded-sm">Subject Area</span>
-                    <span>→</span>
-                    <span className="bg-secondary/30 px-1.5 py-0.5 rounded-sm">Goal</span>
-                    <span>→</span>
-                    <span className="bg-primary/20 px-1.5 py-0.5 rounded-sm font-medium">Objective</span>
-                  </div>
-                  <div className="pl-3 border-l-2 border-secondary/30 space-y-1.5 mt-1">
-                    <p className="text-sm">{currentSelectedObjective?.subject_area?.name}</p>
-                    <div className="pl-3 border-l-2 border-secondary/30 space-y-1.5">
-                      <p className="text-sm">{currentSelectedObjective?.goal?.title}</p>
-                      <div className="pl-3 border-l-2 border-primary/30">
-                        <p className="text-sm font-medium">{currentSelectedObjective?.description}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Progress Input */}
-              <div className="pt-3 border-t space-y-2">
-                <Label className="text-sm">Record Progress</Label>
-                <div className="pl-3 border-l-2 border-primary/30 py-2">
-                  {currentSelectedObjective?.objective_type === 'binary' ? (
-                    <BinaryInput />
-                  ) : (
-                    <TrialInput />
-                  )}
-                </div>
-              </div>
-              
-              {/* Memo Input */}
-              <div className="pt-3 border-t space-y-2">
-                <Label htmlFor={`memo-${currentSessionId}`} className="text-sm">Session Notes</Label>
-                <Textarea
-                  id={`memo-${currentSessionId}`}
-                  value={currentSessionData.memo || ''}
-                  onChange={(e) => updateField('memo', e.target.value)}
-                  placeholder="Add any additional notes about this session..."
-                  className="resize-none min-h-[80px] text-sm"
-                />
-              </div>
-            </CardContent>
-          </Card>
-        )}
       </div>
 
-      <DialogFooter>
-        <Button variant="outline" type="button" onClick={onBack}>
-          Cancel
-        </Button>
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Submitting...' : 'Submit All Sessions'}
-        </Button>
-      </DialogFooter>
-    </form>
+      {/* Main content area with scrolling */}
+      <div className="flex-1 overflow-hidden">
+        <form onSubmit={handleSubmit} className="h-full flex flex-col">
+          <div className="flex-1 overflow-y-auto px-6 py-4">
+            <div className="space-y-6">
+              {/* Transcript Card */}
+              <Card className="overflow-hidden border-muted-foreground/20 shadow-none">
+                <CardHeader className="bg-muted/30 p-3">
+                  <CardTitle className="text-sm font-medium">Transcript</CardTitle>
+                </CardHeader>
+                <CardContent className="p-3 text-sm bg-muted/5">
+                  <p>{currentSession.raw_input}</p>
+                </CardContent>
+              </Card>
+
+              {/* AI Analysis and Edit Section */}
+              <div className="space-y-5">
+                <div className="flex items-center gap-2">
+                  <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center">
+                    <CheckCircle className="h-3.5 w-3.5 text-primary" />
+                  </div>
+                  <h3 className="font-medium text-md">AI Analysis</h3>
+                  <span className="text-xs text-muted-foreground">Review and edit as needed</span>
+                </div>
+
+                {/* Student Selection */}
+                <div className="space-y-2">
+                  <Label htmlFor="student-select" className="text-sm flex items-center gap-2">
+                    Student
+                    <span className="text-xs text-muted-foreground font-normal">(Who was this session about?)</span>
+                  </Label>
+                  <Select 
+                    value={currentSessionData.student_id || ''} 
+                    onValueChange={(value) => updateField('student_id', value)}
+                  >
+                    <SelectTrigger id="student-select" className="w-full">
+                      <SelectValue placeholder="Select a student" className="w-full truncate pr-2" />
+                    </SelectTrigger>
+                    <SelectContent 
+                      className="max-h-[300px] overflow-y-auto w-full min-w-[300px] max-w-[700px]"
+                      side="bottom"
+                      align="start"
+                    >
+                      {currentSession.matches.map((match) => (
+                        <SelectItem key={match.student.id} value={match.student.id}>
+                          {match.student.name} {match.student.grade_level ? `(Grade ${match.student.grade_level})` : ''}
+                          {match.student.disability_type && ` • ${match.student.disability_type}`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Objective Selection */}
+                <div className="space-y-2">
+                  <Label htmlFor="objective-select" className="text-sm flex items-center gap-2">
+                    Objective
+                    <span className="text-xs text-muted-foreground font-normal">(What was being worked on?)</span>
+                  </Label>
+                  {currentSession.matches[0]?.objectives[0]?.queried_objective_description && (
+                    <div className="text-xs text-muted-foreground pl-2 border-l-2 border-primary/30 mb-2">
+                      AI detected: {currentSession.matches[0].objectives[0].queried_objective_description}
+                    </div>
+                  )}
+                  {currentObjectives.length > 0 ? (
+                    <Select 
+                      value={currentSessionData.objective_id || ''} 
+                      onValueChange={(value) => updateField('objective_id', value)}
+                      disabled={!currentSessionData.student_id || currentObjectives.length === 0}
+                    >
+                      <SelectTrigger id="objective-select" className="w-full">
+                        <SelectValue 
+                          placeholder={currentObjectives.length === 0 ? "No objectives found" : "Select an objective"} 
+                          className="w-full truncate pr-2"
+                        />
+                      </SelectTrigger>
+                      <SelectContent 
+                        className="max-h-[300px] overflow-y-auto w-[calc(100vw-80px)] max-w-[520px]"
+                        side="bottom"
+                        align="start"
+                      >
+                        {currentObjectives.map((objective) => (
+                          <SelectItem 
+                            key={objective.id} 
+                            value={objective.id}
+                            className="py-2 whitespace-normal break-words text-sm"
+                          >
+                            <div className="truncate w-full max-w-[700px]">{objective.description}</div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <div className="text-sm text-muted-foreground p-2 border rounded bg-muted/10">
+                      No objectives available for selected student. Please add objectives first.
+                    </div>
+                  )}
+                </div>
+
+                {/* Progress Section with Hierarchy */}
+                {currentSelectedObjective && (
+                  <Card className="overflow-hidden border-primary/10 shadow-none">
+                    <CardHeader className="bg-primary/5 p-3">
+                      <CardTitle className="text-sm font-medium flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center">
+                            <CheckCircle className="h-3 w-3 text-primary" />
+                          </div>
+                          <span>Progress for Objective</span>
+                        </div>
+                        <div className="text-xs bg-primary/10 px-2 py-0.5 rounded">
+                          {currentSelectedObjective.objective_type === 'binary' ? 'Yes/No' : 'Trial Based'} 
+                        </div>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4 space-y-4">
+                      <div className="space-y-2">
+                        <Label className="text-sm text-muted-foreground">Objective</Label>
+                        <p className="text-sm border-l-2 border-primary/30 pl-3 py-1">{currentSelectedObjective.description}</p>
+                      </div>
+                      
+                      <div className="pt-2 space-y-2">
+                        <Label className="text-sm">
+                          Did {currentStudentMatch?.student?.name || "the student"} successfully complete the objective?
+                        </Label>
+                        <div className="pl-3 border-l-2 border-primary/30 py-2">
+                          {currentSelectedObjective?.objective_type === 'binary' ? (
+                            <BinaryInput />
+                          ) : (
+                            <TrialInput />
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="pt-2 space-y-2">
+                        <Label htmlFor={`memo-${currentSessionId}`} className="text-sm">Notes (optional)</Label>
+                        <Textarea
+                          id={`memo-${currentSessionId}`}
+                          value={currentSessionData.memo || ''}
+                          onChange={(e) => updateField('memo', e.target.value)}
+                          placeholder="Add any notes about this session..."
+                          className="resize-none min-h-[80px]"
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            </div>
+          </div>
+          
+          {/* Fixed bottom bar */}
+          <div className="h-[120px] border-t px-6 bg-gradient-to-r from-muted/80 to-muted flex flex-col justify-center flex-shrink-0">
+            <div className="flex items-center gap-1.5">
+              <div className="text-xs text-muted-foreground mr-1">Status:</div>
+              
+              <div className="flex items-center py-4">
+                {currentSelectedObjective ? (
+                  <div className="flex items-center gap-1.5 bg-primary/10 text-primary text-sm px-3 py-1 rounded-full font-medium">
+                    <CheckCircle className="h-3.5 w-3.5" />
+                    <span>Session {currentSessionIndex + 1} of {sessions.length} ready</span>
+                  </div>
+                ) : (
+                  <div className="text-xs text-muted-foreground bg-muted/50 px-3 py-1 rounded-full">
+                    Please select a student and objective
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            <div className="flex justify-end">
+              <div className="flex gap-3">
+                <Button 
+                  variant="outline" 
+                  onClick={onBack}
+                  type="button"
+                >
+                  Back
+                </Button>
+                <Button 
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="flex items-center gap-1"
+                  size="sm"
+                >
+                  {isSubmitting ? 'Submitting...' : 'Submit All Sessions'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
   ) : (
     <Dialog 
       open={open} 
@@ -600,210 +634,240 @@ export function TranscriptObjectiveProgressForm({ sessions, onBack, onSuccess, o
       }}
     >
       <DialogContent 
-        className="sm:max-w-[550px] w-[95vw] max-h-[90vh] overflow-y-auto" 
+        className="sm:max-w-[550px] w-[95vw] max-h-[90vh] p-0 overflow-hidden"
         onInteractOutside={(e) => {
           e.preventDefault();
           if (onOpenChange) {
             onOpenChange(false);
           }
         }}
-        aria-describedby="form-description"
       >
-        <form onSubmit={handleSubmit} className="space-y-6">
-        <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
-            <span>Session {currentSessionIndex + 1} of {sessions.length}</span>
-            <div className="flex items-center gap-2">
-              <Button 
-                variant="outline" 
-                size="icon"
-                onClick={handlePreviousSession} 
-                disabled={currentSessionIndex === 0}
-                aria-label="Previous session"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button 
-                variant="outline" 
-                size="icon"
-                onClick={handleNextSession} 
-                disabled={currentSessionIndex === sessions.length - 1}
-                aria-label="Next session"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
+        <div className="h-[800px] flex flex-col overflow-hidden">
+          {/* Top navigation */}
+          <div className="border-b px-6 py-3 flex justify-between items-center flex-shrink-0 bg-gradient-to-r from-muted/80 to-muted">
+            <div className="flex items-center gap-3">
+              <h2 className="text-lg font-semibold">AI-Generated Log</h2>
             </div>
-          </DialogTitle>
-          <DialogDescription id="form-description">
-            Review and edit AI-generated session data
-          </DialogDescription>
-        </DialogHeader>
-
-          {/* Transcript Card */}
-          <Card className="overflow-hidden border-muted-foreground/20">
-            <CardHeader className="bg-muted/50 p-3">
-              <CardTitle className="text-sm font-medium">Transcript</CardTitle>
-            </CardHeader>
-            <CardContent className="p-3 text-sm bg-muted/10">
-              <p>{currentSession.raw_input}</p>
-            </CardContent>
-          </Card>
-
-          {/* AI Analysis and Edit Section */}
-          <div className="space-y-5">
-            <div className="flex items-center gap-2">
-              <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center">
-                <CheckCircle className="h-3.5 w-3.5 text-primary" />
-              </div>
-              <h3 className="font-medium text-md">AI Analysis</h3>
-              <span className="text-xs text-muted-foreground">Review and edit as needed</span>
-            </div>
-
-            {/* Student Selection */}
-            <div className="space-y-2">
-              <Label htmlFor="student-select" className="text-sm flex items-center gap-2">
-                Student
-                <span className="text-xs text-muted-foreground font-normal">(Who was this session about?)</span>
-              </Label>
-              <Select 
-                value={currentSessionData.student_id || ''} 
-                onValueChange={(value) => updateField('student_id', value)}
-              >
-                <SelectTrigger id="student-select" className="w-full">
-                  <SelectValue placeholder="Select a student" className="w-full truncate pr-2" />
-                </SelectTrigger>
-                <SelectContent 
-                  className="max-h-[300px] overflow-y-auto w-full min-w-[300px] max-w-[520px]"
-                  side="bottom"
-                  align="start"
+            <div className="text-sm text-muted-foreground">
+              <span>Session {currentSessionIndex + 1} of {sessions.length}</span>
+              <div className="flex items-center gap-2 inline-flex ml-2">
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={handlePreviousSession} 
+                  disabled={currentSessionIndex === 0}
+                  aria-label="Previous session"
+                  className="h-7 w-7"
                 >
-                  {currentSession.matches.map((match) => (
-                    <SelectItem key={match.student.id} value={match.student.id}>
-                      {match.student.name} {match.student.grade_level ? `(Grade ${match.student.grade_level})` : ''}
-                      {match.student.disability_type && ` • ${match.student.disability_type}`}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Objective Selection */}
-            <div className="space-y-2">
-              <Label htmlFor="objective-select" className="text-sm flex items-center gap-2">
-                Objective
-                <span className="text-xs text-muted-foreground font-normal">(What was being worked on?)</span>
-              </Label>
-              {currentSession.matches[0]?.objectives[0]?.queried_objective_description && (
-              <div className="text-xs text-muted-foreground pl-2 border-l-2 border-primary/30 mb-2">
-                AI detected: {currentSession.matches[0].objectives[0].queried_objective_description}
-              </div>
-              )}
-              {currentObjectives.length > 0 ? (
-              <Select 
-                  value={currentSessionData.objective_id || ''} 
-                  onValueChange={(value) => updateField('objective_id', value)}
-                  disabled={!currentSessionData.student_id || currentObjectives.length === 0}
-              >
-                <SelectTrigger id="objective-select" className="w-full">
-                  <SelectValue 
-                      placeholder={currentObjectives.length === 0 ? "No objectives found" : "Select an objective"} 
-                    className="w-full truncate pr-2"
-                  />
-                </SelectTrigger>
-                <SelectContent 
-                  className="max-h-[300px] overflow-y-auto w-[calc(100vw-80px)] max-w-[520px]"
-                  side="bottom"
-                  align="start"
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={handleNextSession} 
+                  disabled={currentSessionIndex === sessions.length - 1}
+                  aria-label="Next session"
+                  className="h-7 w-7"
                 >
-                  {currentObjectives.map((objective) => (
-                    <SelectItem 
-                      key={objective.id} 
-                      value={objective.id}
-                      className="py-2 whitespace-normal break-words text-sm"
-                    >
-                      <div className="truncate w-full max-w-[450px]">{objective.description}</div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              ) : (
-                <div className="text-sm text-muted-foreground p-2 border rounded bg-muted/10">
-                  No objectives available for selected student. Please add objectives first.
-                </div>
-              )}
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
+          </div>
 
-            {/* Progress Section with Hierarchy */}
-            {currentSelectedObjective && (
-            <Card className="overflow-hidden border-primary/20">
-              <CardHeader className="bg-primary/5 p-3">
-                <CardTitle className="text-sm font-medium flex items-center justify-between">
-                  <span>Progress Tracking</span>
-                  <div className="text-xs bg-primary/10 px-2 py-0.5 rounded">
-                      {currentSelectedObjective.objective_type === 'binary' ? 'Yes/No' : 'Trial Based'} 
-                  </div>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 space-y-4">
-                {/* Hierarchical Path Display */}
-                <div className="text-sm space-y-2">
-                  <div className="flex flex-col space-y-1">
-                    <div className="flex items-center text-xs text-muted-foreground gap-2">
-                      <span className="bg-secondary/30 px-1.5 py-0.5 rounded-sm">Subject Area</span>
-                      <span>→</span>
-                      <span className="bg-secondary/30 px-1.5 py-0.5 rounded-sm">Goal</span>
-                      <span>→</span>
-                      <span className="bg-primary/20 px-1.5 py-0.5 rounded-sm font-medium">Objective</span>
-                    </div>
-                    <div className="pl-3 border-l-2 border-secondary/30 space-y-1.5 mt-1">
-                      <p className="text-sm">{currentSelectedObjective?.subject_area?.name}</p>
-                      <div className="pl-3 border-l-2 border-secondary/30 space-y-1.5">
-                        <p className="text-sm">{currentSelectedObjective?.goal?.title}</p>
-                        <div className="pl-3 border-l-2 border-primary/30">
-                          <p className="text-sm font-medium">{currentSelectedObjective?.description}</p>
-                        </div>
+          {/* Main content area with scrolling */}
+          <div className="flex-1 overflow-hidden">
+            <form onSubmit={handleSubmit} className="h-full flex flex-col">
+              <div className="flex-1 overflow-y-auto px-6 py-4">
+                <div className="space-y-6">
+                  {/* Transcript Card */}
+                  <Card className="overflow-hidden border-muted-foreground/20 shadow-none">
+                    <CardHeader className="bg-muted/30 p-3">
+                      <CardTitle className="text-sm font-medium">Transcript</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-3 text-sm bg-muted/5">
+                      <p>{currentSession.raw_input}</p>
+                    </CardContent>
+                  </Card>
+
+                  {/* AI Analysis and Edit Section */}
+                  <div className="space-y-5">
+                    <div className="flex items-center gap-2">
+                      <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center">
+                        <CheckCircle className="h-3.5 w-3.5 text-primary" />
                       </div>
+                      <h3 className="font-medium text-md">AI Analysis</h3>
+                      <span className="text-xs text-muted-foreground">Review and edit as needed</span>
                     </div>
+
+                    {/* Student Selection */}
+                    <div className="space-y-2">
+                      <Label htmlFor="student-select" className="text-sm flex items-center gap-2">
+                        Student
+                        <span className="text-xs text-muted-foreground font-normal">(Who was this session about?)</span>
+                      </Label>
+                      <Select 
+                        value={currentSessionData.student_id || ''} 
+                        onValueChange={(value) => updateField('student_id', value)}
+                      >
+                        <SelectTrigger id="student-select" className="w-full">
+                          <SelectValue placeholder="Select a student" className="w-full truncate pr-2" />
+                        </SelectTrigger>
+                        <SelectContent 
+                          className="max-h-[300px] overflow-y-auto w-full min-w-[300px] max-w-[520px]"
+                          side="bottom"
+                          align="start"
+                        >
+                          {currentSession.matches.map((match) => (
+                            <SelectItem key={match.student.id} value={match.student.id}>
+                              {match.student.name} {match.student.grade_level ? `(Grade ${match.student.grade_level})` : ''}
+                              {match.student.disability_type && ` • ${match.student.disability_type}`}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Objective Selection */}
+                    <div className="space-y-2">
+                      <Label htmlFor="objective-select" className="text-sm flex items-center gap-2">
+                        Objective
+                        <span className="text-xs text-muted-foreground font-normal">(What was being worked on?)</span>
+                      </Label>
+                      {currentSession.matches[0]?.objectives[0]?.queried_objective_description && (
+                        <div className="text-xs text-muted-foreground pl-2 border-l-2 border-primary/30 mb-2">
+                          AI detected: {currentSession.matches[0].objectives[0].queried_objective_description}
+                        </div>
+                      )}
+                      {currentObjectives.length > 0 ? (
+                        <Select 
+                          value={currentSessionData.objective_id || ''} 
+                          onValueChange={(value) => updateField('objective_id', value)}
+                          disabled={!currentSessionData.student_id || currentObjectives.length === 0}
+                        >
+                          <SelectTrigger id="objective-select" className="w-full">
+                            <SelectValue 
+                              placeholder={currentObjectives.length === 0 ? "No objectives found" : "Select an objective"} 
+                              className="w-full truncate pr-2"
+                            />
+                          </SelectTrigger>
+                          <SelectContent 
+                            className="max-h-[300px] overflow-y-auto w-[calc(100vw-80px)] max-w-[520px]"
+                            side="bottom"
+                            align="start"
+                          >
+                            {currentObjectives.map((objective) => (
+                              <SelectItem 
+                                key={objective.id} 
+                                value={objective.id}
+                                className="py-2 whitespace-normal break-words text-sm"
+                              >
+                                <div className="truncate w-full max-w-[450px]">{objective.description}</div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <div className="text-sm text-muted-foreground p-2 border rounded bg-muted/10">
+                          No objectives available for selected student. Please add objectives first.
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Progress Section with Hierarchy */}
+                    {currentSelectedObjective && (
+                      <Card className="overflow-hidden border-primary/10 shadow-none">
+                        <CardHeader className="bg-primary/5 p-3">
+                          <CardTitle className="text-sm font-medium flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center">
+                                <CheckCircle className="h-3 w-3 text-primary" />
+                              </div>
+                              <span>Progress for Objective</span>
+                            </div>
+                            <div className="text-xs bg-primary/10 px-2 py-0.5 rounded">
+                              {currentSelectedObjective.objective_type === 'binary' ? 'Yes/No' : 'Trial Based'} 
+                            </div>
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-4 space-y-4">
+                          <div className="space-y-2">
+                            <Label className="text-sm text-muted-foreground">Objective</Label>
+                            <p className="text-sm border-l-2 border-primary/30 pl-3 py-1">{currentSelectedObjective.description}</p>
+                          </div>
+                          
+                          <div className="pt-2 space-y-2">
+                            <Label className="text-sm">
+                              Did {currentStudentMatch?.student?.name || "the student"} successfully complete the objective?
+                            </Label>
+                            <div className="pl-3 border-l-2 border-primary/30 py-2">
+                              {currentSelectedObjective?.objective_type === 'binary' ? (
+                                <BinaryInput />
+                              ) : (
+                                <TrialInput />
+                              )}
+                            </div>
+                          </div>
+                          
+                          <div className="pt-2 space-y-2">
+                            <Label htmlFor={`memo-${currentSessionId}`} className="text-sm">Notes (optional)</Label>
+                            <Textarea
+                              id={`memo-${currentSessionId}`}
+                              value={currentSessionData.memo || ''}
+                              onChange={(e) => updateField('memo', e.target.value)}
+                              placeholder="Add any notes about this session..."
+                              className="resize-none min-h-[80px]"
+                            />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
                   </div>
                 </div>
-
-                {/* Progress Input */}
-                <div className="pt-3 border-t space-y-2">
-                  <Label className="text-sm">Record Progress</Label>
-                  <div className="pl-3 border-l-2 border-primary/30 py-2">
-                    {currentSelectedObjective?.objective_type === 'binary' ? (
-                        <BinaryInput />
+              </div>
+              
+              {/* Fixed bottom bar */}
+              <div className="h-[120px] border-t px-6 bg-gradient-to-r from-muted/80 to-muted flex flex-col justify-center flex-shrink-0">
+                <div className="flex items-center gap-1.5">
+                  <div className="text-xs text-muted-foreground mr-1">Status:</div>
+                  
+                  <div className="flex items-center py-4">
+                    {currentSelectedObjective ? (
+                      <div className="flex items-center gap-1.5 bg-primary/10 text-primary text-sm px-3 py-1 rounded-full font-medium">
+                        <CheckCircle className="h-3.5 w-3.5" />
+                        <span>Session {currentSessionIndex + 1} of {sessions.length} ready</span>
+                      </div>
                     ) : (
-                        <TrialInput />
+                      <div className="text-xs text-muted-foreground bg-muted/50 px-3 py-1 rounded-full">
+                        Please select a student and objective
+                      </div>
                     )}
                   </div>
                 </div>
                 
-                {/* Memo Input */}
-                <div className="pt-3 border-t space-y-2">
-                    <Label htmlFor={`memo-${currentSessionId}`} className="text-sm">Session Notes</Label>
-                  <Textarea
-                      id={`memo-${currentSessionId}`}
-                      value={currentSessionData.memo || ''}
-                      onChange={(e) => updateField('memo', e.target.value)}
-                    placeholder="Add any additional notes about this session..."
-                    className="resize-none min-h-[80px] text-sm"
-                  />
+                <div className="flex justify-end">
+                  <div className="flex gap-3">
+                    <Button 
+                      variant="outline" 
+                      onClick={onBack}
+                      type="button"
+                    >
+                      Back
+                    </Button>
+                    <Button 
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="flex items-center gap-1"
+                      size="sm"
+                    >
+                      {isSubmitting ? 'Submitting...' : 'Submit All Sessions'}
+                    </Button>
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
-            )}
+              </div>
+            </form>
           </div>
-
-          <DialogFooter>
-            <Button variant="outline" type="button" onClick={onBack}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Submitting...' : 'Submit All Sessions'}
-            </Button>
-          </DialogFooter>
-        </form>
+        </div>
       </DialogContent>
     </Dialog>
   );

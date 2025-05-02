@@ -413,87 +413,90 @@ export default function StudentsPage() {
 
           {/* Main content */}
           <div className="h-[calc(100%-50px)] relative overflow-hidden">
-            <div className="absolute inset-0 overflow-y-auto">
-              <div className="p-4 flex flex-col">
-                {/* Table Header */}
-                <div className="grid grid-cols-4 gap-4 p-3 font-medium text-emphasis-high sticky top-0 bg-accent/5 rounded-lg mb-2 text-sm">
-                  <div className="col-span-1">
-                    <Button
-                      variant="ghost"
-                      onClick={() => handleSort('name')}
-                      className="flex items-center gap-1 p-0 h-auto font-medium text-emphasis-high hover:bg-transparent"
-                    >
-                      Student Name
-                      <ArrowUpDown className="h-3.5 w-3.5 ml-1 text-muted-foreground" />
-                    </Button>
-                  </div>
-                  <div className="col-span-1">Disability Type</div>
-                  <div className="col-span-1">Grade Level</div>
-                  <div className="col-span-1">
-                    <Button
-                      variant="ghost"
-                      onClick={() => handleSort('updated_at')}
-                      className="flex items-center gap-1 p-0 h-auto font-medium text-emphasis-high hover:bg-transparent"
-                    >
-                      Last Updated
-                      <ArrowUpDown className="h-3.5 w-3.5 ml-1 text-muted-foreground" />
-                    </Button>
-                  </div>
+            <div className="absolute inset-0 flex flex-col">
+              {/* Table Header - Fixed at top */}
+              <div className="grid grid-cols-4 gap-4 p-3 font-medium text-emphasis-high bg-accent/5 rounded-lg mb-2 text-sm z-10">
+                <div className="col-span-1">
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleSort('name')}
+                    className="flex items-center gap-1 p-0 h-auto font-medium text-emphasis-high hover:bg-transparent"
+                  >
+                    Student Name
+                    <ArrowUpDown className="h-3.5 w-3.5 ml-1 text-muted-foreground" />
+                  </Button>
                 </div>
-                
-                {/* Student Rows */}
-                <div className="space-y-2">
-                  {filteredAndSortedStudents.length === 0 ? (
-                    <div className="flex items-center justify-center h-32 text-muted-foreground bg-accent/5 rounded-lg">
-                      {searchQuery ? 'No students match your search' : 'No students found'}
-                    </div>
-                  ) : (
-                    filteredAndSortedStudents.map((student) => (
-                      <div
-                        key={student.id}
-                        onClick={() => !isLoadingDetails(student.id) && fetchStudentDetails(student.id)}
-                        className={`grid grid-cols-4 gap-4 p-4 bg-background rounded-xl border border-border/40 hover:border-primary/30 hover:shadow-sm transition-all cursor-pointer ${isLoadingDetails(student.id) ? 'opacity-70 pointer-events-none' : ''}`}
-                      >
-                        <div className="col-span-1 text-emphasis-high font-medium">{student.name}</div>
-                        <div className="col-span-1 text-emphasis-medium">{student.disability_type || 'N/A'}</div>
-                        <div className="col-span-1 text-emphasis-medium">{formatGradeLevel(student.grade_level)}</div>
-                        <div className="col-span-1 flex items-center justify-between">
-                          <span className="text-emphasis-medium">{formatDate(student.updated_at)}</span>
-                          <div className="flex items-center">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                                <button className="text-muted-foreground p-1 hover:bg-accent/20 rounded-full transition-colors opacity-0 group-hover:opacity-100">
-                                  <MoreHorizontal className="w-4 h-4" />
-                                </button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-48">
-                                <DropdownMenuItem 
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleOpenStudentModal(student);
-                                  }}
-                                  className="cursor-pointer"
-                                >
-                                  <Pencil className="h-4 w-4 mr-2" />
-                                  Edit Student
-                                </DropdownMenuItem>
-                                <DropdownMenuItem 
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDeleteStudent(student);
-                                  }}
-                                  className="cursor-pointer text-destructive"
-                                >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Delete Student
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                <div className="col-span-1">Disability Type</div>
+                <div className="col-span-1">Grade Level</div>
+                <div className="col-span-1">
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleSort('updated_at')}
+                    className="flex items-center gap-1 p-0 h-auto font-medium text-emphasis-high hover:bg-transparent"
+                  >
+                    Last Updated
+                    <ArrowUpDown className="h-3.5 w-3.5 ml-1 text-muted-foreground" />
+                  </Button>
+                </div>
+              </div>
+              
+              {/* Scrollable Content Area */}
+              <div className="overflow-y-auto flex-1">
+                <div className="p-4 flex flex-col">
+                  {/* Student Rows */}
+                  <div className="space-y-2">
+                    {filteredAndSortedStudents.length === 0 ? (
+                      <div className="flex items-center justify-center h-32 text-muted-foreground bg-accent/5 rounded-lg">
+                        {searchQuery ? 'No students match your search' : 'No students found'}
+                      </div>
+                    ) : (
+                      filteredAndSortedStudents.map((student) => (
+                        <div
+                          key={student.id}
+                          onClick={() => !isLoadingDetails(student.id) && fetchStudentDetails(student.id)}
+                          className={`grid grid-cols-4 gap-4 p-4 bg-background rounded-xl border border-border/40 hover:border-primary/30 hover:shadow-sm transition-all cursor-pointer ${isLoadingDetails(student.id) ? 'opacity-70 pointer-events-none' : ''}`}
+                        >
+                          <div className="col-span-1 text-emphasis-high font-medium">{student.name}</div>
+                          <div className="col-span-1 text-emphasis-medium">{student.disability_type || 'N/A'}</div>
+                          <div className="col-span-1 text-emphasis-medium">{formatGradeLevel(student.grade_level)}</div>
+                          <div className="col-span-1 flex items-center justify-between">
+                            <span className="text-emphasis-medium">{formatDate(student.updated_at)}</span>
+                            <div className="flex items-center">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                  <button className="text-foreground p-1 hover:bg-accent/20 rounded-full transition-colors">
+                                    <MoreHorizontal className="w-4 h-4" />
+                                  </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-48">
+                                  <DropdownMenuItem 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleOpenStudentModal(student);
+                                    }}
+                                    className="cursor-pointer"
+                                  >
+                                    <Pencil className="h-4 w-4 mr-2" />
+                                    Edit Student
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeleteStudent(student);
+                                    }}
+                                    className="cursor-pointer text-destructive"
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Delete Student
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))
-                  )}
+                      ))
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

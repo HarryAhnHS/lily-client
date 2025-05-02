@@ -89,106 +89,108 @@ export default function WeeklyObjectivesOverview({ session }) {
 
   return (
     <Card className="backdrop-blur-sm bg-primary/10 h-full rounded-4xl flex flex-col">
-      <CardHeader>
-        <div className="flex justify-between items-center">
-          <CardTitle className="text-lg font-medium flex items-center gap-2">
-            <svg
-              className="w-5 h-5 text-primary"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-              />
-            </svg>
-            <span>Weekly Objectives Overview</span>
-          </CardTitle>
-          <Select defaultValue={period} onValueChange={handlePeriodChange}>
-            <SelectTrigger className="w-[120px] h-8 text-sm">
-              <SelectValue placeholder="Select period" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="this-week">This Week</SelectItem>
-              <SelectItem value="last-week">Last Week</SelectItem>
-            </SelectContent>
-          </Select>
+      {isLoading ? (
+        <div className="flex items-center justify-center h-full">
+          <LoadingSpinner />
         </div>
-      </CardHeader>
-
-      <CardContent className="pb-0 space-y-6 flex-1 flex flex-col">
-        {isLoading ? (
-          <div className="flex items-center justify-center h-full">
-            <LoadingSpinner />
-          </div>
-        ) : error ? (
-          <div className="text-center py-8 text-red-500 h-full w-full">{error}</div>
-        ) : (
-          <>
-            <div>
-              <div className="text-[48px] font-semibold leading-none mb-2 tracking-tight">
-                {data.completionPercentage}%
-              </div>
-              <div className="text-sm text-muted-foreground mb-2">
-                {data.completedCount}/{data.totalCount} objectives logged this week
-              </div>
-              <Progress value={data.completionPercentage} className="h-2" />
-              <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
-                <Bell className="w-4 h-4" />
-                <span>{data.remainingCount} objectives left</span>
-              </div>
+      ) : (
+        <>
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-lg font-medium flex items-center gap-2">
+                <svg
+                  className="w-5 h-5 text-primary"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                  />
+                </svg>
+                <span>Weekly Objectives Overview</span>
+              </CardTitle>
+              <Select defaultValue={period} onValueChange={handlePeriodChange}>
+                <SelectTrigger className="w-[120px] h-8 text-sm">
+                  <SelectValue placeholder="Select period" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="this-week">This Week</SelectItem>
+                  <SelectItem value="last-week">Last Week</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
+          </CardHeader>
 
-            {current && (
-              <Card className="overflow-hidden bg-primary/5 w-full">
-                <CardHeader className="bg-secondary/10 py-3 border-b border-border/40">
-                  <CardTitle className="text-md font-medium flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="h-6 w-6 rounded-full bg-primary/20 text-xs flex items-center justify-center text-primary font-bold">
-                        {getInitial(current.student_name)}
-                      </span>
-                      <div>
-                        <span>{current.student_name}</span>
-                        <span className="text-xs ml-2 text-muted-foreground">({current.subject_area})</span>
-                      </div>
-                    </div>
-                    <div className="flex justify-between items-center text-sm text-muted-foreground">
-                      <div className="flex gap-1">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-6 px-1"
-                          onClick={handlePrevStudent}
-                        >
-                          <ChevronLeft className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-6 px-1"
-                          onClick={handleNextStudent}
-                        >
-                          <ChevronRight className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
+          <CardContent className="pb-0 space-y-6 flex-1 flex flex-col">
+            {error ? (
+              <div className="text-center py-8 text-red-500 h-full w-full">{error}</div>
+            ) : (
+              <>
+                <div>
+                  <div className="text-[48px] font-semibold leading-none mb-2 tracking-tight">
+                    {data.completionPercentage}%
+                  </div>
+                  <div className="text-sm text-muted-foreground mb-2">
+                    {data.completedCount}/{data.totalCount} objectives logged this week
+                  </div>
+                  <Progress value={data.completionPercentage} className="h-2" />
+                  <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
+                    <Bell className="w-4 h-4" />
+                    <span>{data.remainingCount} objectives left</span>
+                  </div>
+                </div>
 
-
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="px-3 py-3">
-                  <p className="text-sm">
-                    {current.description}
-                  </p>
-                </CardContent>
-              </Card>
+                {current && (
+                  <Card className="overflow-hidden bg-primary/5 w-full">
+                    <CardHeader className="bg-secondary/10 py-3 border-b border-border/40">
+                      <CardTitle className="text-md font-medium flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="h-6 w-6 rounded-full bg-primary/20 text-xs flex items-center justify-center text-primary font-bold">
+                            {getInitial(current.student_name)}
+                          </span>
+                          <div>
+                            <span>{current.student_name}</span>
+                            <span className="text-xs ml-2 text-muted-foreground">({current.subject_area})</span>
+                          </div>
+                        </div>
+                        <div className="flex justify-between items-center text-sm text-muted-foreground">
+                          <div className="flex gap-1">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-6 px-1"
+                              onClick={handlePrevStudent}
+                            >
+                              <ChevronLeft className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-6 px-1"
+                              onClick={handleNextStudent}
+                            >
+                              <ChevronRight className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="px-3 py-3">
+                      <p className="text-sm">
+                        {current.description}
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+              </>
             )}
-          </>
-        )}
-      </CardContent>
+          </CardContent>
+        </>
+      )}
     </Card>
   );
 }

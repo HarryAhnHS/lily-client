@@ -65,7 +65,12 @@ export function IEPPreviewModal({
         onSave(data);
       }
       
+      // Close all modals
       onClose();
+      setSelectedObjective(null);
+      
+      // Refresh the window
+      window.location.reload();
     } catch (error) {
       console.error('Error saving IEP data:', error);
       toast.error(`Failed to save IEP data: ${error.message}`);

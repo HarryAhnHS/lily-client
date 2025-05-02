@@ -1,13 +1,14 @@
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Mic, MicOff, Send, Play, ChevronLeft } from "lucide-react";
+import { Mic, MicOff, Send, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { GoogleGenAI, createUserContent, createPartFromUri } from "@google/genai";
 import { TranscriptObjectiveProgressForm } from "@/components/TranscriptObjectiveProgressForm";
 import { authorizedFetch } from "@/services/api";
 import { useAuth } from "@/app/context/auth-context";
+import { cn } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -26,7 +27,7 @@ export function SessionRecorder({ inDialog = false, onBack, onSuccess, onShowAna
   const [transcript, setTranscript] = useState("");
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [loadingStage, setLoadingStage] = useState(null); // 'analyzing' or 'formatting'
+  const [loadingStage, setLoadingStage] = useState(null);
   const [analyzedSessions, setAnalyzedSessions] = useState(null);
   const { session } = useAuth();
 
@@ -160,18 +161,15 @@ export function SessionRecorder({ inDialog = false, onBack, onSuccess, onShowAna
   // Loading spinner modal component
   const LoadingModal = () => (
     <Dialog open={loadingStage === true} onOpenChange={() => {}} aria-describedby="loading-description">
-      <DialogContent className="sm:max-w-[425px] flex flex-col items-center justify-center p-10">
-        <DialogHeader>
-          <DialogTitle>Working on it...</DialogTitle>
-          <DialogDescription id="loading-description">
-            Extracting key information from your notes
+      <DialogContent className="sm:max-w-[400px] flex flex-col items-center justify-center p-8 bg-background/95 border-border/30">
+        <DialogHeader className="text-center space-y-2 mb-2">
+          <DialogTitle className="text-lg font-medium">Analyzing Notes</DialogTitle>
+          <DialogDescription id="loading-description" className="text-sm text-muted-foreground">
+            Extracting key information from your session
           </DialogDescription>
         </DialogHeader>
-        <div className="flex flex-col items-center space-y-4 py-4">
-          <LoadingSpinner size="large" />
-          <p className="text-center text-lg font-medium mt-4">
-            Analyzing transcript...
-          </p>
+        <div className="flex flex-col items-center space-y-4 py-6">
+          <LoadingSpinner size="large" className="text-primary" />
         </div>
       </DialogContent>
     </Dialog>
@@ -194,98 +192,87 @@ export function SessionRecorder({ inDialog = false, onBack, onSuccess, onShowAna
     );
   }
 
-  // Determine classes based on whether in dialog or standalone
-  const containerClasses = inDialog 
-    ? "space-y-4" 
-    : "rounded-2xl overflow-hidden bg-gradient-to-br from-green-950/50 via-yellow-950/50 to-black backdrop-blur-xl";
-  
-  const textareaClasses = inDialog
-    ? "min-h-[150px] resize-none"
-    : "min-h-[150px] resize-none bg-white/10 border-white/10 focus:border-white/20 text-white/80 placeholder:text-white/40";
-  
-  const submitButtonClasses = inDialog
-    ? "w-full"
-    : "w-full bg-white/20 hover:bg-white/30 text-white/80 disabled:bg-white/10 disabled:text-white/40";
-  
-  const recordButtonClasses = inDialog
-    ? `rounded-full w-16 h-16 p-0 flex items-center justify-center transition-all duration-300 ${
-        isRecording ? "bg-destructive hover:bg-destructive/90 shadow-lg shadow-destructive/20" : ""
-      }`
-    : `rounded-full w-16 h-16 p-0 flex items-center justify-center transition-all duration-300 ${
-        isRecording 
-          ? "bg-destructive hover:bg-destructive/90 shadow-lg shadow-destructive/20" 
-          : "bg-white/20 hover:bg-white/30 shadow-lg text-white"
-      }`;
-
   return (
-    <div className={containerClasses}>
+    <div className="h-[600px] flex flex-col overflow-hidden bg-white">
       {/* Loading Modal */}
       <LoadingModal />
       
-      <div className={inDialog ? "" : "p-6"}>
-        <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
+      {/* Top header */}
+      <div className="border-b px-6 py-3 flex justify-between items-center flex-shrink-0 bg-background">
+        <div className="flex items-center gap-3">
           {inDialog && onBack && (
-            <div className="flex items-center mb-4">
-              <Button variant="ghost" onClick={onBack} className="flex items-center gap-2 p-2">
-                <ChevronLeft className="h-4 w-4" />
-                <span>Back</span>
-              </Button>
-            </div>
-          )}
-          
-          {!inDialog && (
-            <Button
-              variant="ghost"
-              className="w-full flex items-center gap-2 justify-start hover:bg-white/10 text-white/80 h-12"
-              disabled={isRecording}
-            >
-              <Play className="w-4 h-4" />
-              <span>Add New Session</span>
+            <Button variant="ghost" onClick={onBack} className="p-2 h-9 w-9">
+              <ChevronLeft className="h-5 w-5" />
             </Button>
           )}
-
-          {/* Error alert */}
-          {error && (
-            <div className="p-4 rounded-md bg-destructive/10 text-destructive text-sm border border-destructive/20">
-              {error}
-            </div>
-          )}
-
-          {/* Recording UI */}
-          <div className="flex flex-col items-center justify-center py-4 space-y-4">
+          <h2 className="text-lg font-medium">Session Notes</h2>
+        </div>
+        {isRecording && (
+          <span className="font-medium text-destructive flex items-center gap-1.5">
+            <span className="animate-pulse size-2 bg-destructive rounded-full"></span> Recording...
+          </span>
+        )}
+      </div>
+      
+      {/* Main content area */}
+      <div className="flex-1 overflow-hidden">
+        <form ref={formRef} onSubmit={handleSubmit} className="h-full flex flex-col">
+          <div className="flex-1 overflow-y-auto p-6">
+            {/* Error alert */}
+            {error && (
+              <div className="p-3 rounded-md bg-destructive/5 text-destructive text-sm mb-4 border border-destructive/10">
+                {error}
+              </div>
+            )}
+            
             <Textarea
-              placeholder="Your notes will appear here..."
-              className={textareaClasses}
+              placeholder="Record or type your session notes here..."
+              className="min-h-[240px] resize-none border-muted bg-background/50 focus-visible:ring-primary/20 focus-visible:ring-offset-0"
               value={transcript}
               onChange={(e) => setTranscript(e.target.value)}
               required
             />
-
-            <Button
-              type="submit"
-              disabled={!transcript.trim() || isSubmitting}
-              className={submitButtonClasses}
-            >
-              {isSubmitting ? (
-                <>
-                  <LoadingSpinner size="small" className="mr-2" />
-                  <span>Submitting...</span>
-                </>
-              ) : (
-                <>
-                  <Send className="h-4 w-4 mr-2" />
-                  <span>Submit</span>
-                </>
-              )}
-            </Button>
-            <Button
-              type="button"
-              onClick={toggleRecording}
-              variant={isRecording ? "destructive" : "default"}
-              className={recordButtonClasses}
-            >
-              {isRecording ? <MicOff className="h-6 w-6" /> : <Mic className="h-6 w-6" />}
-            </Button>
+            
+            {/* Action buttons */}
+            <div className="mt-6 flex items-center justify-between">
+              <Button
+                type="button"
+                onClick={toggleRecording}
+                variant={isRecording ? "destructive" : "outline"}
+                className={cn(
+                  "rounded-full h-10 w-10 p-0 flex items-center justify-center",
+                  isRecording ? "bg-destructive text-destructive-foreground" : "bg-background text-primary"
+                )}
+              >
+                {isRecording ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+              </Button>
+              
+              <div className="flex items-center gap-3">
+                {inDialog && onBack && (
+                  <Button variant="outline" onClick={onBack} size="sm">
+                    Cancel
+                  </Button>
+                )}
+                <Button
+                  type="submit"
+                  disabled={!transcript.trim() || isSubmitting}
+                  className="flex items-center gap-1"
+                  size="sm"
+                >
+                  {isSubmitting ? (
+                    <div className="flex items-center justify-center">
+                      <LoadingSpinner className="size-4 mr-2" />
+                      Processing
+                    </div>
+                  ) : (
+                    <>
+                      <Send className="h-3.5 w-3.5 mr-1" />
+                      Process
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
           </div>
         </form>
       </div>
