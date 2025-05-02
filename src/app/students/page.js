@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { ObjectiveFormModal } from '@/components/ObjectiveFormModal';
-import { Users, Plus, MoreHorizontal, Search, X, ArrowUpDown } from 'lucide-react';
+import { Users, Plus, MoreHorizontal, Search, X, ArrowUpDown, Pencil, Trash2 } from 'lucide-react';
 import { StudentView } from '@/components/StudentView';
 import ObjectiveView from '@/components/ObjectiveView';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -369,15 +369,17 @@ export default function StudentsPage() {
           onObjectiveClick={handleObjectiveClick}
         />
       ) : (
-        <div className="w-full h-[calc(100vh-200px)] flex flex-col max-w-7xl mx-auto bg-primary/10 rounded-[24px] p-5 m-12">
-          <div className="flex justify-between items-center mb-5">
-            <div className="flex items-center gap-2">
-              <div className="rounded-md p-1">
-                <Users className="w-5 h-5" />
+        <div className="w-full h-[calc(100vh-200px)] flex flex-col max-w-7xl mx-auto bg-background rounded-[24px] p-0 m-12 shadow-lg overflow-hidden border border-border/50">
+          {/* Header Bar - Match StudentView */}
+          <div className="bg-primary/10 p-4 border-b border-border/30 flex flex-wrap justify-between items-center gap-2">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center bg-background h-7 w-7 rounded-full border border-border/50">
+                <Users className="h-4 w-4 text-primary" />
               </div>
-              <span className="font-medium">Students</span>
+              <h3 className="text-sm font-medium">Students</h3>
             </div>
-            <div className="flex items-center gap-4">
+            
+            <div className="flex flex-wrap items-center gap-3">
               <div className="relative w-64">
                 <div className="relative flex items-center">
                   <Search className="h-4 w-4 absolute left-3 text-muted-foreground pointer-events-none" />
@@ -386,12 +388,12 @@ export default function StudentsPage() {
                     placeholder="Search students..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9 pr-9 py-2 bg-background text-foreground shadow-sm focus-visible:ring-foreground"
+                    className="pl-9 pr-9 h-9 bg-background text-foreground border-border/30"
                   />
                   {searchQuery && (
                     <button 
                       onClick={() => setSearchQuery('')}
-                      className="absolute right-3 text-gray-400 hover:text-gray-600"
+                      className="absolute right-3 text-muted-foreground hover:text-foreground"
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -400,92 +402,100 @@ export default function StudentsPage() {
               </div>
               <Button
                 onClick={() => handleOpenStudentModal()}
-                variant="outline"
-                className="flex items-center gap-2 transition-transform"
+                size="sm"
+                className="h-9 px-4 flex items-center gap-1.5 rounded-full shadow-sm"
               >
-                <Plus className="w-4 h-4" />
-                Add Student
+                <Plus className="h-4 w-4" />
+                <span className="sm:inline">Add Student</span>
               </Button>
             </div>
           </div>
 
-          <div className="flex-1 bg-background rounded-[16px] flex flex-col overflow-hidden border border-border shadow-sm">
-            <div className="grid grid-cols-4 gap-4 p-4 border-b border-border font-medium text-emphasis-high sticky top-0 bg-[var(--surface-raised)] z-10">
-              <div className="col-span-1">
-                <Button
-                  variant="ghost"
-                  onClick={() => handleSort('name')}
-                  className="flex items-center gap-1 p-0 h-auto font-medium text-emphasis-high hover:bg-transparent"
-                >
-                  Student Name
-                  <ArrowUpDown className="h-4 w-4 ml-1" />
-                </Button>
-              </div>
-              <div className="col-span-1">Disability Type</div>
-              <div className="col-span-1">Grade Level</div>
-              <div className="col-span-1">
-                <Button
-                  variant="ghost"
-                  onClick={() => handleSort('updated_at')}
-                  className="flex items-center gap-1 p-0 h-auto font-medium text-emphasis-high hover:bg-transparent"
-                >
-                  Last Updated
-                  <ArrowUpDown className="h-4 w-4 ml-1" />
-                </Button>
-              </div>
-            </div>
-            <div className="h-full overflow-y-auto hide-scrollbar flex-1">
-              {filteredAndSortedStudents.length === 0 ? (
-                <div className="flex items-center justify-center h-32 text-muted-foreground">
-                  {searchQuery ? 'No students match your search' : 'No students found'}
-                </div>
-              ) : (
-                filteredAndSortedStudents.map((student) => (
-                  <div
-                    key={student.id}
-                    onClick={() => !isLoadingDetails(student.id) && fetchStudentDetails(student.id)}
-                    className={`grid grid-cols-4 gap-4 p-4 border-b border-border hover:bg-primary/10 transition-colors cursor-pointer ${isLoadingDetails(student.id) ? 'opacity-70 pointer-events-none' : ''}`}
-                  >
-                    <div className="col-span-1 text-emphasis-high font-medium">{student.name}</div>
-                    <div className="col-span-1 text-emphasis-medium">{student.disability_type || 'N/A'}</div>
-                    <div className="col-span-1 text-emphasis-medium">{formatGradeLevel(student.grade_level)}</div>
-                    <div className="col-span-1 flex items-center justify-between">
-                      <span className="text-emphasis-medium">{formatDate(student.updated_at)}</span>
-                      <div className="flex items-center gap-2">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                            <button className="text-emphasis-high p-1 hover:bg-[var(--interactive-hover)] rounded-md">
-                              <MoreHorizontal className="w-5 h-5" />
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleOpenStudentModal(student);
-                              }}
-                              className="cursor-pointer"
-                            >
-                              Edit Student
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteStudent(student);
-                              }}
-                              className="cursor-pointer text-[var(--status-error)] hover:bg-[var(--status-error)]/10"
-                            >
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </div>
+          {/* Main content */}
+          <div className="h-[calc(100%-50px)] relative overflow-hidden">
+            <div className="absolute inset-0 overflow-y-auto">
+              <div className="p-4 flex flex-col">
+                {/* Table Header */}
+                <div className="grid grid-cols-4 gap-4 p-3 font-medium text-emphasis-high sticky top-0 bg-accent/5 rounded-lg mb-2 text-sm">
+                  <div className="col-span-1">
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort('name')}
+                      className="flex items-center gap-1 p-0 h-auto font-medium text-emphasis-high hover:bg-transparent"
+                    >
+                      Student Name
+                      <ArrowUpDown className="h-3.5 w-3.5 ml-1 text-muted-foreground" />
+                    </Button>
                   </div>
-                ))
-              )}
+                  <div className="col-span-1">Disability Type</div>
+                  <div className="col-span-1">Grade Level</div>
+                  <div className="col-span-1">
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort('updated_at')}
+                      className="flex items-center gap-1 p-0 h-auto font-medium text-emphasis-high hover:bg-transparent"
+                    >
+                      Last Updated
+                      <ArrowUpDown className="h-3.5 w-3.5 ml-1 text-muted-foreground" />
+                    </Button>
+                  </div>
+                </div>
+                
+                {/* Student Rows */}
+                <div className="space-y-2">
+                  {filteredAndSortedStudents.length === 0 ? (
+                    <div className="flex items-center justify-center h-32 text-muted-foreground bg-accent/5 rounded-lg">
+                      {searchQuery ? 'No students match your search' : 'No students found'}
+                    </div>
+                  ) : (
+                    filteredAndSortedStudents.map((student) => (
+                      <div
+                        key={student.id}
+                        onClick={() => !isLoadingDetails(student.id) && fetchStudentDetails(student.id)}
+                        className={`grid grid-cols-4 gap-4 p-4 bg-background rounded-xl border border-border/40 hover:border-primary/30 hover:shadow-sm transition-all cursor-pointer ${isLoadingDetails(student.id) ? 'opacity-70 pointer-events-none' : ''}`}
+                      >
+                        <div className="col-span-1 text-emphasis-high font-medium">{student.name}</div>
+                        <div className="col-span-1 text-emphasis-medium">{student.disability_type || 'N/A'}</div>
+                        <div className="col-span-1 text-emphasis-medium">{formatGradeLevel(student.grade_level)}</div>
+                        <div className="col-span-1 flex items-center justify-between">
+                          <span className="text-emphasis-medium">{formatDate(student.updated_at)}</span>
+                          <div className="flex items-center">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                <button className="text-muted-foreground p-1 hover:bg-accent/20 rounded-full transition-colors opacity-0 group-hover:opacity-100">
+                                  <MoreHorizontal className="w-4 h-4" />
+                                </button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuItem 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleOpenStudentModal(student);
+                                  }}
+                                  className="cursor-pointer"
+                                >
+                                  <Pencil className="h-4 w-4 mr-2" />
+                                  Edit Student
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteStudent(student);
+                                  }}
+                                  className="cursor-pointer text-destructive"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete Student
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>

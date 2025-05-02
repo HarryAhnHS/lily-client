@@ -89,8 +89,8 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      <main className="max-w-6xl mx-auto px-4 py-8 space-y-6 relative z-10 overflow-hidden">
+    <div className="w-full h-full flex flex-col justify-center overflow-hidden">
+      <div className="w-full sm:px-8 md:px-18 space-y-6 relative z-10 overflow-y-auto">
         {/* Header with greeting */}
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
@@ -105,7 +105,7 @@ export default function Home() {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 overflow-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 overflow-y-auto">
           {/* Left column - Session Input Options */}
           <div className="lg:col-span-1 overflow-hidden h-[300px]">
             <SessionFormController students={students} />
@@ -117,11 +117,11 @@ export default function Home() {
           </div>
           
           {/* Weekly Overview - Full Width */}
-          <div className="lg:col-span-2 overflow-hidden h-[400px]">
+          <div className="lg:col-span-2 overflow-hidden h-[360px]">
             <WeeklyObjectivesOverview session={session} />
           </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }

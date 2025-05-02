@@ -193,7 +193,7 @@ export function SessionFormController({ students, open, onOpenChange }) {
 
   return (
     <>
-      <Card className="backdrop-blur-sm bg-[var(--soft-primary)] h-full overflow-hidden rounded-4xl flex flex-col">
+      <Card className="backdrop-blur-sm bg-primary/10 h-full overflow-hidden rounded-4xl flex flex-col">
         <CardHeader>
           <CardTitle className="text-lg font-medium flex items-center gap-2">
             <ClipboardList className="w-5 h-5 text-primary"/>
@@ -205,7 +205,7 @@ export function SessionFormController({ students, open, onOpenChange }) {
           <div className="flex items-center gap-4">
             <Button 
               onClick={() => openForm(FORM_TYPES.VOICE)}
-              className="h-48 flex-1 flex flex-col items-center justify-center gap-2 bg-[var(--soft-secondary)] border-[var(--soft-border)]"
+              className="h-48 flex-1 flex flex-col items-center justify-center gap-2 bg-primary/5 border border-border/40 hover:bg-primary/10"
               variant="outline"
             >
               <Mic className="h-8 w-8 mb-2" />
@@ -214,7 +214,7 @@ export function SessionFormController({ students, open, onOpenChange }) {
             
             <Button 
               onClick={() => openForm(FORM_TYPES.MANUAL_STUDENT)}
-              className="h-48 flex-1 flex flex-col items-center justify-center gap-2 bg-[var(--soft-secondary)] border-[var(--soft-border)]"
+              className="h-48 flex-1 flex flex-col items-center justify-center gap-2 bg-primary/5 border border-border/40 hover:bg-primary/10"
               variant="outline"
             >
               <ClipboardEdit className="h-8 w-8 mb-2" />

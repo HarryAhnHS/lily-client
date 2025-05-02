@@ -88,7 +88,7 @@ export default function WeeklyObjectivesOverview({ session }) {
   const current = data.objectives[currentIndex];
 
   return (
-    <Card className="backdrop-blur-sm bg-[var(--soft-primary)] h-full rounded-4xl flex flex-col">
+    <Card className="backdrop-blur-sm bg-primary/10 h-full rounded-4xl flex flex-col">
       <CardHeader>
         <div className="flex justify-between items-center">
           <CardTitle className="text-lg font-medium flex items-center gap-2">
@@ -143,7 +143,7 @@ export default function WeeklyObjectivesOverview({ session }) {
             </div>
 
             {current && (
-              <Card className="overflow-hidden bg-[var(--soft-secondary)] w-full">
+              <Card className="overflow-hidden bg-primary/5 w-full">
                 <CardHeader className="bg-secondary/10 py-3 border-b border-border/40">
                   <CardTitle className="text-md font-medium flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -155,35 +155,34 @@ export default function WeeklyObjectivesOverview({ session }) {
                         <span className="text-xs ml-2 text-muted-foreground">({current.subject_area})</span>
                       </div>
                     </div>
-                    <Button variant="ghost" size="icon" className="h-7 w-7">
-                      <ArrowUpRight className="h-4 w-4" />
-                    </Button>
+                    <div className="flex justify-between items-center text-sm text-muted-foreground">
+                      <div className="flex gap-1">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-6 px-1"
+                          onClick={handlePrevStudent}
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-6 px-1"
+                          onClick={handleNextStudent}
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="px-2">
-                  <p className="text-sm mb-3">
+                <CardContent className="px-3 py-3">
+                  <p className="text-sm">
                     {current.description}
                   </p>
-                  <div className="flex justify-between items-center text-sm text-muted-foreground">
-                    <div className="flex gap-1">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-6 px-1"
-                        onClick={handlePrevStudent}
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-6 px-1"
-                        onClick={handleNextStudent}
-                      >
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
                 </CardContent>
               </Card>
             )}

@@ -92,7 +92,7 @@ export default function RecentLogs({ session }) {
   };
 
   return (
-    <Card className="backdrop-blur-sm bg-[var(--soft-primary)] h-full rounded-4xl flex flex-col">
+    <Card className="backdrop-blur-sm bg-primary/10 h-full rounded-4xl flex flex-col">
       <CardHeader>
         <CardTitle className="text-lg font-medium flex items-center gap-2">
           <div className="w-5 h-5 flex items-center justify-center rounded-full bg-primary/20">
@@ -111,9 +111,9 @@ export default function RecentLogs({ session }) {
         ) : recentLogs.length === 0 ? (
           <div className="text-center py-4 text-muted-foreground">No recent logs found</div>
         ) : (
-          <div className="space-y-3 h-full overflow-y-auto pr-1 pb-2">
+          <div className="h-full overflow-y-auto pr-1 pb-2 rounded-sm bg-primary/5">
             {recentLogs.map((log) => (
-              <div key={log.id} className="flex items-center justify-between py-2 border-b last:border-0">
+              <div key={log.id} className="px-2 flex items-center justify-between h-[60px] border border-border/40">
                 <div className="flex flex-col">
                   <span className="font-medium">{getStudentName(log.student_id)}</span>
                   <span className="text-xs text-muted-foreground">{formatMemo(log.memo)}</span>
