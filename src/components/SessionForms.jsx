@@ -212,7 +212,7 @@ export function SessionFormController({ students, open, onOpenChange }) {
               variant="outline"
             >
               <Mic className="h-8 w-8 mb-2" />
-              <span className="text-lg font-medium">Voice</span>
+              <span className="text-lg font-medium">Transcript</span>
             </Button>
             
             <Button 
