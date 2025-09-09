@@ -238,7 +238,7 @@ export function SessionManualStudentSelect({ students, onComplete }) {
                               "cursor-pointer relative h-[140px] p-3 rounded-xl transition-all flex flex-col gap-2 group overflow-hidden",
                               isSelected 
                                 ? "bg-gradient-to-br from-primary/20 to-primary/10 border-primary border shadow-md" 
-                                : "bg-gradient-to-br from-gray-50 to-white border-muted border hover:shadow-sm hover:border-primary/40"
+                                : "bg-gradient-to-br from-background/50 to-background border-border border hover:shadow-sm hover:border-primary/40"
                             )}
                           >
                             {/* Header area - compact when selected */}
@@ -255,7 +255,7 @@ export function SessionManualStudentSelect({ students, onComplete }) {
                                 "rounded-full transition-all flex-shrink-0",
                                 isSelected
                                   ? "p-1.5 bg-primary/20 text-primary"
-                                  : "p-2.5 bg-gray-100 text-gray-600 group-hover:bg-primary/10 group-hover:text-primary"
+                                  : "p-2.5 bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary"
                               )}>
                                 <User className={isSelected ? "h-4 w-4" : "h-5 w-5"} />
                               </div>
@@ -274,38 +274,42 @@ export function SessionManualStudentSelect({ students, onComplete }) {
                             
                             {/* Subject area selection within the card - only visible when selected */}
                             {isSelected && (
-                              <div className="flex-1 flex flex-col h-[80px]">
-                                <div className="text-xs font-medium text-muted-foreground mb-1">
+                              <div className="flex-1 flex flex-col min-h-0">
+                                <div className="text-xs font-medium text-muted-foreground mb-1 flex-shrink-0">
                                   Subject areas:
                                 </div>
                                 
                                 {isLoading ? (
-                                  <div className="text-xs text-center py-1">
+                                  <div className="text-xs text-center py-1 flex-1 flex items-center justify-center">
                                     Loading...
                                   </div>
                                 ) : subjectAreas.length > 0 ? (
-                                  <div className="flex flex-wrap gap-1 overflow-y-auto flex-1 pb-1 px-0.5">
-                                    {subjectAreas.map((area) => (
-                                      <Badge
-                                        key={area.id}
-                                        variant="outline"
-                                        className={cn(
-                                          "cursor-pointer text-xs py-0.5 px-1.5 h-5",
-                                          isSubjectAreaSelected(student.id, area.id)
-                                            ? "bg-blue-100 text-blue-700 border-blue-300"
-                                            : "bg-muted/20 hover:bg-blue-50"
-                                        )}
-                                        onClick={() => toggleSubjectArea(student.id, area)}
-                                      >
-                                        {area.name}
-                                        {isSubjectAreaSelected(student.id, area.id) && (
-                                          <Check className="h-2.5 w-2.5 ml-0.5" />
-                                        )}
-                                      </Badge>
-                                    ))}
+                                  <div className="flex-1 min-h-0 overflow-hidden">
+                                    <div className="h-full overflow-y-auto">
+                                      <div className="flex flex-wrap gap-1 pb-1">
+                                        {subjectAreas.map((area) => (
+                                          <Badge
+                                            key={area.id}
+                                            variant="outline"
+                                            className={cn(
+                                              "cursor-pointer text-xs py-0.5 px-1.5 h-5 flex-shrink-0",
+                                              isSubjectAreaSelected(student.id, area.id)
+                                                ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30"
+                                                : "bg-muted/20 text-foreground hover:bg-blue-500/10 hover:text-blue-600 dark:hover:text-blue-400"
+                                            )}
+                                            onClick={() => toggleSubjectArea(student.id, area)}
+                                          >
+                                            {area.name}
+                                            {isSubjectAreaSelected(student.id, area.id) && (
+                                              <Check className="h-2.5 w-2.5 ml-0.5" />
+                                            )}
+                                          </Badge>
+                                        ))}
+                                      </div>
+                                    </div>
                                   </div>
                                 ) : (
-                                  <div className="text-xs text-center py-1 text-muted-foreground">
+                                  <div className="text-xs text-center py-1 text-muted-foreground flex-1 flex items-center justify-center">
                                     No subject areas found
                                   </div>
                                 )}

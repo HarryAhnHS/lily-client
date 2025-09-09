@@ -11,9 +11,9 @@ import {
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { Mic, ClipboardEdit, ClipboardList } from 'lucide-react';
-import { SessionManualStudentSelect } from './SessionManualLogForm';
-import { SessionManualObjectiveSelect } from './ObjectivesMultiSelect';
-import { SessionManualProgressForm } from './ObjectiveProgressForm';
+import { SessionManualStudentSelect } from './SessionManualStudentSelect';
+import { SessionManualObjectiveSelect } from './SessionManualObjectivesSelect';
+import { SessionManualProgressForm } from './SessionManualProgressForm';
 import { TranscriptObjectiveProgressForm } from './TranscriptObjectiveProgressForm';
 import { SessionRecorder } from './SessionRecorder';
 

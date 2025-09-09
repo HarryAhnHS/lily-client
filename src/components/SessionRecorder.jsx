@@ -193,19 +193,19 @@ export function SessionRecorder({ inDialog = false, onBack, onSuccess, onShowAna
   }
 
   return (
-    <div className="h-[600px] flex flex-col overflow-hidden bg-white">
+    <div className="h-[600px] flex flex-col overflow-hidden">
       {/* Loading Modal */}
       <LoadingModal />
       
       {/* Top header */}
-      <div className="border-b px-6 py-3 flex justify-between items-center flex-shrink-0 bg-background">
+      <div className="border-b px-6 py-3 flex justify-between items-center flex-shrink-0 bg-gradient-to-r from-muted/80 to-muted">
         <div className="flex items-center gap-3">
           {inDialog && onBack && (
             <Button variant="ghost" onClick={onBack} className="p-2 h-9 w-9">
               <ChevronLeft className="h-5 w-5" />
             </Button>
           )}
-          <h2 className="text-lg font-medium">Session Notes</h2>
+          <h2 className="text-lg font-semibold">Session Notes</h2>
         </div>
         {isRecording && (
           <span className="font-medium text-destructive flex items-center gap-1.5">
@@ -227,7 +227,7 @@ export function SessionRecorder({ inDialog = false, onBack, onSuccess, onShowAna
             
             <Textarea
               placeholder="Record or type your session notes here..."
-              className="min-h-[240px] resize-none border-muted bg-background/50 focus-visible:ring-primary/20 focus-visible:ring-offset-0"
+              className="min-h-[240px] resize-none border-border bg-gradient-to-br from-background/50 to-background focus-visible:ring-primary/20 focus-visible:ring-offset-0"
               value={transcript}
               onChange={(e) => setTranscript(e.target.value)}
               required
@@ -240,8 +240,10 @@ export function SessionRecorder({ inDialog = false, onBack, onSuccess, onShowAna
                 onClick={toggleRecording}
                 variant={isRecording ? "destructive" : "outline"}
                 className={cn(
-                  "rounded-full h-10 w-10 p-0 flex items-center justify-center",
-                  isRecording ? "bg-destructive text-destructive-foreground" : "bg-background text-primary"
+                  "rounded-full h-10 w-10 p-0 flex items-center justify-center transition-all",
+                  isRecording 
+                    ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" 
+                    : "bg-gradient-to-br from-background/50 to-background border-border text-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/40"
                 )}
               >
                 {isRecording ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
@@ -249,14 +251,19 @@ export function SessionRecorder({ inDialog = false, onBack, onSuccess, onShowAna
               
               <div className="flex items-center gap-3">
                 {inDialog && onBack && (
-                  <Button variant="outline" onClick={onBack} size="sm">
+                  <Button 
+                    variant="outline" 
+                    onClick={onBack} 
+                    size="sm"
+                    className="bg-gradient-to-br from-background/50 to-background border-border text-foreground hover:bg-muted/10 hover:border-primary/40"
+                  >
                     Cancel
                   </Button>
                 )}
                 <Button
                   type="submit"
                   disabled={!transcript.trim() || isSubmitting}
-                  className="flex items-center gap-1"
+                  className="flex items-center gap-1 bg-gradient-to-br from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80"
                   size="sm"
                 >
                   {isSubmitting ? (

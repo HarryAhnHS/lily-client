@@ -474,14 +474,14 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
                                           "cursor-pointer relative h-24 p-3 rounded-xl transition-all flex flex-col justify-center items-center gap-2 group overflow-hidden",
                                           field.value === student.id 
                                             ? "bg-gradient-to-br from-primary/20 to-primary/10 border-primary border shadow-md" 
-                                            : "bg-gradient-to-br from-gray-50 to-white border-muted border hover:shadow-sm hover:border-primary/40"
+                                            : "bg-gradient-to-br from-background/50 to-background border-border border hover:shadow-sm hover:border-primary/40"
                                         )}
                                       >
                                         <div className={cn(
                                           "rounded-full p-2 transition-all",
                                           field.value === student.id
                                             ? "bg-primary/20 text-primary"
-                                            : "bg-gray-100 text-gray-600 group-hover:bg-primary/10 group-hover:text-primary"
+                                            : "bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary"
                                         )}>
                                           <User className="h-5 w-5" />
                                         </div>
@@ -608,15 +608,15 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
                                             className={cn(
                                               "cursor-pointer relative h-24 p-3 rounded-xl transition-all flex flex-col justify-center items-center gap-2 group overflow-hidden",
                                               field.value === area.id 
-                                                ? "bg-gradient-to-br from-blue-100 to-blue-50 border-blue-400 border shadow-md" 
-                                                : "bg-gradient-to-br from-gray-50 to-white border-muted border hover:shadow-sm hover:border-blue-300"
+                                                ? "bg-gradient-to-br from-blue-500/20 to-blue-500/10 border-blue-500 border shadow-md" 
+                                                : "bg-gradient-to-br from-background/50 to-background border-border border hover:shadow-sm hover:border-blue-500/40"
                                             )}
                                           >
                                             <div className={cn(
                                               "rounded-full p-2 transition-all",
                                               field.value === area.id
-                                                ? "bg-blue-200 text-blue-700"
-                                                : "bg-gray-100 text-gray-600 group-hover:bg-blue-100 group-hover:text-blue-600"
+                                                ? "bg-blue-500/20 text-blue-600 dark:text-blue-400"
+                                                : "bg-muted text-muted-foreground group-hover:bg-blue-500/10 group-hover:text-blue-600 dark:group-hover:text-blue-400"
                                             )}>
                                               <BookOpen className="h-5 w-5" />
                                             </div>
@@ -651,8 +651,8 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
                                 <Button 
                                   type="button" 
                                   size="sm"
-                                  onClick={() => setIsAddingInFooter(true)}
-                                  className="flex items-center gap-1.5 rounded-full h-8 px-3 bg-blue-50 hover:bg-blue-100 text-blue-700 border-none shadow-none"
+                                    onClick={() => setIsAddingInFooter(true)}
+                                    className="flex items-center gap-1.5 rounded-full h-8 px-3 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border-none shadow-none"
                                 >
                                   <Plus className="h-3.5 w-3.5" /> 
                                   <span>Add Subject Area</span>
@@ -746,15 +746,15 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
                                               className={cn(
                                                 "cursor-pointer relative h-24 p-3 rounded-xl transition-all flex flex-col justify-center items-center gap-2 group overflow-hidden",
                                                 field.value === goal.id 
-                                                  ? "bg-gradient-to-br from-green-100 to-green-50 border-green-400 border shadow-md" 
-                                                  : "bg-gradient-to-br from-gray-50 to-white border-muted border hover:shadow-sm hover:border-green-300"
+                                                  ? "bg-gradient-to-br from-green-500/20 to-green-500/10 border-green-500 border shadow-md" 
+                                                  : "bg-gradient-to-br from-background/50 to-background border-border border hover:shadow-sm hover:border-green-500/40"
                                               )}
                                             >
                                               <div className={cn(
                                                 "rounded-full p-2 transition-all",
                                                 field.value === goal.id
-                                                  ? "bg-green-200 text-green-700"
-                                                  : "bg-gray-100 text-gray-600 group-hover:bg-green-100 group-hover:text-green-600"
+                                                  ? "bg-green-500/20 text-green-600 dark:text-green-400"
+                                                  : "bg-muted text-muted-foreground group-hover:bg-green-500/10 group-hover:text-green-600 dark:group-hover:text-green-400"
                                               )}>
                                                 <Target className="h-5 w-5" />
                                               </div>
@@ -794,7 +794,7 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
                                     type="button" 
                                     size="sm"
                                     onClick={() => setIsAddingInFooter(true)}
-                                    className="flex items-center gap-1.5 rounded-full h-8 px-3 bg-green-50 hover:bg-green-100 text-green-700 border-none shadow-none"
+                                    className="flex items-center gap-1.5 rounded-full h-8 px-3 bg-green-500/10 hover:bg-green-500/20 text-green-600 dark:text-green-400 border-none shadow-none"
                                   >
                                     <Plus className="h-3.5 w-3.5" /> 
                                     <span>Add Goal</span>
@@ -1004,10 +1004,10 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
           <div className="h-[120px] border-t px-6 py-3 bg-gradient-to-r from-muted/80 to-muted flex flex-col justify-center flex-shrink-0">
             {isAddingInFooter && currentStep === 2 ? (
               <div className="flex flex-col gap-2">
-                <div className="text-sm font-medium flex items-center gap-1.5 text-blue-700">
-                  <BookOpen className="h-4 w-4" />
-                  <span>Add New Subject Area</span>
-                </div>
+                  <div className="text-sm font-medium flex items-center gap-1.5 text-blue-600 dark:text-blue-400">
+                    <BookOpen className="h-4 w-4" />
+                    <span>Add New Subject Area</span>
+                  </div>
                 <div className="flex gap-2">
                   <Input
                     placeholder={`Add new subject area for ${selectedStudent?.name}`}
@@ -1027,7 +1027,7 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
                     size="sm"
                     onClick={handleAddSubjectArea}
                     disabled={isCreatingSubjectArea}
-                    className="whitespace-nowrap bg-blue-500 hover:bg-blue-600"
+                    className="whitespace-nowrap bg-blue-500 hover:bg-blue-600 text-white"
                   >
                     {isCreatingSubjectArea ? 'Adding...' : 'Add'}
                   </Button>
@@ -1043,7 +1043,7 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
               </div>
             ) : isAddingInFooter && currentStep === 3 ? (
               <div className="flex flex-col gap-2">
-                <div className="text-sm font-medium flex items-center gap-1.5 text-green-700">
+                <div className="text-sm font-medium flex items-center gap-1.5 text-green-600 dark:text-green-400">
                   <Target className="h-4 w-4" />
                   <span>Add New Goal</span>
                 </div>
@@ -1066,7 +1066,7 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
                     size="sm"
                     onClick={handleAddGoal}
                     disabled={isCreatingGoal}
-                    className="whitespace-nowrap bg-green-500 hover:bg-green-600"
+                    className="whitespace-nowrap bg-green-500 hover:bg-green-600 text-white"
                   >
                     {isCreatingGoal ? 'Adding...' : 'Add'}
                   </Button>
@@ -1110,7 +1110,7 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
                       <button
                         type="button"
                         onClick={() => setCurrentStep(2)}
-                        className="flex items-center gap-1.5 bg-blue-50 text-blue-700 text-sm px-3 py-1 rounded-full font-medium border border-blue-100 hover:bg-blue-100 transition-colors"
+                        className="flex items-center gap-1.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-sm px-3 py-1 rounded-full font-medium border border-blue-500/20 hover:bg-blue-500/20 transition-colors"
                       >
                         <BookOpen className="h-3.5 w-3.5" />
                         <span>{subjectAreas.find(a => a.id === form.watch('subjectArea'))?.name}</span>
@@ -1125,7 +1125,7 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
                       <button
                         type="button"
                         onClick={() => setCurrentStep(3)}
-                        className="flex items-center gap-1.5 bg-green-50 text-green-700 text-sm px-3 py-1 rounded-full font-medium border border-green-100 hover:bg-green-100 transition-colors"
+                        className="flex items-center gap-1.5 bg-green-500/10 text-green-600 dark:text-green-400 text-sm px-3 py-1 rounded-full font-medium border border-green-500/20 hover:bg-green-500/20 transition-colors"
                       >
                         <Target className="h-3.5 w-3.5" />
                         <span>{goals.find(g => g.id === form.watch('goal'))?.title}</span>
@@ -1138,7 +1138,7 @@ export function ObjectiveFormModal({ objective, onSuccess, students, open, onOpe
                         <button
                           type="button"
                           onClick={() => setCurrentStep(4)}
-                          className="flex items-center gap-1.5 bg-purple-50 text-purple-700 text-sm px-3 py-1 rounded-full font-medium border border-purple-100 hover:bg-purple-100 transition-colors"
+                          className="flex items-center gap-1.5 bg-purple-500/10 text-purple-600 dark:text-purple-400 text-sm px-3 py-1 rounded-full font-medium border border-purple-500/20 hover:bg-purple-500/20 transition-colors"
                         >
                           <Target className="h-3.5 w-3.5" />
                           <span>Objective Details</span>
